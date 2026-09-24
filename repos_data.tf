@@ -40,36 +40,51 @@ locals {
       manage_files = false
     }
     "viavitae-compliance" = {
-      description      = "Via-Vitae compliance evidence and control monitoring for ISO 27001, SOC 2 and GDPR"
-      visibility       = "public"
+      description = "Via-Vitae compliance evidence and control monitoring for ISO 27001, SOC 2 and GDPR"
+      # STAGED PRIVATIZATION (2026-09-24): audit evidence is confidential.
+      # NOTE (Free plan): private repos lose secret scanning; branch protection
+      # requires Team+.
+      visibility       = "private"
       tier             = "control"
       manage_files     = false
       codeowners_teams = ["compliance", "security"]
     }
     "viavitae-data-governance" = {
-      description      = "Via-Vitae data governance - records of processing, retention schedules and DPIAs"
-      visibility       = "public"
+      description = "Via-Vitae data governance - records of processing, retention schedules and DPIAs"
+      # STAGED PRIVATIZATION (2026-09-24): GDPR Art. 9/32 — DPIAs & records of
+      # processing must not be public. NOTE (Free plan): once private, GitHub
+      # secret scanning is unavailable and branch protection requires Team+.
+      visibility       = "private"
       tier             = "control"
       manage_files     = false
       codeowners_teams = ["dpo", "compliance", "security"]
     }
     "viavitae-policies" = {
-      description      = "Via-Vitae organisational policy library - governance, information security and privacy policies"
-      visibility       = "public"
+      description = "Via-Vitae organisational policy library - governance, information security and privacy policies"
+      # STAGED PRIVATIZATION (2026-09-24): internal infosec/privacy policies are
+      # confidential. NOTE (Free plan): private repos lose secret scanning; branch
+      # protection requires Team+.
+      visibility       = "private"
       tier             = "control"
       manage_files     = false
       codeowners_teams = ["compliance", "legal", "security"]
     }
     "viavitae-vendor-register" = {
-      description      = "Via-Vitae vendor and sub-processor register with GDPR Article 28 due diligence"
-      visibility       = "public"
+      description = "Via-Vitae vendor and sub-processor register with GDPR Article 28 due diligence"
+      # STAGED PRIVATIZATION (2026-09-24): GDPR Art. 28/32 — sub-processor register
+      # is confidential. NOTE (Free plan): private repos lose secret scanning;
+      # branch protection requires Team+.
+      visibility       = "private"
       tier             = "control"
       manage_files     = false
       codeowners_teams = ["dpo", "legal", "compliance"]
     }
     "viavitae-threat-model" = {
-      description      = "Via-Vitae threat models, STRIDE analysis and risk assessments"
-      visibility       = "public"
+      description = "Via-Vitae threat models, STRIDE analysis and risk assessments"
+      # STAGED PRIVATIZATION (2026-09-24): ISO 27001 A.12.6 / SOC2 CC7.1 — public
+      # threat models hand attackers a roadmap. NOTE (Free plan): private repos lose
+      # secret scanning; branch protection requires Team+.
+      visibility       = "private"
       tier             = "control"
       manage_files     = false
       codeowners_teams = ["security", "architects"]
