@@ -1,0 +1,36 @@
+# #############################################################################
+# S3 remote backend — Via-Vitae Terraform state bootstrap bucket.
+#
+# THIS IS AN EXAMPLE (.example extension => Terraform ignores it). To activate:
+#   1. Fill in bucket / key / region (and optionally kms_key / dynamodb_table).
+#   2. Copy to the repo root as backend.tf.
+#   3. terraform init -migrate-state
+#
+# Backend configuration CANNOT use variables/locals — values must be literal.
+# AWS credentials come from the environment / SSO, never from this file.
+#
+# Bucket prerequisites (provision in viavitae-infra):
+#   - Versioning: ENABLED
+#   - Encryption: SSE-KMS (preferred) or SSE-S3
+#   - Public access: BLOCKED (all four settings)
+#   - Locking: DynamoDB table OR S3 native lockfile (use_lockfile, TF >= 1.10)
+# #############################################################################
+
+terraform {
+  backend "s3" {
+    bucket = "REPLACE_ME-viavitae-tfstate"
+    key    = "viavitae-control/terraform.tfstate"
+    region = "eu-central-1"
+
+    encrypt = true
+
+    # Option A — S3 native state locking (Terraform >= 1.10):
+    use_lockfile = true
+
+    # Option B — DynamoDB locking (comment out use_lockfile above if using this):
+    # dynamodb_table = "viavitae-terraform-locks"
+
+    # Strong encryption with a customer-managed key (recommended):
+    # kms_key = "arn:aws:kms:eu-central-1:ACCOUNT_ID:key/KEY_ID"
+  }
+}

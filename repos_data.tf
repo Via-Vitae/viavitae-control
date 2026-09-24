@@ -1,0 +1,225 @@
+# #############################################################################
+# Repository inventory — SOURCE OF TRUTH (Approach A)
+#
+# Organization: Via-Vitae  (NOT journeyoflife-org — that is a separate org with
+# its own control plane). Every repository in the Via-Vitae org is declared here
+# explicitly. Refresh with scripts/generate_inventory.sh and review by PR;
+# scripts/detect_drift.sh fails CI if a live repo is missing from this map.
+#
+# NON-DESTRUCTIVE BASELINE: `visibility` reflects each repo's CURRENT live value
+# (all 30 are public today). Changing a repo to private is a deliberate, staged,
+# PR-reviewed edit — never automatic. `manage_files = false` means Terraform will
+# NOT write CODEOWNERS/workflows into these existing repos on first apply.
+#
+# Fields:
+#   description  = string
+#   visibility   = "public" | "private" | "internal"   (current live value)
+#   tier         = "control" | "platform" | "app" | "site" | "meta"
+#   manage_files = bool                                (false for existing repos)
+#   # Optional overrides: codeowners_teams, license_template, enable_branch_protection
+#
+# Via-Vitae teams (verified live): architects, compliance, dpo, legal, platform,
+# security. Tier->team defaults live in locals.tf; sensitive repos override here.
+# #############################################################################
+
+locals {
+  inventory = {
+    # ---------------------------------------------------------------- meta ----
+    ".github" = {
+      description  = "Organisation-level defaults: community health files, reusable CI/CodeQL/compliance workflows, issue and PR templates for the Via-Vitae GitHub organisation."
+      visibility   = "public"
+      tier         = "meta"
+      manage_files = false
+    }
+
+    # ------------------------------------------------------------- control ----
+    "viavitae-control" = {
+      description  = "Terraform GitHub control plane — declarative source of truth for all Via-Vitae repositories and organization policy (SOC 2 / GDPR / ISO 27001)."
+      visibility   = "public"
+      tier         = "control"
+      manage_files = false
+    }
+    "viavitae-compliance" = {
+      description      = "Via-Vitae compliance evidence and control monitoring for ISO 27001, SOC 2 and GDPR"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["compliance", "security"]
+    }
+    "viavitae-data-governance" = {
+      description      = "Via-Vitae data governance - records of processing, retention schedules and DPIAs"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["dpo", "compliance", "security"]
+    }
+    "viavitae-policies" = {
+      description      = "Via-Vitae organisational policy library - governance, information security and privacy policies"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["compliance", "legal", "security"]
+    }
+    "viavitae-vendor-register" = {
+      description      = "Via-Vitae vendor and sub-processor register with GDPR Article 28 due diligence"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["dpo", "legal", "compliance"]
+    }
+    "viavitae-threat-model" = {
+      description      = "Via-Vitae threat models, STRIDE analysis and risk assessments"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["security", "architects"]
+    }
+    "viavitae-training" = {
+      description      = "Via-Vitae security and compliance training material and awareness records"
+      visibility       = "public"
+      tier             = "control"
+      manage_files     = false
+      codeowners_teams = ["compliance", "security"]
+    }
+    "viavitae-docs" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "control"
+      manage_files = false
+    }
+
+    # ------------------------------------------------------------ platform ----
+    "viavitae-infra" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "platform"
+      manage_files = false
+    }
+    "viavitae-observability" = {
+      description  = "Via-Vitae observability stack configuration - metrics, logs, traces, dashboards and alerting"
+      visibility   = "public"
+      tier         = "platform"
+      manage_files = false
+    }
+    "viavitae-runbooks" = {
+      description  = "Via-Vitae operational runbooks for incident response, backup/restore and disaster recovery"
+      visibility   = "public"
+      tier         = "platform"
+      manage_files = false
+    }
+    "viavitae-reusable-workflows" = {
+      description      = "Via-Vitae shared GitHub Actions reusable workflows for CI, compliance and security gates"
+      visibility       = "public"
+      tier             = "platform"
+      manage_files     = false
+      codeowners_teams = ["platform", "security"]
+    }
+    "viavitae-template" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "platform"
+      manage_files = false
+    }
+    "viavitae-qa" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "platform"
+      manage_files = false
+    }
+
+    # ----------------------------------------------------------------- app ----
+    "viavitae-api" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "app"
+      manage_files = false
+    }
+    "viavitae-clients" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "app"
+      manage_files = false
+    }
+    "viavitae-web" = {
+      description      = "ViaVitae marketing & product website — Next.js 15 App Router, React 19, next-intl (LT/EN/RU), MDX, OpenAPI contracts"
+      visibility       = "public"
+      tier             = "app"
+      manage_files     = false
+      codeowners_teams = ["architects", "platform"]
+    }
+    "viavitae-brand" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "app"
+      manage_files = false
+    }
+    "viavitae-demos" = {
+      description  = ""
+      visibility   = "public"
+      tier         = "app"
+      manage_files = false
+    }
+
+    # ---------------------------------------------------------------- site ----
+    "viavitae-landing-basilica" = {
+      description  = "ViaVitae landing page — viavitae-landing-basilica"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-cathedral" = {
+      description  = "ViaVitae landing page — viavitae-landing-cathedral"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-cemetery-services" = {
+      description  = "ViaVitae landing page — viavitae-landing-cemetery-services"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-churches-orthodox" = {
+      description  = "ViaVitae landing page — viavitae-landing-churches-orthodox"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-churches-other" = {
+      description  = "ViaVitae landing page — viavitae-landing-churches-other"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-churches-protestant" = {
+      description  = "ViaVitae landing page — viavitae-landing-churches-protestant"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-deaneries" = {
+      description  = "ViaVitae landing page — viavitae-landing-deaneries"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-diocese" = {
+      description  = "ViaVitae landing page — viavitae-landing-diocese"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-funeral-services" = {
+      description  = "ViaVitae landing page — viavitae-landing-funeral-services"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+    "viavitae-landing-parish-church" = {
+      description  = "ViaVitae landing page — viavitae-landing-parish-church"
+      visibility   = "public"
+      tier         = "site"
+      manage_files = false
+    }
+  }
+}

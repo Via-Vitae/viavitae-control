@@ -1,0 +1,40 @@
+# Copy to terraform.tfvars and adjust. NEVER commit real secrets to tfvars.
+# The GitHub token is provided via the GITHUB_TOKEN environment variable, not here.
+
+github_owner     = "Via-Vitae"
+github_plan_tier = "free"   # free | team | enterprise — flipping this activates gated controls
+
+# --- Control flags -----------------------------------------------------------
+enable_secret_scanning             = true
+enable_push_protection             = true
+enable_advanced_security           = false  # requires enterprise
+enable_branch_protection           = true
+enable_private_branch_protection   = true   # effective only on team/enterprise
+enable_dependabot_alerts           = true
+enable_dependabot_security_updates = true
+enable_sso                         = false  # requires enterprise + policies/enforce_sso.sh
+
+# --- Branch protection review model -----------------------------------------
+# Single-member org today: keep review count 0 to avoid locking out the sole admin.
+# Raise to 1 (and code-owner review true) once a second member/team exists.
+branch_required_approving_review_count = 0
+branch_require_code_owner_reviews      = false
+branch_enforce_admins                  = true
+branch_require_last_push_approval      = false
+
+# --- Allowed Actions policy --------------------------------------------------
+actions_allowed_mode = "selected"   # all | selected | disabled
+# actions_allowed_patterns = [ ... ]  # see variables.tf defaults
+
+# --- Org member permissions (defaults preserve current live values) ----------
+default_repository_permission        = "read"
+members_can_create_repositories       = true
+members_can_create_public_repositories = true
+
+# --- Adoption of existing repos ---------------------------------------------
+import_existing_repos = true
+
+# --- S3 backend (only used when state/backend_s3.tf.example is enabled) ------
+# state_s3_bucket = "viavitae-tfstate-bootstrap"
+# state_s3_key    = "viavitae-control/terraform.tfstate"
+# state_s3_region = "eu-central-1"

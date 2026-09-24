@@ -1,0 +1,35 @@
+# --- Terraform ---------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Keep example vars, ignore real ones (may contain sensitive values).
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+
+# --- Secrets (never commit) --------------------------------------------------
+*.pem
+*.key
+.env
+.env.*
+secrets.*
+
+# --- Python (legacy scaffold in this repo) -----------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+
+# --- OS / editor -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
