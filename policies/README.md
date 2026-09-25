@@ -13,6 +13,7 @@ mapping, its plan-tier requirement, and how it is verified.
 | `allowed_actions.md` | GitHub Actions allow-list rationale | Free+ | yes (in Terraform) |
 | `sso_saml.md` | SSO/SAML gap analysis & compensating controls | Enterprise | partial |
 | `restore_peer_review.md` | Runbook to restore 1-approval review once a 2nd reviewer exists | Free+ (public) / Team+ (private) | one-line variable flip |
+| `AUDIT_PROMPT.md` | Evidence-gated AI-agent audit prompt for control-plane audits | Free+ | paste into agent session |
 
 ## Why scripts and not resources?
 
@@ -23,3 +24,14 @@ them by `var.enable_sso` / plan tier, and record the residual gap in
 `docs/COMPLIANCE.md`. This keeps the control plane honest under audit.
 
 All scripts default to **dry-run**; pass `--apply` to make changes.
+
+## Audit prompt
+
+[`AUDIT_PROMPT.md`](AUDIT_PROMPT.md) is a reusable, evidence-gated AI-agent audit
+prompt for the Via-Vitae control plane. It defines staged gates (0–5), a fixed
+findings JSON schema, and a severity rubric tied to exploitability. Paste it
+verbatim into an agent session to execute a full audit cycle.
+
+See the design spec in
+[`docs/superpowers/specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md`](../docs/superpowers/specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md)
+for the rationale.
