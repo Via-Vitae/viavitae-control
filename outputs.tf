@@ -35,13 +35,21 @@ output "control_gaps" {
 }
 
 output "p0_security_alerts" {
-  description = "Immediate-action security findings surfaced by the control plane."
-  value = [
-    "P0: All 30 Via-Vitae repositories are PUBLIC, including compliance-sensitive ones (viavitae-compliance, viavitae-data-governance, viavitae-vendor-register, viavitae-threat-model, viavitae-policies). Review each for GDPR Art. 9 personal data and schedule staged privatization.",
-    "P1: Org-wide 2FA is NOT enforced (two_factor_requirement_enabled=false). Run policies/enforce_sso.sh --apply (free on all plans).",
-    "P1: SINGLE-MEMBER ORG (only JourneyOfLife). Peer-review and code-owner enforcement are disabled by default to avoid locking out the sole admin; add a second member/team, then raise branch_required_approving_review_count to 1 and set branch_require_code_owner_reviews=true.",
-    "P1: SAML SSO not available on the Free plan (requires Enterprise). See policies/sso_saml.md for compensating controls.",
-  ]
+  description = "Immediate-action security findings derived from live org state."
+  value = concat(
+    # 2FA not enforced
+    data.github_organization.this.two_factor_requirement_enabled ? [] : [
+      "P1: Org-wide 2FA is NOT enforced (two_factor_requirement_enabled=false). Run policies/enforce_sso.sh --apply (free on all plans). Not IaC-settable in provider 6.13.0."
+    ],
+    # Single-member org
+    var.branch_required_approving_review_count == 0 ? [
+      "P1: SINGLE-MEMBER ORG (only JourneyOfLife). Peer-review and code-owner enforcement are disabled by default to avoid locking out the sole admin; add a second member/team, then raise branch_required_approving_review_count to 1 and set branch_require_code_owner_reviews=true."
+    ] : [],
+    # SAML SSO not available on Free
+    local.is_enterprise ? [] : [
+      "P1: SAML SSO not available on the Free plan (requires Enterprise). See policies/sso_saml.md for compensating controls."
+    ],
+  )
 }
 
 output "drift_hint" {

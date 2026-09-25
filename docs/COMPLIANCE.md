@@ -25,7 +25,7 @@ companion to the effective-control matrix emitted by `terraform output`.
 | C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | ✅ |
 | C10 | Least-privilege repo features (wiki/projects off) | CC6.1 | A.9.4 | Art. 25 | `modules/repo/main.tf` | ✅ |
 | C11 | Org member permission baseline | CC6.1 | A.9.2 | Art. 32 | `org_settings.tf` | ✅ |
-| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | `policies/enforce_sso.sh` | ✅ (manual apply) |
+| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | `policies/enforce_sso.sh` | `out-of-band` (not IaC-settable in provider 6.13.0; detective control only) |
 | C13 | State encryption + locking | CC6.1 | A.10.1 | Art. 32 | `state/` (local now, S3 target) | ⚠️ local now |
 | C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | ❌ needs Team+ |
 | C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | ❌ needs Enterprise |
