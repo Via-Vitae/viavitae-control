@@ -26,18 +26,20 @@ locals {
   inventory = {
     # ---------------------------------------------------------------- meta ----
     ".github" = {
-      description  = "Organisation-level defaults: community health files, reusable CI/CodeQL/compliance workflows, issue and PR templates for the Via-Vitae GitHub organisation."
-      visibility   = "public"
-      tier         = "meta"
-      manage_files = false
+      description           = "Organisation-level defaults: community health files, reusable CI/CodeQL/compliance workflows, issue and PR templates for the Via-Vitae GitHub organisation."
+      visibility            = "public"
+      tier                  = "meta"
+      manage_files          = false
+      default_branch_exists = true
     }
 
     # ------------------------------------------------------------- control ----
     "viavitae-control" = {
-      description  = "Terraform GitHub control plane — declarative source of truth for all Via-Vitae repositories and organization policy (SOC 2 / GDPR / ISO 27001)."
-      visibility   = "public"
-      tier         = "control"
-      manage_files = false
+      description           = "Terraform GitHub control plane — declarative source of truth for all Via-Vitae repositories and organization policy (SOC 2 / GDPR / ISO 27001)."
+      visibility            = "public"
+      tier                  = "control"
+      manage_files          = false
+      default_branch_exists = true
       # Protection for THIS repo is handled by the `protect-main` repository
       # ruleset (repo_rulesets.tf), not the module's classic branch protection.
       # Disabled here to avoid two overlapping mechanisms on the same branch.
@@ -101,18 +103,20 @@ locals {
       codeowners_teams = ["compliance", "security"]
     }
     "viavitae-docs" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "control"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "control"
+      manage_files          = false
+      default_branch_exists = true
     }
 
     # ------------------------------------------------------------ platform ----
     "viavitae-infra" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "platform"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "platform"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-observability" = {
       description  = "Via-Vitae observability stack configuration - metrics, logs, traces, dashboards and alerting"
@@ -134,111 +138,128 @@ locals {
       codeowners_teams = ["platform", "security"]
     }
     "viavitae-template" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "platform"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "platform"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-qa" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "platform"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "platform"
+      manage_files          = false
+      default_branch_exists = true
     }
 
     # ----------------------------------------------------------------- app ----
     "viavitae-api" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "app"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "app"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-clients" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "app"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "app"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-web" = {
-      description      = "ViaVitae marketing & product website — Next.js 15 App Router, React 19, next-intl (LT/EN/RU), MDX, OpenAPI contracts"
-      visibility       = "public"
-      tier             = "app"
-      manage_files     = false
-      codeowners_teams = ["architects", "platform"]
+      description           = "ViaVitae marketing & product website — Next.js 15 App Router, React 19, next-intl (LT/EN/RU), MDX, OpenAPI contracts"
+      visibility            = "public"
+      tier                  = "app"
+      manage_files          = false
+      default_branch_exists = true
+      codeowners_teams      = ["architects", "platform"]
     }
     "viavitae-brand" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "app"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "app"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-demos" = {
-      description  = ""
-      visibility   = "public"
-      tier         = "app"
-      manage_files = false
+      description           = ""
+      visibility            = "public"
+      tier                  = "app"
+      manage_files          = false
+      default_branch_exists = true
     }
 
     # ---------------------------------------------------------------- site ----
     "viavitae-landing-basilica" = {
-      description  = "ViaVitae landing page — viavitae-landing-basilica"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-basilica"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-cathedral" = {
-      description  = "ViaVitae landing page — viavitae-landing-cathedral"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-cathedral"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-cemetery-services" = {
-      description  = "ViaVitae landing page — viavitae-landing-cemetery-services"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-cemetery-services"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-churches-orthodox" = {
-      description  = "ViaVitae landing page — viavitae-landing-churches-orthodox"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-churches-orthodox"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-churches-other" = {
-      description  = "ViaVitae landing page — viavitae-landing-churches-other"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-churches-other"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-churches-protestant" = {
-      description  = "ViaVitae landing page — viavitae-landing-churches-protestant"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-churches-protestant"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-deaneries" = {
-      description  = "ViaVitae landing page — viavitae-landing-deaneries"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-deaneries"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-diocese" = {
-      description  = "ViaVitae landing page — viavitae-landing-diocese"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-diocese"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-funeral-services" = {
-      description  = "ViaVitae landing page — viavitae-landing-funeral-services"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-funeral-services"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
     "viavitae-landing-parish-church" = {
-      description  = "ViaVitae landing page — viavitae-landing-parish-church"
-      visibility   = "public"
-      tier         = "site"
-      manage_files = false
+      description           = "ViaVitae landing page — viavitae-landing-parish-church"
+      visibility            = "public"
+      tier                  = "site"
+      manage_files          = false
+      default_branch_exists = true
     }
   }
 }
