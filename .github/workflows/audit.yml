@@ -1,0 +1,57 @@
+name: Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: actions/setup-terraform@v3
+        with:
+          terraform_version: 1.16.1
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (backend=false)
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Assert toolchain pin
+        run: |
+          PIN=$(cat .terraform-version)
+          ACTUAL=$(terraform version -json | jq -r '.terraform_version')
+          if [ "$PIN" != "$ACTUAL" ]; then
+            echo "::error::.terraform-version ($PIN) != installed ($ACTUAL)"
+            exit 1
+          fi
+
+      - name: Detect drift (requires ORG_READ_TOKEN)
+        if: ${{ secrets.ORG_READ_TOKEN != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+          ORG: Via-Vitae
+        run: |
+          chmod +x scripts/detect_drift.sh
+          ./scripts/detect_drift.sh
+
+      - name: Fail loudly if ORG_READ_TOKEN is absent
+        if: ${{ secrets.ORG_READ_TOKEN == '' }}
+        run: |
+          echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
+          echo "::error::Create an org-read token with admin:org (read) scope and add it as a repository secret."
+          exit 1
