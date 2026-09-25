@@ -1,0 +1,2369 @@
+[0m[1mgithub_repository_ruleset.protect_main: Preparing import... [id=viavitae-control:23943250][0m
+[0m[1mdata.github_organization.this: Reading...[0m[0m
+[0m[1mmodule.repo["viavitae-landing-basilica"].github_repository.this: Preparing import... [id=viavitae-landing-basilica][0m
+[0m[1mmodule.repo["viavitae-docs"].github_repository.this: Preparing import... [id=viavitae-docs][0m
+[0m[1mmodule.repo["viavitae-landing-churches-orthodox"].github_repository.this: Preparing import... [id=viavitae-landing-churches-orthodox][0m
+[0m[1mmodule.repo["viavitae-template"].github_repository.this: Preparing import... [id=viavitae-template][0m
+[0m[1mmodule.repo["viavitae-landing-cathedral"].github_repository.this: Preparing import... [id=viavitae-landing-cathedral][0m
+[0m[1mmodule.repo[".github"].github_repository.this: Preparing import... [id=.github][0m
+[0m[1mmodule.repo["viavitae-infra"].github_repository.this: Preparing import... [id=viavitae-infra][0m
+[0m[1mmodule.repo["viavitae-landing-parish-church"].github_repository.this: Preparing import... [id=viavitae-landing-parish-church][0m
+[0m[1mmodule.repo["viavitae-template"].github_repository.this: Refreshing state... [id=viavitae-template][0m
+[0m[1mmodule.repo["viavitae-docs"].github_repository.this: Refreshing state... [id=viavitae-docs][0m
+[0m[1mmodule.repo["viavitae-landing-churches-orthodox"].github_repository.this: Refreshing state... [id=viavitae-landing-churches-orthodox][0m
+[0m[1mmodule.repo["viavitae-landing-parish-church"].github_repository.this: Refreshing state... [id=viavitae-landing-parish-church][0m
+[0m[1mmodule.repo[".github"].github_repository.this: Refreshing state... [id=.github][0m
+[0m[1mmodule.repo["viavitae-landing-basilica"].github_repository.this: Refreshing state... [id=viavitae-landing-basilica][0m
+[0m[1mmodule.repo["viavitae-landing-cathedral"].github_repository.this: Refreshing state... [id=viavitae-landing-cathedral][0m
+[0m[1mmodule.repo["viavitae-infra"].github_repository.this: Refreshing state... [id=viavitae-infra][0m
+[0m[1mgithub_repository_ruleset.protect_main: Refreshing state... [id=23943250][0m
+[0m[1mmodule.repo["viavitae-demos"].github_repository.this: Preparing import... [id=viavitae-demos][0m
+[0m[1mmodule.repo["viavitae-demos"].github_repository.this: Refreshing state... [id=viavitae-demos][0m
+[0m[1mmodule.repo["viavitae-landing-churches-protestant"].github_repository.this: Preparing import... [id=viavitae-landing-churches-protestant][0m
+[0m[1mmodule.repo["viavitae-landing-churches-protestant"].github_repository.this: Refreshing state... [id=viavitae-landing-churches-protestant][0m
+[0m[1mmodule.repo["viavitae-runbooks"].github_repository.this: Preparing import... [id=viavitae-runbooks][0m
+[0m[1mmodule.repo["viavitae-runbooks"].github_repository.this: Refreshing state... [id=viavitae-runbooks][0m
+[0m[1mmodule.repo["viavitae-landing-diocese"].github_repository.this: Preparing import... [id=viavitae-landing-diocese][0m
+[0m[1mmodule.repo["viavitae-landing-diocese"].github_repository.this: Refreshing state... [id=viavitae-landing-diocese][0m
+[0m[1mmodule.repo["viavitae-compliance"].github_repository.this: Refreshing state... [id=viavitae-compliance][0m
+[0m[1mmodule.repo["viavitae-landing-churches-other"].github_repository.this: Preparing import... [id=viavitae-landing-churches-other][0m
+[0m[1mmodule.repo["viavitae-landing-churches-other"].github_repository.this: Refreshing state... [id=viavitae-landing-churches-other][0m
+[0m[1mmodule.repo["viavitae-landing-funeral-services"].github_repository.this: Preparing import... [id=viavitae-landing-funeral-services][0m
+[0m[1mmodule.repo["viavitae-landing-funeral-services"].github_repository.this: Refreshing state... [id=viavitae-landing-funeral-services][0m
+[0m[1mmodule.repo["viavitae-brand"].github_repository.this: Preparing import... [id=viavitae-brand][0m
+[0m[1mmodule.repo["viavitae-brand"].github_repository.this: Refreshing state... [id=viavitae-brand][0m
+[0m[1mmodule.repo["viavitae-web"].github_repository.this: Preparing import... [id=viavitae-web][0m
+[0m[1mmodule.repo["viavitae-web"].github_repository.this: Refreshing state... [id=viavitae-web][0m
+[0m[1mmodule.repo["viavitae-clients"].github_repository.this: Preparing import... [id=viavitae-clients][0m
+[0m[1mmodule.repo["viavitae-clients"].github_repository.this: Refreshing state... [id=viavitae-clients][0m
+[0m[1mdata.github_organization.this: Still reading... [00m10s elapsed][0m[0m
+[0m[1mmodule.repo["viavitae-threat-model"].github_repository.this: Refreshing state... [id=viavitae-threat-model][0m
+[0m[1mmodule.repo["viavitae-observability"].github_repository.this: Preparing import... [id=viavitae-observability][0m
+[0m[1mmodule.repo["viavitae-observability"].github_repository.this: Refreshing state... [id=viavitae-observability][0m
+[0m[1mmodule.repo["viavitae-control"].github_repository.this: Preparing import... [id=viavitae-control][0m
+[0m[1mmodule.repo["viavitae-control"].github_repository.this: Refreshing state... [id=viavitae-control][0m
+[0m[1mmodule.repo["viavitae-landing-cemetery-services"].github_repository.this: Preparing import... [id=viavitae-landing-cemetery-services][0m
+[0m[1mmodule.repo["viavitae-landing-cemetery-services"].github_repository.this: Refreshing state... [id=viavitae-landing-cemetery-services][0m
+[0m[1mmodule.repo["viavitae-training"].github_repository.this: Preparing import... [id=viavitae-training][0m
+[0m[1mmodule.repo["viavitae-training"].github_repository.this: Refreshing state... [id=viavitae-training][0m
+[0m[1mmodule.repo["viavitae-vendor-register"].github_repository.this: Refreshing state... [id=viavitae-vendor-register][0m
+[0m[1mmodule.repo["viavitae-landing-deaneries"].github_repository.this: Preparing import... [id=viavitae-landing-deaneries][0m
+[0m[1mmodule.repo["viavitae-landing-deaneries"].github_repository.this: Refreshing state... [id=viavitae-landing-deaneries][0m
+[0m[1mmodule.repo["viavitae-reusable-workflows"].github_repository.this: Preparing import... [id=viavitae-reusable-workflows][0m
+[0m[1mmodule.repo["viavitae-reusable-workflows"].github_repository.this: Refreshing state... [id=viavitae-reusable-workflows][0m
+[0m[1mmodule.repo["viavitae-qa"].github_repository.this: Preparing import... [id=viavitae-qa][0m
+[0m[1mmodule.repo["viavitae-qa"].github_repository.this: Refreshing state... [id=viavitae-qa][0m
+[0m[1mmodule.repo["viavitae-api"].github_repository.this: Preparing import... [id=viavitae-api][0m
+[0m[1mmodule.repo["viavitae-api"].github_repository.this: Refreshing state... [id=viavitae-api][0m
+[0m[1mmodule.repo["viavitae-data-governance"].github_repository.this: Refreshing state... [id=viavitae-data-governance][0m
+[0m[1mmodule.repo["viavitae-policies"].github_repository.this: Refreshing state... [id=viavitae-policies][0m
+[0m[1mdata.github_organization.this: Still reading... [00m20s elapsed][0m[0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+  [33m~[0m update in-place[0m
+
+Terraform planned the following actions, but then encountered a problem:
+
+[1m  # github_actions_organization_permissions.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_actions_organization_permissions" "this" {
+      [32m+[0m[0m allowed_actions      = "selected"
+      [32m+[0m[0m enabled_repositories = "all"
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m sha_pinning_required = false
+
+      [32m+[0m[0m allowed_actions_config {
+          [32m+[0m[0m github_owned_allowed = true
+          [32m+[0m[0m patterns_allowed     = [
+              [32m+[0m[0m "actions/cache@*",
+              [32m+[0m[0m "actions/checkout@*",
+              [32m+[0m[0m "actions/download-artifact@*",
+              [32m+[0m[0m "actions/setup-node@*",
+              [32m+[0m[0m "actions/setup-python@*",
+              [32m+[0m[0m "actions/upload-artifact@*",
+              [32m+[0m[0m "dependabot/*",
+              [32m+[0m[0m "github/codeql-action@*",
+            ]
+          [32m+[0m[0m verified_allowed     = true
+        }
+    }
+
+[1m  # github_organization_settings.this[0m will be created
+[0m  [32m+[0m[0m resource "github_organization_settings" "this" {
+      [32m+[0m[0m advanced_security_enabled_for_new_repositories               = false
+      [32m+[0m[0m billing_email                                                = "journey4oflife+viavitae.github@gmail.com"
+      [32m+[0m[0m default_repository_permission                                = "read"
+      [32m+[0m[0m dependabot_alerts_enabled_for_new_repositories               = true
+      [32m+[0m[0m dependabot_security_updates_enabled_for_new_repositories     = true
+      [32m+[0m[0m dependency_graph_enabled_for_new_repositories                = true
+      [32m+[0m[0m has_organization_projects                                    = true
+      [32m+[0m[0m has_repository_projects                                      = true
+      [32m+[0m[0m id                                                           = (known after apply)
+      [32m+[0m[0m members_can_create_internal_repositories                     = false
+      [32m+[0m[0m members_can_create_pages                                     = true
+      [32m+[0m[0m members_can_create_private_pages                             = true
+      [32m+[0m[0m members_can_create_private_repositories                      = true
+      [32m+[0m[0m members_can_create_public_pages                              = true
+      [32m+[0m[0m members_can_create_public_repositories                       = true
+      [32m+[0m[0m members_can_create_repositories                              = true
+      [32m+[0m[0m members_can_fork_private_repositories                        = false
+      [32m+[0m[0m secret_scanning_enabled_for_new_repositories                 = false
+      [32m+[0m[0m secret_scanning_push_protection_enabled_for_new_repositories = false
+      [32m+[0m[0m web_commit_signoff_required                                  = false
+    }
+
+[1m  # github_repository_ruleset.protect_main[0m will be imported
+[0m    resource "github_repository_ruleset" "protect_main" {
+        enforcement = "active"
+        etag        = "W/\"4063a2e1d9a95598325b15f7494532f941b5e4747d9afc41a33ec91b5747f4e8\""
+        id          = "23943250"
+        name        = "protect-main"
+        node_id     = "RRS_lACqUmVwb3NpdG9yec5Sl2vCzgFtWFI"
+        repository  = "viavitae-control"
+        ruleset_id  = 23943250
+        target      = "branch"
+
+        conditions {
+            ref_name {
+                exclude = []
+                include = [
+                    "refs/heads/main",
+                ]
+            }
+        }
+
+        rules {
+            creation                      = false
+            deletion                      = true
+            non_fast_forward              = true
+            required_linear_history       = true
+            required_signatures           = false
+            update                        = false
+            update_allows_fetch_and_merge = false
+
+            pull_request {
+                allowed_merge_methods             = [
+                    "merge",
+                    "squash",
+                    "rebase",
+                ]
+                dismiss_stale_reviews_on_push     = true
+                require_code_owner_review         = false
+                require_last_push_approval        = false
+                required_approving_review_count   = 0
+                required_review_thread_resolution = false
+            }
+        }
+    }
+
+[1m  # module.repo[".github"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUT0ZVQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo[".github"].github_repository.this[0m will be updated in-place
+  # [0m(imported from ".github")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "Organisation-level defaults: community health files, reusable CI/CodeQL/compliance workflows, issue and PR templates for the Via-Vitae GitHub organisation."
+        etag                                    = "W/\"f829883a6c1a9508b3aaa74772c1a7f89cad10c630ee0da5fb664f42e4613715\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/.github"
+        git_clone_url                           = "git://github.com/Via-Vitae/.github.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+        has_wiki                                = false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/.github"
+        http_clone_url                          = "https://github.com/Via-Vitae/.github.git"
+        id                                      = ".github"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = ".github"
+        node_id                                 = "R_kgDOUT0ZVQ"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1362958677
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/.github.git"
+        svn_url                                 = "https://github.com/Via-Vitae/.github"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo[".github"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = ".github"
+    }
+
+[1m  # module.repo["viavitae-api"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURhsKg"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-api"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-api")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"74c18d01815d91a4406c10d928280d43b3947c041eac66442c4b091a8bc554f1\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-api"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-api.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+        has_wiki                                = false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-api"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-api.git"
+        id                                      = "viavitae-api"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-api"
+        node_id                                 = "R_kgDOURhsKg"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1360555050
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-api.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-api"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-api"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-api"
+    }
+
+[1m  # module.repo["viavitae-brand"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURhk8g"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-brand"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-brand")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"2daf15e785bc5544beaf01a8861a4efb801f9fb6c33a31729af5e8e5d5816576\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-brand"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-brand.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+        has_wiki                                = false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-brand"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-brand.git"
+        id                                      = "viavitae-brand"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-brand"
+        node_id                                 = "R_kgDOURhk8g"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1360553202
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-brand.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-brand"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-brand"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-brand"
+    }
+
+[1m  # module.repo["viavitae-clients"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURh5Ig"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-clients"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-clients")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"215221f75b971f0f5318ee579f09ad8bbb7db29a018520d735cf8388fb6a06f9\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-clients"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-clients.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-clients"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-clients.git"
+        id                                      = "viavitae-clients"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-clients"
+        node_id                                 = "R_kgDOURh5Ig"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1360558370
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-clients.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-clients"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-clients"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-clients"
+    }
+
+[1m  # module.repo["viavitae-compliance"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-compliance"
+    }
+
+[1m  # module.repo["viavitae-control"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-control")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+      [33m~[0m[0m description                             = "Via-Vitae control catalogue and control-to-framework mapping" [33m->[0m[0m "Terraform GitHub control plane — declarative source of truth for all Via-Vitae repositories and organization policy (SOC 2 / GDPR / ISO 27001)."
+        etag                                    = "W/\"95022668b25131da12f234460b0c3aeda6bd251bb5db3a30420dc4e9a96bd2cf\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-control"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-control.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-control"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-control.git"
+        id                                      = "viavitae-control"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-control"
+        node_id                                 = "R_kgDOUpdrwg"
+        primary_language                        = "HCL"
+        private                                 = false
+        repo_id                                 = 1385655234
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-control.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-control"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-control"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-control"
+    }
+
+[1m  # module.repo["viavitae-data-governance"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-data-governance"
+    }
+
+[1m  # module.repo["viavitae-demos"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURhxXQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-demos"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-demos")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"5294fd41f662ba4a21feaf42f37682f40abef5dda9cb3a9c28e58e1462c758fe\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-demos"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-demos.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-demos"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-demos.git"
+        id                                      = "viavitae-demos"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-demos"
+        node_id                                 = "R_kgDOURhxXQ"
+        primary_language                        = "TypeScript"
+        private                                 = false
+        repo_id                                 = 1360556381
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-demos.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-demos"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-demos"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-demos"
+    }
+
+[1m  # module.repo["viavitae-docs"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURhzCA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-docs"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-docs")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"f5179bb675adcb81cd6d4f8376e42f46892a50534b7912327c11695d0d01a89a\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-docs"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-docs.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-docs"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-docs.git"
+        id                                      = "viavitae-docs"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-docs"
+        node_id                                 = "R_kgDOURhzCA"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1360556808
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-docs.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-docs"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-docs"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-docs"
+    }
+
+[1m  # module.repo["viavitae-infra"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURXSGA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-infra"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-infra")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"786433a9a80dac4ca3e4cc67ee30d769520c8762591f1ce3eb81ee085860b6a6\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-infra"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-infra.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-infra"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-infra.git"
+        id                                      = "viavitae-infra"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-infra"
+        node_id                                 = "R_kgDOURXSGA"
+        primary_language                        = "HCL"
+        private                                 = false
+        repo_id                                 = 1360384536
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-infra.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-infra"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-infra"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-infra"
+    }
+
+[1m  # module.repo["viavitae-landing-basilica"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVghAA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-basilica"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-basilica")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-basilica"
+        etag                                    = "W/\"33c01912bbe3dbd317500b2b594b7851236a3d3c37f19b1b6a9453d37b497912\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-basilica"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-basilica.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-basilica"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-basilica.git"
+        id                                      = "viavitae-landing-basilica"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-basilica"
+        node_id                                 = "R_kgDOUVghAA"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364730112
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-basilica.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-basilica"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-basilica"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-basilica"
+    }
+
+[1m  # module.repo["viavitae-landing-cathedral"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVghpg"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-cathedral"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-cathedral")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-cathedral"
+        etag                                    = "W/\"5a34076ae7da482b767c398daa6f20a7a48988adeb8f4679a997a2fb07b90fee\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-cathedral"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-cathedral.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-cathedral"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-cathedral.git"
+        id                                      = "viavitae-landing-cathedral"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-cathedral"
+        node_id                                 = "R_kgDOUVghpg"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364730278
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-cathedral.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-cathedral"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-cathedral"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-cathedral"
+    }
+
+[1m  # module.repo["viavitae-landing-cemetery-services"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVglSg"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-cemetery-services"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-cemetery-services")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-cemetery-services"
+        etag                                    = "W/\"efbdad03e6b2b108d03c39b7d338a97632397a1a08d58eac3625404513798999\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-cemetery-services"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-cemetery-services.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-cemetery-services"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-cemetery-services.git"
+        id                                      = "viavitae-landing-cemetery-services"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-cemetery-services"
+        node_id                                 = "R_kgDOUVglSg"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364731210
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-cemetery-services.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-cemetery-services"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-cemetery-services"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-cemetery-services"
+    }
+
+[1m  # module.repo["viavitae-landing-churches-orthodox"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgmvQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-orthodox"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-churches-orthodox")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-churches-orthodox"
+        etag                                    = "W/\"1a941eee9e6dcf5a678d5a7efb7cd9a9be4c7212efd67354a18b80d12aecd061\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-churches-orthodox"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-churches-orthodox.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-churches-orthodox"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-churches-orthodox.git"
+        id                                      = "viavitae-landing-churches-orthodox"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-churches-orthodox"
+        node_id                                 = "R_kgDOUVgmvQ"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364731581
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-churches-orthodox.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-churches-orthodox"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-orthodox"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-churches-orthodox"
+    }
+
+[1m  # module.repo["viavitae-landing-churches-other"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgngA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-other"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-churches-other")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-churches-other"
+        etag                                    = "W/\"75c151b039231e22c39a87abfa73c8f8e652b3742bd8a0d6e1f9234802cc3908\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-churches-other"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-churches-other.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-churches-other"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-churches-other.git"
+        id                                      = "viavitae-landing-churches-other"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-churches-other"
+        node_id                                 = "R_kgDOUVgngA"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364731776
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-churches-other.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-churches-other"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-other"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-churches-other"
+    }
+
+[1m  # module.repo["viavitae-landing-churches-protestant"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgmAQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-protestant"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-churches-protestant")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-churches-protestant"
+        etag                                    = "W/\"0a42ace1fb670f7786d9514c2ed7056241ab398ff08e3fb01468b6cf8dc1e690\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-churches-protestant"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-churches-protestant.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-churches-protestant"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-churches-protestant.git"
+        id                                      = "viavitae-landing-churches-protestant"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-churches-protestant"
+        node_id                                 = "R_kgDOUVgmAQ"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364731393
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-churches-protestant.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-churches-protestant"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-churches-protestant"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-churches-protestant"
+    }
+
+[1m  # module.repo["viavitae-landing-deaneries"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgjFA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-deaneries"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-deaneries")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-deaneries"
+        etag                                    = "W/\"4b5138964742ed1bf3ff3bea51ae434a12f2260391ec8cfcd026ebafd6076304\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-deaneries"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-deaneries.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-deaneries"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-deaneries.git"
+        id                                      = "viavitae-landing-deaneries"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-deaneries"
+        node_id                                 = "R_kgDOUVgjFA"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364730644
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-deaneries.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-deaneries"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-deaneries"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-deaneries"
+    }
+
+[1m  # module.repo["viavitae-landing-diocese"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgiUQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-diocese"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-diocese")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-diocese"
+        etag                                    = "W/\"5bfa59a36fb2894d7826c54756a384936e883dfbc0ad2a81de33cf72c3f6c6eb\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-diocese"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-diocese.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-diocese"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-diocese.git"
+        id                                      = "viavitae-landing-diocese"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-diocese"
+        node_id                                 = "R_kgDOUVgiUQ"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364730449
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-diocese.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-diocese"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-diocese"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-diocese"
+    }
+
+[1m  # module.repo["viavitae-landing-funeral-services"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgkjw"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-funeral-services"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-funeral-services")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-funeral-services"
+        etag                                    = "W/\"a62188645c153dc68596b0bc6e66c093e627c1dabbf01e170e1a8425bb2f9e4e\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-funeral-services"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-funeral-services.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-funeral-services"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-funeral-services.git"
+        id                                      = "viavitae-landing-funeral-services"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-funeral-services"
+        node_id                                 = "R_kgDOUVgkjw"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364731023
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-funeral-services.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-funeral-services"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-funeral-services"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-funeral-services"
+    }
+
+[1m  # module.repo["viavitae-landing-parish-church"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUVgjxQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-parish-church"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-landing-parish-church")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae landing page — viavitae-landing-parish-church"
+        etag                                    = "W/\"0b6c1c07fa95cbddb0e1569201a807631156708dc6dc95ee8902bdc079c270fd\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-landing-parish-church"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-landing-parish-church.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-landing-parish-church"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-landing-parish-church.git"
+        id                                      = "viavitae-landing-parish-church"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-landing-parish-church"
+        node_id                                 = "R_kgDOUVgjxQ"
+        primary_language                        = "Python"
+        private                                 = false
+        repo_id                                 = 1364730821
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-landing-parish-church.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-landing-parish-church"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-landing-parish-church"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-landing-parish-church"
+    }
+
+[1m  # module.repo["viavitae-observability"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-observability")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "Via-Vitae observability stack configuration - metrics, logs, traces, dashboards and alerting"
+        etag                                    = "W/\"167cd5cffd942d0ad33b724519e9b84a326f08ce8151f665c27ccbe3a1b00e20\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-observability"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-observability.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-observability"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-observability.git"
+        id                                      = "viavitae-observability"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-observability"
+        node_id                                 = "R_kgDOUpdofg"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1385654398
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-observability.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-observability"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-observability"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-observability"
+    }
+
+[1m  # module.repo["viavitae-policies"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-policies"
+    }
+
+[1m  # module.repo["viavitae-qa"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURh0NQ"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-qa"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-qa")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"47bf60669e075a1b2f7af51b564e7eb64e831765a3ffcd0d66119591060e470e\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-qa"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-qa.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-qa"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-qa.git"
+        id                                      = "viavitae-qa"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-qa"
+        node_id                                 = "R_kgDOURh0NQ"
+        primary_language                        = "TypeScript"
+        private                                 = false
+        repo_id                                 = 1360557109
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-qa.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-qa"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-qa"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-qa"
+    }
+
+[1m  # module.repo["viavitae-reusable-workflows"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-reusable-workflows")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "Via-Vitae shared GitHub Actions reusable workflows for CI, compliance and security gates"
+        etag                                    = "W/\"cba9470c835d8c179a8f9c1648499c458749e1da15b0275e8f2c71c4c5f9a961\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-reusable-workflows"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-reusable-workflows.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-reusable-workflows"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-reusable-workflows.git"
+        id                                      = "viavitae-reusable-workflows"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-reusable-workflows"
+        node_id                                 = "R_kgDOUpdo8w"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1385654515
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-reusable-workflows.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-reusable-workflows"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-reusable-workflows"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-reusable-workflows"
+    }
+
+[1m  # module.repo["viavitae-runbooks"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-runbooks")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "Via-Vitae operational runbooks for incident response, backup/restore and disaster recovery"
+        etag                                    = "W/\"4131fc1e9fbc5a0a344c05ea3a81ddefc0703da7d6601d550bb176849ceb976c\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-runbooks"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-runbooks.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-runbooks"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-runbooks.git"
+        id                                      = "viavitae-runbooks"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-runbooks"
+        node_id                                 = "R_kgDOUpdn-g"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1385654266
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-runbooks.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-runbooks"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-runbooks"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-runbooks"
+    }
+
+[1m  # module.repo["viavitae-template"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOURhhxw"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-template"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-template")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = [90mnull[0m[0m
+        etag                                    = "W/\"95a6e94310c093685a5ef83791d745f1a5266d86e03f8a95ea78ce3bb80dd374\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-template"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-template.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-template"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-template.git"
+        id                                      = "viavitae-template"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-template"
+        node_id                                 = "R_kgDOURhhxw"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1360552391
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-template.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-template"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-template"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-template"
+    }
+
+[1m  # module.repo["viavitae-threat-model"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-threat-model"
+    }
+
+[1m  # module.repo["viavitae-training"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-training")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "Via-Vitae security and compliance training material and awareness records"
+        etag                                    = "W/\"bae2ac2911b10badbf05933f80c1c27baade12f12d4465fd4f70a743cfbac0e9\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-training"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-training.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+        homepage_url                            = [90mnull[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-training"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-training.git"
+        id                                      = "viavitae-training"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-training"
+        node_id                                 = "R_kgDOUpdrUw"
+        primary_language                        = [90mnull[0m[0m
+        private                                 = false
+        repo_id                                 = 1385655123
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-training.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-training"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-training"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-training"
+    }
+
+[1m  # module.repo["viavitae-vendor-register"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-vendor-register"
+    }
+
+[1m  # module.repo["viavitae-web"].github_branch_protection.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_branch_protection" "this" {
+      [32m+[0m[0m allows_deletions                = false
+      [32m+[0m[0m allows_force_pushes             = false
+      [32m+[0m[0m enforce_admins                  = true
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m lock_branch                     = false
+      [32m+[0m[0m pattern                         = "main"
+      [32m+[0m[0m repository_id                   = "R_kgDOUQkJvA"
+      [32m+[0m[0m require_conversation_resolution = false
+      [32m+[0m[0m require_signed_commits          = false
+      [32m+[0m[0m required_linear_history         = true
+
+      [32m+[0m[0m required_pull_request_reviews {
+          [32m+[0m[0m dismiss_stale_reviews           = true
+          [32m+[0m[0m require_code_owner_reviews      = false
+          [32m+[0m[0m require_last_push_approval      = false
+          [32m+[0m[0m required_approving_review_count = 0
+        }
+
+      [32m+[0m[0m required_status_checks {
+          [32m+[0m[0m strict = true
+        }
+    }
+
+[1m  # module.repo["viavitae-web"].github_repository.this[0m will be updated in-place
+  # [0m(imported from "viavitae-web")
+[0m  [33m~[0m[0m resource "github_repository" "this" {
+        allow_auto_merge                        = false
+        allow_forking                           = true
+        allow_merge_commit                      = true
+        allow_rebase_merge                      = true
+        allow_squash_merge                      = true
+        allow_update_branch                     = false
+        archived                                = false
+        auto_init                               = false
+        default_branch                          = "main"
+      [33m~[0m[0m delete_branch_on_merge                  = false [33m->[0m[0m true
+        description                             = "ViaVitae marketing & product website — Next.js 15 App Router, React 19, next-intl (LT/EN/RU), MDX, OpenAPI contracts"
+        etag                                    = "W/\"054facbd7b85901e3e782ee5beed210ea3b828a2cb4654f706ea1f96476b8238\""
+        fork                                    = "false"
+        full_name                               = "Via-Vitae/viavitae-web"
+        git_clone_url                           = "git://github.com/Via-Vitae/viavitae-web.git"
+        has_discussions                         = false
+        has_downloads                           = false
+        has_issues                              = true
+      [33m~[0m[0m has_projects                            = true [33m->[0m[0m false
+      [33m~[0m[0m has_wiki                                = true [33m->[0m[0m false
+      [31m-[0m[0m homepage_url                            = "https://viavitae.com" [90m-> null[0m[0m
+        html_url                                = "https://github.com/Via-Vitae/viavitae-web"
+        http_clone_url                          = "https://github.com/Via-Vitae/viavitae-web.git"
+        id                                      = "viavitae-web"
+      [32m+[0m[0m ignore_vulnerability_alerts_during_read = false
+        is_template                             = false
+        merge_commit_message                    = "PR_TITLE"
+        merge_commit_title                      = "MERGE_MESSAGE"
+        name                                    = "viavitae-web"
+        node_id                                 = "R_kgDOUQkJvA"
+        primary_language                        = "TypeScript"
+        private                                 = false
+        repo_id                                 = 1359546812
+        source_owner                            = [90mnull[0m[0m
+        source_repo                             = [90mnull[0m[0m
+        squash_merge_commit_message             = "COMMIT_MESSAGES"
+        squash_merge_commit_title               = "COMMIT_OR_PR_TITLE"
+        ssh_clone_url                           = "git@github.com:Via-Vitae/viavitae-web.git"
+        svn_url                                 = "https://github.com/Via-Vitae/viavitae-web"
+        topics                                  = []
+        visibility                              = "public"
+        vulnerability_alerts                    = true
+        web_commit_signoff_required             = false
+
+        security_and_analysis {
+            secret_scanning {
+                status = "enabled"
+            }
+            secret_scanning_push_protection {
+                status = "enabled"
+            }
+        }
+    }
+
+[1m  # module.repo["viavitae-web"].github_repository_dependabot_security_updates.this[0][0m will be created
+[0m  [32m+[0m[0m resource "github_repository_dependabot_security_updates" "this" {
+      [32m+[0m[0m enabled    = true
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m repository = "viavitae-web"
+    }
+
+[1mPlan:[0m [0m26 to import, 52 to add, 25 to change, 0 to destroy.
+
+Changes to Outputs:
+  [32m+[0m[0m branch_protection_deferred = [
+      [32m+[0m[0m "viavitae-compliance",
+      [32m+[0m[0m "viavitae-data-governance",
+      [32m+[0m[0m "viavitae-observability",
+      [32m+[0m[0m "viavitae-policies",
+      [32m+[0m[0m "viavitae-reusable-workflows",
+      [32m+[0m[0m "viavitae-runbooks",
+      [32m+[0m[0m "viavitae-threat-model",
+      [32m+[0m[0m "viavitae-training",
+      [32m+[0m[0m "viavitae-vendor-register",
+    ]
+  [32m+[0m[0m control_gaps               = [
+      [32m+[0m[0m "branch_protection_private requires GitHub Team or Enterprise (current tier: free)",
+      [32m+[0m[0m "secret_scanning/push_protection on PRIVATE repos requires GitHub Enterprise",
+      [32m+[0m[0m "branch protection DEFERRED for empty repos (no default branch). Set repos_have_default_branch=true or per-repo default_branch_exists once repos have content.",
+      [32m+[0m[0m "peer-review requirement is 0 (single-member org). Raise branch_required_approving_review_count to >=1 once a second member/team exists.",
+      [32m+[0m[0m "CODEOWNERS review not enforced (branch_require_code_owner_reviews=false); enable once >=2 reviewers exist.",
+    ]
+  [32m+[0m[0m drift_hint                 = "Run scripts/detect_drift.sh in CI: it fails if any live org repo is missing from repos_data.tf."
+  [32m+[0m[0m effective_control_matrix   = {
+      [32m+[0m[0m advanced_security_private   = false
+      [32m+[0m[0m allowed_actions_policy      = true
+      [32m+[0m[0m branch_protection_private   = false
+      [32m+[0m[0m branch_protection_public    = true
+      [32m+[0m[0m code_owner_review_enforced  = false
+      [32m+[0m[0m dependabot_alerts           = true
+      [32m+[0m[0m dependabot_security_updates = true
+      [32m+[0m[0m push_protection_public      = true
+      [32m+[0m[0m secret_scanning_public      = true
+      [32m+[0m[0m sso_saml                    = false
+    }
+  [32m+[0m[0m managed_repositories       = {
+      [32m+[0m[0m ".github"                            = "Via-Vitae/.github"
+      [32m+[0m[0m viavitae-api                         = "Via-Vitae/viavitae-api"
+      [32m+[0m[0m viavitae-brand                       = "Via-Vitae/viavitae-brand"
+      [32m+[0m[0m viavitae-clients                     = "Via-Vitae/viavitae-clients"
+      [32m+[0m[0m viavitae-compliance                  = "Via-Vitae/viavitae-compliance"
+      [32m+[0m[0m viavitae-control                     = "Via-Vitae/viavitae-control"
+      [32m+[0m[0m viavitae-data-governance             = "Via-Vitae/viavitae-data-governance"
+      [32m+[0m[0m viavitae-demos                       = "Via-Vitae/viavitae-demos"
+      [32m+[0m[0m viavitae-docs                        = "Via-Vitae/viavitae-docs"
+      [32m+[0m[0m viavitae-infra                       = "Via-Vitae/viavitae-infra"
+      [32m+[0m[0m viavitae-landing-basilica            = "Via-Vitae/viavitae-landing-basilica"
+      [32m+[0m[0m viavitae-landing-cathedral           = "Via-Vitae/viavitae-landing-cathedral"
+      [32m+[0m[0m viavitae-landing-cemetery-services   = "Via-Vitae/viavitae-landing-cemetery-services"
+      [32m+[0m[0m viavitae-landing-churches-orthodox   = "Via-Vitae/viavitae-landing-churches-orthodox"
+      [32m+[0m[0m viavitae-landing-churches-other      = "Via-Vitae/viavitae-landing-churches-other"
+      [32m+[0m[0m viavitae-landing-churches-protestant = "Via-Vitae/viavitae-landing-churches-protestant"
+      [32m+[0m[0m viavitae-landing-deaneries           = "Via-Vitae/viavitae-landing-deaneries"
+      [32m+[0m[0m viavitae-landing-diocese             = "Via-Vitae/viavitae-landing-diocese"
+      [32m+[0m[0m viavitae-landing-funeral-services    = "Via-Vitae/viavitae-landing-funeral-services"
+      [32m+[0m[0m viavitae-landing-parish-church       = "Via-Vitae/viavitae-landing-parish-church"
+      [32m+[0m[0m viavitae-observability               = "Via-Vitae/viavitae-observability"
+      [32m+[0m[0m viavitae-policies                    = "Via-Vitae/viavitae-policies"
+      [32m+[0m[0m viavitae-qa                          = "Via-Vitae/viavitae-qa"
+      [32m+[0m[0m viavitae-reusable-workflows          = "Via-Vitae/viavitae-reusable-workflows"
+      [32m+[0m[0m viavitae-runbooks                    = "Via-Vitae/viavitae-runbooks"
+      [32m+[0m[0m viavitae-template                    = "Via-Vitae/viavitae-template"
+      [32m+[0m[0m viavitae-threat-model                = "Via-Vitae/viavitae-threat-model"
+      [32m+[0m[0m viavitae-training                    = "Via-Vitae/viavitae-training"
+      [32m+[0m[0m viavitae-vendor-register             = "Via-Vitae/viavitae-vendor-register"
+      [32m+[0m[0m viavitae-web                         = "Via-Vitae/viavitae-web"
+    }
+  [32m+[0m[0m repo_count                 = 30
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mYour token has not been granted the required scopes to execute this query. The 'email' field requires one of the following scopes: ['user:email', 'read:user'], but your token has only been granted the: ['admin:gpg_key', 'admin:org', 'gist', 'repo', 'workflow', 'write:packages'] scopes. Please modify your token's scopes at: https://github.com/settings/tokens.[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  with data.github_organization.this,
+[31m│[0m [0m  on org_data.tf line 10, in data "github_organization" "this":
+[31m│[0m [0m  10: data "github_organization" "this" [4m{[0m[0m
+[31m│[0m [0m
+[31m╵[0m[0m
