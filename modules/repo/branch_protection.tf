@@ -5,8 +5,10 @@
 # status checks. Peer-review count and code-owner review are configurable; they
 # default to 0/false because the Via-Vitae org currently has a single member
 # (requiring approvals would lock out the sole admin). Raise them once a second
-# reviewer exists. NOTE: the default branch must exist before protection can be
-# applied; for an empty repo set auto_init = true or push an initial commit first.
+# reviewer exists. NOTE: the default branch MUST exist before protection can be
+# applied; the guard in main.tf (local.branch_exists) defers protection for empty
+# repos unless auto_init = true or default_branch_exists = true is set. This
+# prevents an apply-time "Branch not found" API error on the 30 currently-empty repos.
 #
 # Private-repo branch protection requires GitHub Team or Enterprise; the root
 # module resolves that via local.branch_protection_enabled.

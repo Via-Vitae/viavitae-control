@@ -28,6 +28,11 @@ output "branch_protection_enabled" {
   value       = local.branch_protection_enabled
 }
 
+output "branch_protection_deferred" {
+  description = "True when branch protection was requested but deferred (default branch does not exist yet, or plan tier insufficient)."
+  value       = local.branch_protection_deferred
+}
+
 output "files_managed" {
   description = "Whether CODEOWNERS/security workflow/README are managed by Terraform."
   value       = var.manage_files

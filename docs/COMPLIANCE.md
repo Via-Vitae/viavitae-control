@@ -14,22 +14,35 @@ companion to the effective-control matrix emitted by `terraform output`.
 
 | # | Control | SOC 2 | ISO 27001 | GDPR | Implemented by | Free status |
 |---|---|---|---|---|---|---|
-| C1 | Repositories declared as code (single source of truth) | CC8.1 | A.14.2 | Art. 25 | `repos_data.tf`, `repos.tf` | ✅ |
-| C2 | No shadow repos (drift detection) | CC8.1 | A.12.4 | Art. 32 | `scripts/detect_drift.sh` | ✅ |
-| C3 | Secret scanning (public repos) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | ✅ |
-| C4 | Secret-scanning push protection (public) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | ✅ |
-| C5 | Dependabot security updates | CC7.1 | A.12.6 | Art. 32 | `github_repository_dependabot_security_updates` | ✅ |
-| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | ✅ |
-| C7 | CODEOWNERS (accountable reviewers) | CC1.4, CC8.1 | A.6.1 | Art. 24 | `modules/repo/files.tf` | ✅ (when manage_files) |
-| C8 | Baseline security workflow (CodeQL) | CC7.1 | A.14.2 | Art. 32 | `modules/repo/files.tf` | ✅ |
-| C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | ✅ |
-| C10 | Least-privilege repo features (wiki/projects off) | CC6.1 | A.9.4 | Art. 25 | `modules/repo/main.tf` | ✅ |
-| C11 | Org member permission baseline | CC6.1 | A.9.2 | Art. 32 | `org_settings.tf` | ✅ |
-| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | `policies/enforce_sso.sh` | ✅ (manual apply) |
-| C13 | State encryption + locking | CC6.1 | A.10.1 | Art. 32 | `state/` (local now, S3 target) | ⚠️ local now |
-| C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | ❌ needs Team+ |
-| C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | ❌ needs Enterprise |
-| C16 | SAML SSO / SCIM provisioning | CC6.1 | A.9.2 | Art. 32 | `policies/sso_saml.md` | ❌ needs Enterprise |
+| C1 | Repositories declared as code (single source of truth) | CC8.1 | A.14.2 | Art. 25 | `repos_data.tf`, `repos.tf` | `declared-not-applied` |
+| C2 | No shadow repos (drift detection) | CC8.1 | A.12.4 | Art. 32 | `scripts/detect_drift.sh` | `declared-not-applied` |
+| C3 | Secret scanning (public repos) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | `declared-not-applied` |
+| C4 | Secret-scanning push protection (public) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | `declared-not-applied` |
+| C5 | Dependabot security updates | CC7.1 | A.12.6 | Art. 32 | `github_repository_dependabot_security_updates` | `declared-not-applied` |
+| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | `declared-not-applied` |
+| C7 | CODEOWNERS (accountable reviewers) | CC1.4, CC8.1 | A.6.1 | Art. 24 | `modules/repo/files.tf` | `declared-not-applied` |
+| C8 | Baseline security workflow (CodeQL) | CC7.1 | A.14.2 | Art. 32 | `modules/repo/files.tf` | `declared-not-applied` |
+| C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | `declared-not-applied` |
+| C10 | Least-privilege repo features (wiki/projects off) | CC6.1 | A.9.4 | Art. 25 | `modules/repo/main.tf` | `declared-not-applied` |
+| C11 | Org member permission baseline | CC6.1 | A.9.2 | Art. 32 | `org_settings.tf` | `declared-not-applied` |
+| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | `policies/enforce_sso.sh` | `out-of-band` (not IaC-settable in provider 6.13.0; detective control only) |
+| C13 | State encryption + locking | CC6.1 | A.10.1 | Art. 32 | `state/` (local now, S3 target) | `out-of-band` |
+| C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | `gap-plan-tier` |
+| C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | `gap-plan-tier` |
+| C16 | SAML SSO / SCIM provisioning | CC6.1 | A.9.2 | Art. 32 | `policies/sso_saml.md` | `gap-plan-tier` |
+
+### 1.1 Control status vocabulary
+
+| Status | Meaning | Required citation |
+|---|---|---|
+| `enforced-verified` | Declared, in state, and confirmed against the live API | live API response |
+| `declared-not-applied` | Present in config, absent from state — will enforce on next apply | state listing |
+| `deferred-empty-repo` | Cannot apply because the target ref does not exist yet | repo `size == 0` |
+| `gap-plan-tier` | Requires a paid GitHub plan the org does not have | plan tier + provider gating |
+| `out-of-band` | Not IaC-settable; enforced by script, API or human process | provider schema evidence |
+
+A control may not be marked `enforced-verified` without a cited live observation.
+This single rule would have prevented F2, F5, F6 and F11.
 
 ## 2. P0 / P1 findings (require human action — not auto-remediated)
 
@@ -55,6 +68,11 @@ repo visibility or rotate credentials automatically. The following need explicit
 - **P1-5 — Members may delete repos / change visibility** (`members_can_delete_repositories`,
   `members_can_change_repo_visibility` = true). Tighten via org settings once the
   control plane owns repo lifecycle.
+- **P1-6 — All 30 repos are EMPTY** (no `main` branch), so branch protection (C6) is
+  **deferred** by the empty-repo guard — it cannot be applied to a non-existent branch.
+  Deferred repos are listed in the `branch_protection_deferred` output. Once repos have
+  content, set `repos_have_default_branch = true` (or per-repo `default_branch_exists`)
+  and re-apply to activate protection.
 
 ## 3. Staged remediation roadmap
 
@@ -73,6 +91,9 @@ repo visibility or rotate credentials automatically. The following need explicit
 
 - **No secrets in code or state.** GitHub token via `GITHUB_TOKEN` env only.
 - **Change control.** Every repo/policy change is a PR against this repo (C1/C6/C7).
+- **No ruleset drift.** The `protect-main` ruleset on `viavitae-control` is declared
+  in `repo_rulesets.tf` and adopted by import (plan shows import with no diff). The
+  control repo's own protection is therefore reproducible and auditable, not hand-made.
 - **Evidence.** `terraform output effective_control_matrix` and `control_gaps`
   provide point-in-time evidence for auditors; archive outputs per apply (see
   `viavitae-compliance`).

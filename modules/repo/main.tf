@@ -1,10 +1,19 @@
 locals {
-  # Branch protection is applied when enabled AND (the repo is not private OR
-  # private branch protection is permitted by the org plan tier). This prevents
-  # an apply-time API error for private repos on a Free plan.
-  branch_protection_enabled = var.enable_branch_protection && (
+  # A branch can only be protected once it exists. auto_init creates the default
+  # branch on a new repo; otherwise the operator must signal it via
+  # default_branch_exists. Without this, protection on an empty repo errors at apply.
+  branch_exists = var.default_branch_exists || var.auto_init
+
+  # Branch protection is applied when enabled AND the branch exists AND (the repo
+  # is not private OR private branch protection is permitted by the org plan tier).
+  # The visibility check prevents an apply-time API error for private repos on Free.
+  branch_protection_enabled = var.enable_branch_protection && local.branch_exists && (
     var.visibility != "private" || var.apply_private_branch_protection
   )
+
+  # True when protection was requested but is being deferred (branch missing or
+  # plan tier insufficient). Surfaced as an output so the gap is never silent.
+  branch_protection_deferred = var.enable_branch_protection && !local.branch_protection_enabled
 
   # The security_and_analysis block is only emitted when at least one sub-control
   # is requested; advanced_security is Enterprise-only and stays disabled otherwise.
