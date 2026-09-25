@@ -38,6 +38,10 @@ locals {
       visibility   = "public"
       tier         = "control"
       manage_files = false
+      # Protection for THIS repo is handled by the `protect-main` repository
+      # ruleset (repo_rulesets.tf), not the module's classic branch protection.
+      # Disabled here to avoid two overlapping mechanisms on the same branch.
+      enable_branch_protection = false
     }
     "viavitae-compliance" = {
       description = "Via-Vitae compliance evidence and control monitoring for ISO 27001, SOC 2 and GDPR"

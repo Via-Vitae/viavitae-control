@@ -13,6 +13,18 @@ output "effective_control_matrix" {
   value       = local.effective_controls
 }
 
+output "branch_protection_deferred" {
+  description = <<-EOT
+    Repos where branch protection was requested but is DEFERRED because the
+    default branch does not exist yet (empty repo) or the plan tier is
+    insufficient. Set default_branch_exists/auto_init, or upgrade the plan, then
+    re-apply to activate protection.
+  EOT
+  value = sort([
+    for k, m in module.repo : k if m.branch_protection_deferred
+  ])
+}
+
 output "control_gaps" {
   description = <<-EOT
     Controls requested but NOT enforceable on the current GitHub plan tier.

@@ -12,6 +12,7 @@ mapping, its plan-tier requirement, and how it is verified.
 | `enforce_sso.sh` | Org-wide 2FA requirement + SAML SSO guidance | 2FA: Free · SAML: Enterprise | 2FA yes; SAML needs IdP config |
 | `allowed_actions.md` | GitHub Actions allow-list rationale | Free+ | yes (in Terraform) |
 | `sso_saml.md` | SSO/SAML gap analysis & compensating controls | Enterprise | partial |
+| `restore_peer_review.md` | Runbook to restore 1-approval review once a 2nd reviewer exists | Free+ (public) / Team+ (private) | one-line variable flip |
 
 ## Why scripts and not resources?
 

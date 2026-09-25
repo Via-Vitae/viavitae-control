@@ -13,15 +13,18 @@ locals {
   # object consumed by modules/repo. Optional per-repo overrides win.
   repos = {
     for name, r in local.inventory : name => {
-      name           = name
-      description    = lookup(r, "description", "")
-      visibility     = lookup(r, "visibility", "public")
-      tier           = lookup(r, "tier", "app")
-      manage_files   = lookup(r, "manage_files", false)
-      auto_init      = lookup(r, "auto_init", false)
-      license        = lookup(r, "license_template", var.license_template)
-      codeowners     = lookup(r, "codeowners_teams", local.tier_codeowners[lookup(r, "tier", "app")])
-      default_branch = var.default_branch
+      name         = name
+      description  = lookup(r, "description", "")
+      visibility   = lookup(r, "visibility", "public")
+      tier         = lookup(r, "tier", "app")
+      manage_files = lookup(r, "manage_files", false)
+      auto_init    = lookup(r, "auto_init", false)
+      # Branch protection is deferred unless the default branch exists. Per-repo
+      # `default_branch_exists` overrides the global var.repos_have_default_branch.
+      default_branch_exists = lookup(r, "default_branch_exists", var.repos_have_default_branch)
+      license               = lookup(r, "license_template", var.license_template)
+      codeowners            = lookup(r, "codeowners_teams", local.tier_codeowners[lookup(r, "tier", "app")])
+      default_branch        = var.default_branch
 
       # Per-repo control gating, resolved against the org plan tier below.
       enable_branch_protection = lookup(r, "enable_branch_protection", true)
@@ -53,6 +56,7 @@ locals {
     var.enable_private_branch_protection && !local.is_team ? "branch_protection_private requires GitHub Team or Enterprise (current tier: ${var.github_plan_tier})" : "",
     var.enable_sso && !local.is_enterprise ? "sso_saml requires GitHub Enterprise + policies/enforce_sso.sh (current tier: ${var.github_plan_tier})" : "",
     !local.is_enterprise ? "secret_scanning/push_protection on PRIVATE repos requires GitHub Enterprise" : "",
+    var.repos_have_default_branch ? "" : "branch protection DEFERRED for empty repos (no default branch). Set repos_have_default_branch=true or per-repo default_branch_exists once repos have content.",
     var.branch_required_approving_review_count == 0 ? "peer-review requirement is 0 (single-member org). Raise branch_required_approving_review_count to >=1 once a second member/team exists." : "",
     !var.branch_require_code_owner_reviews ? "CODEOWNERS review not enforced (branch_require_code_owner_reviews=false); enable once >=2 reviewers exist." : "",
   ])

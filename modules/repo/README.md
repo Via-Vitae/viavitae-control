@@ -12,7 +12,9 @@ Every managed repository is an instance of this module. It asserts:
 - **Branch protection** — no direct pushes to the default branch, no force-push or
   deletion, required linear history, strict status checks, admins enforced. Peer-review
   count and code-owner review are configurable (default 0 / false for a single-member
-  org to avoid lockout; raise once a second reviewer exists).
+  org to avoid lockout; raise once a second reviewer exists). Protection is **deferred**
+  for empty repos (`default_branch_exists = false` and `auto_init = false`) since a
+  non-existent branch cannot be protected — see `branch_protection_deferred` output.
 - **Managed files** (only when `manage_files = true`) — `.github/CODEOWNERS`,
   `.github/workflows/security.yml` (CodeQL), and a README skeleton.
 

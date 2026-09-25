@@ -19,7 +19,7 @@ companion to the effective-control matrix emitted by `terraform output`.
 | C3 | Secret scanning (public repos) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | ✅ |
 | C4 | Secret-scanning push protection (public) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | ✅ |
 | C5 | Dependabot security updates | CC7.1 | A.12.6 | Art. 32 | `github_repository_dependabot_security_updates` | ✅ |
-| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | ✅ |
+| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | ⚠️ deferred (empty repos) |
 | C7 | CODEOWNERS (accountable reviewers) | CC1.4, CC8.1 | A.6.1 | Art. 24 | `modules/repo/files.tf` | ✅ (when manage_files) |
 | C8 | Baseline security workflow (CodeQL) | CC7.1 | A.14.2 | Art. 32 | `modules/repo/files.tf` | ✅ |
 | C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | ✅ |
@@ -55,6 +55,11 @@ repo visibility or rotate credentials automatically. The following need explicit
 - **P1-5 — Members may delete repos / change visibility** (`members_can_delete_repositories`,
   `members_can_change_repo_visibility` = true). Tighten via org settings once the
   control plane owns repo lifecycle.
+- **P1-6 — All 30 repos are EMPTY** (no `main` branch), so branch protection (C6) is
+  **deferred** by the empty-repo guard — it cannot be applied to a non-existent branch.
+  Deferred repos are listed in the `branch_protection_deferred` output. Once repos have
+  content, set `repos_have_default_branch = true` (or per-repo `default_branch_exists`)
+  and re-apply to activate protection.
 
 ## 3. Staged remediation roadmap
 
@@ -73,6 +78,9 @@ repo visibility or rotate credentials automatically. The following need explicit
 
 - **No secrets in code or state.** GitHub token via `GITHUB_TOKEN` env only.
 - **Change control.** Every repo/policy change is a PR against this repo (C1/C6/C7).
+- **No ruleset drift.** The `protect-main` ruleset on `viavitae-control` is declared
+  in `repo_rulesets.tf` and adopted by import (plan shows import with no diff). The
+  control repo's own protection is therefore reproducible and auditable, not hand-made.
 - **Evidence.** `terraform output effective_control_matrix` and `control_gaps`
   provide point-in-time evidence for auditors; archive outputs per apply (see
   `viavitae-compliance`).

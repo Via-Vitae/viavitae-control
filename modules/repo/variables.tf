@@ -37,6 +37,18 @@ variable "auto_init" {
   default     = false
 }
 
+variable "default_branch_exists" {
+  description = <<-EOT
+    Whether the default branch already exists (i.e. the repo has at least one
+    commit). Branch protection CANNOT be applied to a non-existent branch, so
+    when this is false (and auto_init is false) branch protection is deferred to
+    avoid an apply-time API error on empty repositories. Set true once the repo
+    has content, or rely on auto_init for newly created repos.
+  EOT
+  type        = bool
+  default     = false
+}
+
 variable "license_template" {
   description = "GitHub license template key (e.g. mit, apache-2.0). Empty = no license."
   type        = string
