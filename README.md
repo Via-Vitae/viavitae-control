@@ -109,5 +109,9 @@ Set `github_plan_tier` (`free` | `team` | `enterprise`) in `terraform.tfvars`.
 
 ## Status
 
-Generated + validated locally against the live Via-Vitae org. **Not pushed, not
-applied.** See the design spec in [`docs/superpowers/specs/`](docs/superpowers/specs/).
+Pushed to `main` and partially applied. Terraform state contains 5 of 30
+repositories (the 5 privatized compliance-sensitive repos). The `protect-main`
+ruleset on `viavitae-control` is live but not yet in state; a full `terraform
+apply` will adopt it via the existing import block. See the design spec in
+[`docs/superpowers/specs/`](docs/superpowers/specs/) and the findings register
+in [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
