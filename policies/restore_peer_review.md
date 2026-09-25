@@ -89,10 +89,13 @@ Then open a test PR and confirm it **cannot** merge without a second approval.
 The `protect-main` ruleset has `bypass_actors: []`, so if you are locked out you
 must relax it out-of-band. Fastest safe rollback:
 ```bash
-# Set approvals back to 0 via API (owner token), then re-apply IaC to reconcile:
-RSID=$(gh api repos/Via-Vitae/viavitae-control/rulesets --jq '.[]|select(.name=="protect-main").id')
-gh api -X PUT "repos/Via-Vitae/viavitae-control/rulesets/$RSID" \
-  --input <(jq '.rules[].parameters.required_approving_review_count=0' ...)   # or edit in UI
+# Get the ruleset ID
+RSID=$(gh api repos/Via-Vitae/viavitae-control/rulesets --jq '.[] | select(.name=="protect-main") | .id')
+
+# Fetch the current ruleset, modify the approval count, and update
+gh api repos/Via-Vitae/viavitae-control/rulesets/$RSID \
+  | jq '.rules |= map(if .type == "pull_request" then .parameters.required_approving_review_count = 0 else . end)' \
+  | gh api -X PUT repos/Via-Vitae/viavitae-control/rulesets/$RSID --input -
 ```
 Simpler: temporarily set `branch_required_approving_review_count = 0` and
 `terraform apply`. To avoid ever needing this, do not enable the flip until P1–P3
