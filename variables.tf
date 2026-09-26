@@ -253,3 +253,19 @@ variable "license_template" {
   type        = string
   default     = ""
 }
+
+###############################################################################
+# Secret scanning compensating controls (GitHub Free)
+###############################################################################
+
+variable "gitleaks_version" {
+  description = "Gitleaks release version for CI workflow and pre-commit hook."
+  type        = string
+  default     = "v8.30.1"
+}
+
+variable "pre_commit_hooks_version" {
+  description = "pre-commit/pre-commit-hooks release version."
+  type        = string
+  default     = "v5.0.0"
+}

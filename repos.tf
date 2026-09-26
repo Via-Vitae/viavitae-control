@@ -41,4 +41,8 @@ module "repo" {
   enable_advanced_security           = local.effective_controls.advanced_security_private
   enable_dependabot_alerts           = local.effective_controls.dependabot_alerts
   enable_dependabot_security_updates = local.effective_controls.dependabot_security_updates
+
+  # Secret scanning compensating controls (pre-commit + gitleaks CI).
+  gitleaks_version         = var.gitleaks_version
+  pre_commit_hooks_version = var.pre_commit_hooks_version
 }
