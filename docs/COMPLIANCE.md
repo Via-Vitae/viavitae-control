@@ -30,6 +30,8 @@ companion to the effective-control matrix emitted by `terraform output`.
 | C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | `gap-plan-tier` |
 | C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | `gap-plan-tier` |
 | C16 | SAML SSO / SCIM provisioning | CC6.1 | A.9.2 | Art. 32 | `policies/sso_saml.md` | `gap-plan-tier` |
+| C17 | Pre-commit secret scanning (gitleaks + hygiene hooks) | CC7.1 | A.12.6 | Art. 32 | `modules/repo/files.tf` (`.pre-commit-config.yaml`) | `declared-not-applied` |
+| C18 | CI-based secret scanning (gitleaks CLI, license-free) | CC7.1 | A.12.6 | Art. 32 | `modules/repo/files.tf` (`.github/workflows/gitleaks.yml`) | `declared-not-applied` |
 
 ### 1.1 Control status vocabulary
 
@@ -78,7 +80,9 @@ repo visibility or rotate credentials automatically. The following need explicit
 
 1. **Day 0 (now, free):** Enforce 2FA; enable secret scanning + push protection +
    Dependabot on all public repos; apply the allowed-actions list; begin privatizing
-   the compliance-sensitive repos (P0-1) — note private-repo branch protection needs Team.
+   the compliance-sensitive repos (P0-1) — note private-repo branch protection needs Team;
+   activate `manage_files` per repo to deploy gitleaks CI workflow + pre-commit config;
+   install pre-commit hooks on developer machines (`pip install pre-commit && pre-commit install`).
 2. **Stage 1 (Team upgrade):** finish flipping sensitive repos private; private-repo
    branch protection activates automatically via the feature flag.
 3. **Stage 2 (grow the team):** add a second member/reviewer; raise review count to 1
