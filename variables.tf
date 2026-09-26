@@ -20,6 +20,19 @@ variable "default_branch" {
   default     = "main"
 }
 
+variable "repos_have_default_branch" {
+  description = <<-EOT
+    Global default for whether managed repos already have their default branch
+    (at least one commit). Branch protection is deferred for repos where this is
+    false, because protection cannot be applied to a non-existent branch. All 30
+    Via-Vitae repos are currently EMPTY, so this defaults to false to keep apply
+    safe. Flip to true (or set per-repo `default_branch_exists` in repos_data.tf)
+    once repos have content.
+  EOT
+  type        = bool
+  default     = false
+}
+
 variable "import_existing_repos" {
   description = <<-EOT
     When true, existing org repositories listed in the inventory are adopted into
@@ -239,4 +252,20 @@ variable "license_template" {
   description = "Default license template applied to newly created repos (empty = none)."
   type        = string
   default     = ""
+}
+
+###############################################################################
+# Secret scanning compensating controls (GitHub Free)
+###############################################################################
+
+variable "gitleaks_version" {
+  description = "Gitleaks release version for CI workflow and pre-commit hook."
+  type        = string
+  default     = "v8.30.1"
+}
+
+variable "pre_commit_hooks_version" {
+  description = "pre-commit/pre-commit-hooks release version."
+  type        = string
+  default     = "v5.0.0"
 }

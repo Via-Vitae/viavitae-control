@@ -15,6 +15,10 @@ module "repo" {
   auto_init        = each.value.auto_init
   license_template = each.value.license
 
+  # Defer branch protection for empty repos (no default branch yet) so apply
+  # never hits a "Branch not found" error. See modules/repo/main.tf guard.
+  default_branch_exists = each.value.default_branch_exists
+
   # Files (CODEOWNERS / security.yml / README / LICENSE) are only written when
   # manage_files = true — false for all existing repos (non-destructive baseline).
   manage_files     = each.value.manage_files
@@ -37,4 +41,8 @@ module "repo" {
   enable_advanced_security           = local.effective_controls.advanced_security_private
   enable_dependabot_alerts           = local.effective_controls.dependabot_alerts
   enable_dependabot_security_updates = local.effective_controls.dependabot_security_updates
+
+  # Secret scanning compensating controls (pre-commit + gitleaks CI).
+  gitleaks_version         = var.gitleaks_version
+  pre_commit_hooks_version = var.pre_commit_hooks_version
 }

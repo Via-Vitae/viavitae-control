@@ -23,6 +23,9 @@ controls automatically on Team/Enterprise), and **non-destructive by default**.
   and a baseline CodeQL security workflow.
 - **Org policy**: member permissions ([`org_settings.tf`](org_settings.tf)) and the
   GitHub Actions allow-list ([`org_actions_policy.tf`](org_actions_policy.tf)).
+- **`protect-main` ruleset** ([`repo_rulesets.tf`](repo_rulesets.tf)): the control
+  repo's own branch protection, declared as a `github_repository_ruleset` and adopted
+  by import (no drift). Rulesets work on empty repos, unlike classic branch protection.
 - **Tier-gated controls**: SSO/SAML, private-repo protection, and Advanced Security
   are modeled honestly ([`policies/`](policies)) — never faked on Free.
 
@@ -35,6 +38,7 @@ controls automatically on Team/Enterprise), and **non-destructive by default**.
 ├── imports.tf           # adopt existing repos into state (non-destructive)
 ├── org_settings.tf      # org member/permission + new-repo security defaults
 ├── org_actions_policy.tf# GitHub Actions allow-list
+├── repo_rulesets.tf     # protect-main ruleset (viavitae-control) under IaC
 ├── outputs.tf           # effective-control matrix + gap register + P0/P1 alerts
 ├── modules/repo/        # reusable, compliance-hardened repo template
 ├── policies/            # SSO/SAML gap + enforce_sso.sh + allowed-actions doc
@@ -89,6 +93,12 @@ team exists**, raise the review count to 1 and enable code-owner review.
   (`manage_files = false`).
 - **Paid-only controls are gated** by `github_plan_tier`, so `apply` never attempts
   an operation the current plan cannot satisfy.
+- **Empty-repo guard** — branch protection is deferred for repos whose default
+  branch does not exist yet (all 30 are currently empty), so `apply` never hits a
+  "Branch not found" error. Deferred repos are listed in the
+  `branch_protection_deferred` output and the `control_gaps` register. Set
+  `repos_have_default_branch = true` (or per-repo `default_branch_exists`) once
+  repos have content, then re-apply.
 - **State** is git-ignored; migrate to the encrypted S3 backend before production.
 
 ## Plan-tier feature flags
@@ -99,5 +109,9 @@ Set `github_plan_tier` (`free` | `team` | `enterprise`) in `terraform.tfvars`.
 
 ## Status
 
-Generated + validated locally against the live Via-Vitae org. **Not pushed, not
-applied.** See the design spec in [`docs/superpowers/specs/`](docs/superpowers/specs/).
+Pushed to `main` and partially applied. Terraform state contains 5 of 30
+repositories (the 5 privatized compliance-sensitive repos). The `protect-main`
+ruleset on `viavitae-control` is live but not yet in state; a full `terraform
+apply` will adopt it via the existing import block. See the design spec in
+[`docs/superpowers/specs/`](docs/superpowers/specs/) and the findings register
+in [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
