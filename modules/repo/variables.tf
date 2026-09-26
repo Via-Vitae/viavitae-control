@@ -147,3 +147,15 @@ variable "enable_dependabot_security_updates" {
   type        = bool
   default     = true
 }
+
+variable "gitleaks_version" {
+  description = "Gitleaks release version for CI workflow and pre-commit hook (e.g. v8.30.1)."
+  type        = string
+  default     = "v8.30.1"
+}
+
+variable "pre_commit_hooks_version" {
+  description = "pre-commit/pre-commit-hooks release version (e.g. v5.0.0)."
+  type        = string
+  default     = "v5.0.0"
+}
