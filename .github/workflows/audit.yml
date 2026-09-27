@@ -31,6 +31,11 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      - name: Terraform plan
+        env:
+          GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
+        run: terraform plan -no-color -input=false
+
       - name: Assert toolchain pin
         run: |
           PIN=$(cat .terraform-version)
