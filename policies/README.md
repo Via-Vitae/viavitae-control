@@ -14,6 +14,7 @@ mapping, its plan-tier requirement, and how it is verified.
 | `sso_saml.md` | SSO/SAML gap analysis & compensating controls | Enterprise | partial |
 | `restore_peer_review.md` | Runbook to restore 1-approval review once a 2nd reviewer exists | Free+ (public) / Team+ (private) | one-line variable flip |
 | `AUDIT_PROMPT.md` | Evidence-gated AI-agent audit prompt for control-plane audits | Free+ | paste into agent session |
+| `AI_WORKFLOW_POLICY.md` | Mandatory workflow policy for AI-assisted development (15 levers + review checklist) | Free+ | enforce via PR review |
 
 ## Why scripts and not resources?
 
@@ -35,3 +36,12 @@ verbatim into an agent session to execute a full audit cycle.
 See the design spec in
 [`docs/superpowers/specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md`](../docs/superpowers/specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md)
 for the rationale.
+
+## AI workflow policy
+
+[`AI_WORKFLOW_POLICY.md`](AI_WORKFLOW_POLICY.md) defines the mandatory workflow for
+AI-assisted development in this compliance-controlled repository. It specifies 15
+levers (in priority order) and a mandatory review checklist that must be signed off
+before any AI-generated change is committed. This is the compliance control that
+distinguishes authorized automation from uncontrolled automation under SOC 2 CC8.1
+and ISO 27001 A.14.2.2.
