@@ -179,6 +179,7 @@ variable "actions_allowed_patterns" {
     "actions/checkout@*",
     "actions/setup-node@*",
     "actions/setup-python@*",
+    "actions/setup-terraform@*",
     "actions/upload-artifact@*",
     "actions/download-artifact@*",
     "actions/cache@*",
