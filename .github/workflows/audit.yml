@@ -9,6 +9,10 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    env:
+      # Bridge secret to env var — `secrets` context is not available in `if:`
+      # conditionals (GitHub Actions limitation), but env vars are.
+      HAS_ORG_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN != '' }}
 
     steps:
       - name: Checkout
@@ -43,7 +47,7 @@ jobs:
           fi
 
       - name: Detect drift (requires ORG_READ_TOKEN)
-        if: ${{ secrets.ORG_READ_TOKEN != '' }}
+        if: env.HAS_ORG_READ_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
           ORG: Via-Vitae
@@ -52,7 +56,7 @@ jobs:
           ./scripts/detect_drift.sh
 
       - name: Fail loudly if ORG_READ_TOKEN is absent
-        if: ${{ secrets.ORG_READ_TOKEN == '' }}
+        if: ${{ !env.HAS_ORG_READ_TOKEN }}
         run: |
           echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
           echo "::error::Create an org-read token with admin:org (read) scope and add it as a repository secret."
