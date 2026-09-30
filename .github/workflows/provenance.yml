@@ -18,6 +18,12 @@ name: provenance
 # on the org Actions allow-list and needs no secrets — it reads the PR title/body
 # from the event payload.
 #
+# Trigger actions: `opened` (new PR), `edited` (PR body/title updated — re-checks
+# provenance when the author adds the trailer after an initial failure), and
+# `synchronize` (new commits pushed to the branch). Without `edited`, a rerun
+# after updating the PR body would still use the stale event payload captured
+# at push time.
+#
 # BLOCKING: this job only blocks merges once its check name is added to the
 # protect-main ruleset's required status checks (repo_rulesets.tf). Until then it
 # is advisory. Confirm the exact check-run name from a real run before wiring it
@@ -27,6 +33,7 @@ name: provenance
 on:
   pull_request:
     branches: [main]
+    types: [opened, edited, synchronize]
 
 permissions:
   contents: read
