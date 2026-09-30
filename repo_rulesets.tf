@@ -50,6 +50,19 @@ resource "github_repository_ruleset" "protect_main" {
       required_review_thread_resolution = false
       allowed_merge_methods             = ["merge", "squash", "rebase"]
     }
+
+    # Provenance enforcement (policy §8): the CI check .github/workflows/provenance.yml
+    # runs on every PR to main and fails if the PR description lacks an ai:<tier>
+    # trailer. Adding it here as a required status check makes it an unbypassable
+    # merge gate — the second layer of the two-layer provenance control.
+    # Compliance rationale: SOC 2 CC8.1 (change management), ISO 27001 A.14.2.2
+    # (change control). Owner-authorized 2026-09-30.
+    required_status_checks {
+      strict_required_status_checks_policy = var.branch_required_status_checks_strict
+      required_check {
+        context = "provenance"
+      }
+    }
   }
 
   # No bypass actors: not even admins can bypass (matches the hardened live config).

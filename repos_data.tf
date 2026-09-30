@@ -189,6 +189,25 @@ locals {
       manage_files          = false
       default_branch_exists = true
     }
+    "viavitae-hermes-agents" = {
+      description  = "Via-Vitae Hermes agents - autonomous agent services and orchestration (Python)."
+      visibility   = "public"
+      tier         = "app"
+      manage_files = false
+      # GREENFIELD CREATE: this repo does not yet exist on GitHub, so it must be
+      # CREATED (not imported). `create_new = true` excludes it from the import
+      # blocks in imports.tf. Flip it back to false (and default_branch_exists =
+      # true) once the initial scaffold is pushed, so the repo adopts the normal
+      # baselined/import lifecycle like the rest of the inventory.
+      create_new = true
+      # Empty at creation: no default branch yet, so branch protection is deferred
+      # by the module guard (see modules/repo/main.tf local.branch_exists).
+      auto_init = false
+      # Scaffold pushed to `main` (2026-09-30) — branch now exists, so protection
+      # is active. create_new stays true: the repo is terraform-created (already
+      # in state) and must NOT be adopted via an import block.
+      default_branch_exists = true
+    }
 
     # ---------------------------------------------------------------- site ----
     "viavitae-landing-basilica" = {

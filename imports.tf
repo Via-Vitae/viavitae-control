@@ -11,7 +11,7 @@
 # #############################################################################
 
 import {
-  for_each = var.import_existing_repos ? { for k, v in local.inventory : k => k } : {}
+  for_each = var.import_existing_repos ? { for k, v in local.inventory : k => k if lookup(v, "create_new", false) != true } : {}
 
   to = module.repo[each.key].github_repository.this
   id = each.value

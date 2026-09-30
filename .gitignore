@@ -22,6 +22,9 @@ terraform.tfvars.json
 .env.*
 secrets.*
 
+# --- Audit evidence (may contain sensitive values from plan output) ----------
+audit-evidence/terraform-plan.txt
+
 # --- Python (legacy scaffold in this repo) -----------------------------------
 .venv/
 __pycache__/

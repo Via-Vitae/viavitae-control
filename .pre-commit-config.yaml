@@ -1,5 +1,11 @@
 # Pre-commit hooks for viavitae-control.
 # Install: .venv/bin/pip3 install pre-commit && .venv/bin/pre-commit install
+# `default_install_hook_types` makes `pre-commit install` wire BOTH the
+# pre-commit (file hygiene) and commit-msg (provenance trailer) git hooks.
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
 repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
@@ -19,3 +25,14 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
+  # commit-msg stage: enforce the provenance trailer required by
+  # policies/AI_WORKFLOW_POLICY.md §3.11. Bypassable (--no-verify) and inactive
+  # until `pre-commit install`; an early-feedback aid, not the control.
+  - repo: local
+    hooks:
+      - id: commit-provenance
+        name: commit provenance trailer (ai:<tier>)
+        entry: bash scripts/check_commit_provenance.sh
+        language: system
+        stages: [commit-msg]
+        always_run: true
