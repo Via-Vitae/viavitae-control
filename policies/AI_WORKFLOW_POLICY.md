@@ -97,16 +97,18 @@ If the cheap tier deviates from the plan — even if it thinks it found a "bette
 
 ### 3.11 Audit trail of tier provenance
 
-In a compliance-controlled repo, you should know which edits were AI-generated and by which tier. This matters for incident response ("was this change reviewed by a human?"). Use a commit message prefix or PR label to indicate tier.
+In a compliance-controlled repo, you should know which edits were AI-generated and by which tier. This matters for incident response ("was this change reviewed by a human?"). Every commit carries a **provenance trailer** — a standalone line at the end of the commit message — enforced locally by the `commit-msg` hook `scripts/check_commit_provenance.sh`.
 
-**Convention:**
+**Convention (exactly one trailer per commit):**
 - `ai:top` — top-tier model produced the change
 - `ai:mid` — mid-tier model produced the change
 - `ai:cheap` — cheap-tier model produced the change
 - `ai:free` — free-tier model produced the change
 - `ai:review` — top-tier or human reviewed the change
 
-**Verification:** every AI-generated commit must include the tier prefix.
+The trailer set is **`ai:*`-only** (owner decision, 2026-09-30): there is no non-AI escape hatch, so provenance is mandatory on every commit and origin is 100% auditable rather than only-sometimes declared. A purely manual, human-only commit uses `ai:review` (human-reviewed).
+
+**Verification:** every commit carries exactly one valid `ai:<tier>` trailer; the `commit-msg` hook rejects commits that lack one or use an invalid value. **Limitation:** the local hook is bypassable (`git commit --no-verify`) and inactive on a fresh clone until `pre-commit install`, so it is an early-feedback aid — the authoritative, unbypassable control is the CI provenance check (§8) plus PR review (§3.9).
 
 ### 3.12 Don't let the agent reason about compliance
 
@@ -231,7 +233,7 @@ This policy is enforced by:
 1. **CI gates**: `.github/workflows/audit.yml` runs `terraform fmt -check`, `validate`, and drift detection on every PR.
 2. **PR review**: the review checklist must be completed before merge.
 3. **Post-merge verification**: `terraform plan` must confirm no drift.
-4. **Audit trail**: commit messages must include tier prefixes.
+4. **Audit trail (provenance)**: every commit carries an `ai:<tier>` trailer, enforced at two layers — (a) locally by the `commit-msg` hook `scripts/check_commit_provenance.sh` (bypassable with `--no-verify`, inactive until `pre-commit install`; early feedback only), and (b) server-side by `.github/workflows/provenance.yml`, which fails any PR whose description lacks a valid `ai:<tier>` trailer. Under squash-merge the PR description becomes the commit that lands on `main`, so the CI check is the unbypassable control. To actually block merges, the `provenance` check must be listed in the `protect-main` ruleset's required status checks (`repo_rulesets.tf`) — a ruleset change requiring owner authorization and a compliance rationale (§3.12).
 
 Violations are P1 findings in the next audit cycle.
 
