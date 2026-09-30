@@ -2,6 +2,7 @@
 # The GitHub token is provided via the GITHUB_TOKEN environment variable, not here.
 
 github_owner     = "Via-Vitae"
+billing_email    = "<your-org-billing-email>"  # required — no default (GDPR Art. 5(1)(c))
 github_plan_tier = "free"   # free | team | enterprise — flipping this activates gated controls
 
 # --- Control flags -----------------------------------------------------------

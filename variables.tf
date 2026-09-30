@@ -9,9 +9,8 @@ variable "github_owner" {
 }
 
 variable "billing_email" {
-  description = "Organization billing email (required argument of github_organization_settings; org metadata, not a secret)."
+  description = "Organization billing email (required argument of github_organization_settings; org metadata, not a secret). Supply via terraform.tfvars or TF_VAR_billing_email env var — no hardcoded default (GDPR Art. 5(1)(c))."
   type        = string
-  default     = "journey4oflife+viavitae.github@gmail.com"
 }
 
 variable "default_branch" {
