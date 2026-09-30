@@ -1,0 +1,53 @@
+name: provenance
+
+# #############################################################################
+# Server-side, unbypassable complement to the local commit-msg hook
+# (scripts/check_commit_provenance.sh).
+#
+# The local hook can be skipped with `git commit --no-verify` and is absent on
+# fresh clones until `pre-commit install`; this check runs in CI on every PR to
+# main and cannot be bypassed by the author.
+#
+# WHY IT CHECKS THE PR DESCRIPTION (not each commit): this repo merges by
+# squash only (protect-main), so the single commit that lands on main is
+# composed from the PR title + body. The PR description is therefore the
+# authoritative provenance record for main. A per-commit check would also fail
+# the branch's pre-policy (grandfathered) commits, which predate this control.
+#
+# Uses only `run:` steps (no third-party actions), so it does not depend
+# on the org Actions allow-list and needs no secrets — it reads the PR title/body
+# from the event payload.
+#
+# BLOCKING: this job only blocks merges once its check name is added to the
+# protect-main ruleset's required status checks (repo_rulesets.tf). Until then it
+# is advisory. Confirm the exact check-run name from a real run before wiring it
+# into the ruleset. See policies/AI_WORKFLOW_POLICY.md §8.
+# #############################################################################
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    name: provenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require ai:<tier> provenance trailer in PR title or body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          # Valid trailer = a line consisting of exactly ai:(top|mid|cheap|free|review).
+          if printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" \
+             | grep -qE '^[[:space:]]*ai:(top|mid|cheap|free|review)[[:space:]]*$'; then
+            echo "OK: provenance trailer present (ai:<tier>)."
+          else
+            echo "::error::Missing provenance trailer. The PR title or description must contain a line with exactly one of: ai:top | ai:mid | ai:cheap | ai:free | ai:review"
+            echo "::error::See policies/AI_WORKFLOW_POLICY.md §3.11 and §8."
+            exit 1
+          fi
