@@ -35,6 +35,9 @@ jobs:
       - name: Terraform plan
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
+          # billing_email has no default (GDPR Art. 5(1)(c)); CI provides a
+          # placeholder so plan can run. This is read-only — plan never applies.
+          TF_VAR_billing_email: ci-placeholder-not-applied
         run: terraform plan -no-color -input=false
 
       - name: Assert toolchain pin
