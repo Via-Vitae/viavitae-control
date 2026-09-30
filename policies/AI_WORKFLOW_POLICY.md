@@ -240,6 +240,7 @@ Violations are P1 findings in the next audit cycle.
 ## 9. References
 
 - [`AUDIT_PROMPT.md`](AUDIT_PROMPT.md) — evidence-gated audit prompt for control-plane audits
+- [`docs/superpowers/plans/TEMPLATE.md`](../docs/superpowers/plans/TEMPLATE.md) — copy-ready plan template embedding the STOP conditions, compliance rationale, and the §5 review checklist
 - [`docs/superpowers/plans/`](../docs/superpowers/plans/) — implementation plans
 - [`docs/COMPLIANCE.md`](../docs/COMPLIANCE.md) — findings register and control matrix
 - SOC 2 CC8.1 (change management)
