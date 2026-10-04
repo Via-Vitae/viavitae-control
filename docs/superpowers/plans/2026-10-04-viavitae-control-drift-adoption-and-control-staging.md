@@ -10,6 +10,10 @@
 
 **Authority boundary:** plan-only per `policies/AI_WORKFLOW_POLICY.md` §3.13/§4. `terraform apply` (including `-refresh-only`), `gh api` write verbs, and `git push` to `main` are **prohibited** until the owner authorizes each one explicitly, per stage.
 
+**Related spec:** [`docs/superpowers/specs/2026-09-24-viavitae-control-github-control-plane-design.md`](../specs/2026-09-24-viavitae-control-github-control-plane-design.md)
+(control-plane design) and
+[`docs/superpowers/specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md`](../specs/2026-09-25-viavitae-control-audit-prompt-and-evidence-remediation-design.md)
+(defines the `VV-2026-09-*` register this plan closes)
 **Related findings:** VV-2026-09-002 (protection overwrite), VV-2026-09-003 (state is not the system of record), VV-2026-09-005 (drift detection compares names only)
 **Related changes:** PR #7 (per-repo `required_status_checks_contexts`), PR #8 (`manage_org_settings` gate), PR #9 (`scripts/assert_live_controls.sh`)
 
@@ -73,7 +77,11 @@ Halt immediately and report — do not improvise, do not re-run — if any of:
 
 ---
 
-## Compliance rationale (required — policy §3.12)
+## Compliance rationale (required if touching `visibility` / `manage_files` / `enforce_admins` / rulesets — policy §3.12)
+
+<!-- This document changes none of those four fields itself. The rationale is
+     originated here for the stages it prescribes, because §3.12 forbids an
+     executor inferring it. -->
 
 | Field | Value | Rationale | Framework ref |
 |---|---|---|---|
@@ -241,7 +249,7 @@ Prerequisites: PR #8 merged, a genuine `billing_email`, 2FA resolved (`org_data.
 
 This checklist is for **this document only** (a docs-only change). Every execution stage above carries its own, to be completed with cited output by the reviewer before that stage's apply. Bare `[x]` without a citation is not a sign-off.
 
-### Pre-commit checklist (this PR)
+### Pre-commit checklist
 
 - [x] **Plan exists and is committed** — `docs/superpowers/plans/2026-10-04-viavitae-control-drift-adoption-and-control-staging.md`
 - [x] **Plan includes STOP conditions** — section present, 7 clauses
