@@ -292,12 +292,25 @@ This checklist is for **this document only** (a docs-only change). Every executi
 ### Pre-commit checklist
 
 - [x] **Plan exists and is committed** — `docs/superpowers/plans/2026-10-04-viavitae-control-drift-adoption-and-control-staging.md`
-- [x] **Plan includes STOP conditions** — section present, 7 clauses
+- [x] **Plan includes STOP conditions** — section present, 8 clauses. Re-counted at this
+      commit: it was 7 when the line was written, and my own later amendment added the
+      adoption-degradation clause without updating the citation. A checklist that is not
+      re-verified after every edit decays into exactly the claim-without-evidence it is
+      meant to prevent.
 - [x] **Plan includes compliance rationale** — present (6 fields incl. `enforce_admins`-adjacent gating)
-- [x] **Plan includes halt-and-report triggers** — present (5 clauses incl. unverified provider import form)
+- [x] **Plan includes halt-and-report triggers** — present, 5 clauses. The provider import
+      form is no longer one of the unknowns: it was measured at plan time, so the
+      surviving triggers are reconciliation-before-import, apply-time confirmation, and
+      the per-repo wiki/content check.
 - [ ] **Deterministic gates passed** — N/A for a Markdown-only change; `fmt`/`validate` not exercised by this PR
 - [ ] **Diff matches plan** — n/a; this PR performs no Terraform change. Expected: documentation only
-- [x] **No silent fallback** — nothing was substituted; two unverified claims (provider import id format, dependabot private-repo behaviour) were downgraded to explicit STOP triggers rather than written as fact
+- [x] **No silent fallback** — nothing was substituted. Honest correction: the two items
+      this line praised for being parked as unknowns were subsequently measured, and one
+      of them contradicted the document. `GET …/vulnerability-alerts` returns HTTP 204 on
+      private repos (viavitae-compliance, viavitae-policies), so the dependabot hedge in
+      the earlier version was an inference from the protection 403s and was wrong; the
+      import id form was confirmed as `<repository>:<branch>`. Kept visible rather than
+      quietly reworded.
 - [x] **Tier prefix in commit message** — `ai:top`
 - [ ] **Small diff** — new file, ~200 lines; exceeds the template's <100-line mechanical guideline, justified because it is a multi-stage plan document, flagged for reviewer judgment
 - [x] **No state mutation** — `terraform apply` was **not** run; only `plan`/`-refresh-only plan`/read-only `gh api`
