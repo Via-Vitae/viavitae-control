@@ -70,6 +70,7 @@ Halt immediately and report — do not improvise, do not re-run — if any of:
 - `terraform plan` shows **any `destroy`** or **any `must be replaced`**.
 - The plan delta does not match the **expected delta stated for that task**, token for token.
 - A `github_branch_protection` appears as `will be created` for any repo whose live protection is **stronger** than the module default (compare with `assert_live_controls.sh` output first).
+- An adoption (`will be updated in-place` after an import) reduces `required_approving_review_count`, removes any `required_status_checks.contexts` entry, or removes any `pull_request_bypassers` entry. Measured on `viavitae-web`: adoption alone would take approvals 1 -> 0 and drop `Action SHA pinning` and `/JourneyOfLife`.
 - Any file outside the task's **Files** list would change.
 - `enforce_admins`, `visibility`, `manage_files`, or any ruleset value moves beyond what the task states.
 - The remote-state migration in Task 1 reports any resource count differing from the pre-migration `terraform state list | wc -l`.
@@ -96,8 +97,8 @@ Halt immediately and report — do not improvise, do not re-run — if any of:
 
 ## Halt-and-report triggers (required — policy §3.15)
 
-- If provider v6.13 import support for `github_branch_protection` cannot be **demonstrated** on one throwaway repo, STOP and report. Do not assume the `<repo>:<branch>` form works; if unsupported, the fallback decision (CLI `terraform import`, or migrate those repos to rulesets) is an **owner** decision, not an executor's.
-- If dependabot enablement on a private repo returns 4xx, STOP and report the exact response; do not add visibility guards mid-apply.
+- Import support is **established** (plan-time, one public repo). It is *not* established for private repos, which have no classic protection on the Free plan, nor end-to-end at apply time. If an adoption plan shows a **decrease** in `required_approving_review_count`, any `- "..."` removal under `required_status_checks.contexts`, or any removal under `pull_request_bypassers`, STOP and report: the declaration has not been reconciled to live yet, and applying would silently weaken a control.
+- **Corrected inference.** An earlier bullet in this plan implied private repos might reject dependabot because protection reads return 403. Measured directly: `GET /repos/Via-Vitae/{viavitae-compliance,viavitae-policies}/vulnerability-alerts` returns **HTTP 204**, i.e. the endpoint works and alerts are already enabled on private repos. So the 30 dependabot adds are expected to succeed or be near-no-ops. Residual rule kept deliberately: if a 4xx *does* appear at apply time, STOP and report the exact response — it would now be a regression against measured state, not an expected unknown.
 - If any repo's wiki has non-trivial content, STOP and report before `has_wiki` flips.
 - If the pre-apply and post-apply `assert_live_controls.sh` outputs differ from the task's stated expectation in any way, STOP and report.
 - If the correct declared value for a repo's contexts cannot be derived from a real check run, **STOP and report** — never substitute the workflow filename or a guess.
@@ -162,7 +163,43 @@ Expected: real `pattern`, `enforce_admins`, `required_status_checks` values, not
 
 ---
 
-## Task 3: Spike — can live protection be **imported**?
+## Task 3: Adopt live protection by import — **answered 2026-10-04, and it changed the design**
+
+**Measured result (read-only, transient config, reverted; `imports.tf` diff after the
+spike: 0 lines).** The provider accepts the identity and reads the live rule:
+
+```
+module.repo["viavitae-web"].github_branch_protection.this[0]: Preparing import... [id=viavitae-web:main]
+module.repo["viavitae-web"].github_branch_protection.this[0]: Refreshing state... [id=BPR_kwDOUQkJvM4E76T1]
+```
+
+So `<repository>:<branch>` is **correct**, import blocks work for this resource, and the
+ruleset-migration fallback written into an earlier draft of this plan is **not needed**.
+
+The same plan then showed what adoption does to a repo that already has stronger rules:
+
+```
+  # module.repo["viavitae-web"].github_branch_protection.this[0] will be updated in-place
+  # (imported from "viavitae-web:main")
+      ~ required_linear_history         = false -> true
+      ~ required_pull_request_reviews {
+          ~ pull_request_bypassers      = [ - "/JourneyOfLife", ]
+          ~ required_approving_review_count = 1 -> 0
+      ~ required_status_checks { ~ contexts = [ - "Action SHA pinning", ... ] }
+```
+
+Two conclusions, both corrections to what this plan previously asserted:
+
+1. **Import is necessary but not sufficient.** Adoption alone does not preserve live
+   strength: the same apply would drop a required approval and remove required checks.
+   The per-repo declaration must be reconciled to live values **in the same change** as
+   the import, or adoption degrades protection.
+2. **Fields the module does not declare are reset to provider defaults.** Live
+   `pull_request_bypassers = ["/JourneyOfLife"]` disappears on adoption because
+   `modules/repo/branch_protection.tf` never sets it. This is the mechanism behind
+   VV-2026-09-002's "no valid approver / bypass lost" class, and it means the module
+   must learn bypass actors, contexts and review counts per repo before importing any
+   repo that has them. An unmanaged field is not a neutral field - it is a reset.
 
 **Files:** `imports.tf`, `variables.tf`, `locals.tf`, one disposable repo
 
@@ -188,7 +225,10 @@ variable "import_existing_protections" {
 ```
 
 ```hcl
-# imports.tf — id form <repository>:<branch_pattern> is UNVERIFIED; prove it here or STOP
+# imports.tf — id form <repository>:<branch_pattern> VERIFIED at plan time 2026-10-04
+# (see Measured result above). Note the inventory-wide for_each below is WRONG for a
+# first landing: it would import private repos, which have no classic protection on the
+# Free plan (403), and repos with no protection at all. Restrict to an explicit list.
 import {
   for_each = var.import_existing_protections ? { for k, v in local.inventory : k => k if lookup(v, "create_new", false) != true } : {}
   to       = module.repo[each.key].github_branch_protection.this[0]
@@ -202,7 +242,7 @@ Run: `terraform fmt -recursive && terraform init -backend=false && terraform val
 Expected: `Success! The configuration is valid.`
 
 Run: `terraform plan -no-color | grep -E '^Plan:|github_branch_protection'`
-Expected for the disposable repo: it moves from `will be created` to an import/no-op. **If the count of protection creates does not fall, STOP and report** — the mechanism does not work as assumed and Task 4 must not proceed.
+Expected, and observed: the target moves from `will be created` to `will be updated in-place # (imported from ...)`. **If instead it stays `will be created`, STOP and report** — the id form or the instance address is wrong for that repo.
 
 - [ ] **Step 4: record the measured result in a follow-up spec** including whether dependabot adoption is likewise importable.
 
