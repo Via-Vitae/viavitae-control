@@ -60,11 +60,23 @@ jobs:
           chmod +x scripts/detect_drift.sh
           ./scripts/detect_drift.sh
 
+      # Inventory drift (above) proves the repo LIST matches reality. This proves
+      # the declared MERGE CONTROLS match reality, by asking the live API every run
+      # instead of trusting a stored plan. Red here means a control documented in
+      # repos_data.tf is not the control in force on that branch.
+      - name: Assert live controls (requires ORG_READ_TOKEN)
+        if: env.HAS_ORG_READ_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+        run: |
+          chmod +x scripts/assert_live_controls.sh
+          ./scripts/assert_live_controls.sh
+
       - name: Fail loudly if ORG_READ_TOKEN is absent
         if: ${{ !env.HAS_ORG_READ_TOKEN }}
         run: |
           echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
-          echo "::error::Mint a READ-ONLY fine-grained PAT (repository access = All repositories, private repositories included; Metadata + Administration read-only; no organization permissions; no Contents/Workflows/Secrets; expiring) and add it as the ORG_READ_TOKEN repository secret. The credential contract is in provider.tf."
+          echo "::error::Mint a READ-ONLY fine-grained PAT (repository access = All repositories, private repositories included; Metadata + Administration read-only, plus Organization administration read-only while org_data.tf reads the org; no Contents/Workflows/Secrets; expiring) and add it as the ORG_READ_TOKEN repository secret. The credential contract is in provider.tf."
           echo "::error::Do NOT reuse your interactive credential (\`gh auth token\`) and do NOT mint a classic PAT with admin:org/repo/workflow to make this step pass. CI only plans; it must not hold write power."
           exit 1
 
