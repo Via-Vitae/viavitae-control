@@ -109,6 +109,18 @@ variable "required_status_checks_strict" {
   default     = true
 }
 
+variable "required_status_checks_contexts" {
+  description = <<-EOT
+    Status checks that must succeed before merging (check-run names; for Actions
+    that is the job id, not the workflow name). An empty list keeps CI advisory:
+    `strict` still requires the branch to be up to date, but no check gates the
+    merge. Populate only with names harvested from a real run, because a context
+    that never reports blocks the branch permanently.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "apply_private_branch_protection" {
   description = <<-EOT
     Whether branch protection may be applied to PRIVATE repos (requires GitHub

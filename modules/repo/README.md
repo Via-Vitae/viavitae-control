@@ -10,8 +10,10 @@ Every managed repository is an instance of this module. It asserts:
   repos); Advanced Security when the plan tier allows.
 - **Dependabot security updates**.
 - **Branch protection** — no direct pushes to the default branch, no force-push or
-  deletion, required linear history, strict status checks, admins enforced. Peer-review
-  count and code-owner review are configurable (default 0 / false for a single-member
+  deletion, required linear history and admins enforced. Required status checks are
+  declared per repo through `required_status_checks_contexts` (default empty, so CI
+  is advisory unless a repo opts in). Peer-review count and code-owner review are
+  configurable (default 0 / false for a single-member
   org to avoid lockout; raise once a second reviewer exists). Protection is **deferred**
   for empty repos (`default_branch_exists = false` and `auto_init = false`) since a
   non-existent branch cannot be protected — see `branch_protection_deferred` output.
