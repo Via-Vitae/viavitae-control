@@ -9,8 +9,38 @@ variable "github_owner" {
 }
 
 variable "billing_email" {
-  description = "Organization billing email (required argument of github_organization_settings; org metadata, not a secret). Supply via terraform.tfvars or TF_VAR_billing_email env var — no hardcoded default (GDPR Art. 5(1)(c))."
+  description = <<-EOT
+    Organization billing email: real GitHub organization metadata, not a secret.
+    It is only ever sent to the live API when var.manage_org_settings = true, so
+    CI may supply a syntactic placeholder to let `terraform plan` run without that
+    value reaching anything. No usable default is defined (GDPR Art. 5(1)(c)).
+  EOT
   type        = string
+  default     = null
+
+  # Cross-variable validation (Terraform >= 1.9): the placeholder is legal only
+  # while the gate is closed. The moment manage_org_settings = true, a real,
+  # non-placeholder address is mandatory — so a CI placeholder cannot silently
+  # become the organization's billing address on apply.
+  validation {
+    condition = !var.manage_org_settings || (
+      can(regex("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", coalesce(var.billing_email, ""))) &&
+      !can(regex("(?i)placeholder|not-applied|your-org|example\\.com|change-me", coalesce(var.billing_email, "")))
+    )
+    error_message = "billing_email must be a real, non-placeholder email address when manage_org_settings = true."
+  }
+}
+
+variable "manage_org_settings" {
+  description = <<-EOT
+    Explicit opt-in for managing organization-level settings
+    (github_organization_settings). Default false: the resource is not declared,
+    so no plan or apply can write org billing email or member-permission values.
+    Flip to true only with a real billing_email and an org baseline reviewed
+    against live settings — the resource sets ~20 org-wide fields at once.
+  EOT
+  type        = bool
+  default     = false
 }
 
 variable "default_branch" {
