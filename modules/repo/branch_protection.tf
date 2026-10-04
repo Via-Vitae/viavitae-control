@@ -1,8 +1,9 @@
 # Branch protection on the default branch.
 #
 # COMPLIANCE (SOC2 CC8 change management / ISO 27001 A.14): no direct pushes to
-# the default branch, no force-push/deletion, required linear history, and strict
-# status checks. Peer-review count and code-owner review are configurable; they
+# the default branch, no force-push/deletion, required linear history, and - for
+# repos that declare them - required status checks. Peer-review count and
+# code-owner review are configurable; they
 # default to 0/false because the Via-Vitae org currently has a single member
 # (requiring approvals would lock out the sole admin). Raise them once a second
 # reviewer exists. NOTE: the default branch MUST exist before protection can be
@@ -32,8 +33,13 @@ resource "github_branch_protection" "this" {
     require_last_push_approval      = var.require_last_push_approval
   }
 
+  # `contexts` are check-run NAMES. For GitHub Actions that is the job id as
+  # reported by the Checks API (e.g. "test", "scan"), not the workflow file name
+  # and not the workflow's `name:` key. A context that no check ever reports
+  # blocks the branch permanently, so per-repo values must be harvested from a
+  # real run (`gh pr checks <n>`) before being declared here.
   required_status_checks {
     strict   = var.required_status_checks_strict
-    contexts = []
+    contexts = var.required_status_checks_contexts
   }
 }

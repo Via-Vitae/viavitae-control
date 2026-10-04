@@ -16,7 +16,8 @@
 #   visibility   = "public" | "private" | "internal"   (current live value)
 #   tier         = "control" | "platform" | "app" | "site" | "meta"
 #   manage_files = bool                                (false for existing repos)
-#   # Optional overrides: codeowners_teams, license_template, enable_branch_protection
+#   # Optional overrides: codeowners_teams, license_template, enable_branch_protection,
+#   #   required_status_checks_contexts (list of check-run names; empty = CI advisory)
 #
 # Via-Vitae teams (verified live): architects, compliance, dpo, legal, platform,
 # security. Tier->team defaults live in locals.tf; sensitive repos override here.
@@ -207,6 +208,14 @@ locals {
       # is active. create_new stays true: the repo is terraform-created (already
       # in state) and must NOT be adopted via an import block.
       default_branch_exists = true
+      # Merge gates, harvested from real runs on PR #10/#11 (2026-10-04):
+      #   test -> .github/workflows/ci.yml (ruff, mypy src+tests, pytest, bandit)
+      #   scan -> .github/workflows/gitleaks.yml
+      # Both already run on every PR to main; declaring them here turns a
+      # passing build from convention into an unbypassable control
+      # (SOC2 CC8.1 / ISO 27001 A.14.2.2). Contexts are job ids, so a
+      # workflow rename must be reflected here or merges will block.
+      required_status_checks_contexts = ["test", "scan"]
     }
 
     # ---------------------------------------------------------------- site ----

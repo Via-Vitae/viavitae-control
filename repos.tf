@@ -33,6 +33,7 @@ module "repo" {
   require_last_push_approval      = var.branch_require_last_push_approval
   enforce_admins                  = var.branch_enforce_admins
   required_status_checks_strict   = var.branch_required_status_checks_strict
+  required_status_checks_contexts = each.value.required_status_checks_contexts
   # Secret scanning / push protection are free for PUBLIC repos. On PRIVATE repos
   # they require Advanced Security (Enterprise), so they are gated by visibility
   # to avoid an apply-time API error on the Free plan.

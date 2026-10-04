@@ -28,6 +28,9 @@ locals {
 
       # Per-repo control gating, resolved against the org plan tier below.
       enable_branch_protection = lookup(r, "enable_branch_protection", true)
+      # Empty default keeps every other repo's CI advisory; opt in per repo in
+      # repos_data.tf using check-run names taken from a real CI run.
+      required_status_checks_contexts = lookup(r, "required_status_checks_contexts", [])
     }
   }
 
