@@ -32,6 +32,15 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      # Deliberately placed BEFORE the credential-dependent plan step: while
+      # TF_GITHUB_TOKEN is dead, everything after `Terraform plan` is skipped, so a
+      # docs gate parked there could never report. This one needs no secrets, no
+      # network and no Terraform - it fails the build on its own merits.
+      - name: Check plan self-citations
+        run: |
+          chmod +x scripts/check_plan_selfcite.sh
+          ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
+
       - name: Terraform plan
         env:
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
