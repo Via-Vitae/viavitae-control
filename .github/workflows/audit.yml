@@ -58,6 +58,19 @@ jobs:
           chmod +x scripts/detect_drift.sh
           ./scripts/detect_drift.sh
 
+      # Inventory drift (above) proves the repo LIST matches reality. This proves
+      # the declared MERGE CONTROLS match reality, by asking the live API every run
+      # instead of trusting a stored plan. Red here means a control documented in
+      # repos_data.tf is not the control in force on that branch.
+      - name: Assert live controls (requires ORG_READ_TOKEN)
+        if: env.HAS_ORG_READ_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+          ORG: Via-Vitae
+        run: |
+          chmod +x scripts/assert_live_controls.sh
+          ./scripts/assert_live_controls.sh
+
       - name: Fail loudly if ORG_READ_TOKEN is absent
         if: ${{ !env.HAS_ORG_READ_TOKEN }}
         run: |
