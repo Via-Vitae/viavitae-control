@@ -2,7 +2,11 @@
 # The GitHub token is provided via the GITHUB_TOKEN environment variable, not here.
 
 github_owner     = "Via-Vitae"
-billing_email    = "<your-org-billing-email>"  # required — no default (GDPR Art. 5(1)(c))
+# Org settings are opt-in. While manage_org_settings = false, billing_email is
+# unused and may be omitted; the validation on billing_email only fires when the
+# gate is open, at which point a real address is required.
+manage_org_settings = false
+billing_email       = "<your-org-billing-email>"  # required when manage_org_settings = true
 github_plan_tier = "free"   # free | team | enterprise — flipping this activates gated controls
 
 # --- Control flags -----------------------------------------------------------

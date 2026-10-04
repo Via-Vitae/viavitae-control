@@ -5,10 +5,18 @@
 # Via-Vitae org (verified 2026-09-24). Tightening any of these is a deliberate,
 # PR-reviewed change. Fields marked [PAID] can only be set to true on the
 # required plan tier; leaving them false on a Free plan avoids apply-time errors.
+#
+# OPT-IN GATE: this resource is only declared when var.manage_org_settings is
+# true. Without it, `terraform plan` reports `github_organization_settings.this
+# will be created` using whatever TF_VAR_billing_email the environment supplied —
+# in CI that is a placeholder — and an apply would push that value to the live
+# org. Verified in the 2026-10-04 plan: billing_email = "ci-placeholder-not-applied".
 # #############################################################################
 
 resource "github_organization_settings" "this" {
-  # billing_email is a REQUIRED argument (org metadata, not a secret).
+  count = var.manage_org_settings ? 1 : 0
+
+  # Validated to be a real address whenever the gate is open (see variables.tf).
   billing_email = var.billing_email
 
   # --- Member permissions (current live Via-Vitae values preserved) ----------
