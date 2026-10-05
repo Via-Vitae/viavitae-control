@@ -42,6 +42,28 @@ variable "import_existing_repos" {
   default     = true
 }
 
+variable "manage_org_data" {
+  description = <<-EOT
+    Explicit opt-in for organization-level DATA READS (modules/org_assertions:
+    the github_organization data source and the 2FA check block). Default false:
+    neither is instantiated, so the plan does not depend on organization
+    full-detail fields and needs no organization-admin credential for them.
+
+    This does NOT mean the plan makes no organization-level request at all: the
+    provider itself issues one `GET /orgs/{org}` at configure time because
+    provider "github" sets owner (verified 2026-10-05 with TF_LOG=TRACE, once with
+    the gate closed and once with it open). That call needs only org visibility.
+    What needs organization administration read is the full-detail FIELDS — and a
+    credential that lacks it gets HTTP 200 with those fields set to null, not an
+    error, which is precisely why they are not read in CI by default.
+
+    Flip to true only for an operator-local plan run where the 2FA assertion is
+    actually wanted; out-of-band verification is scripts/assert_org_2fa.sh.
+  EOT
+  type        = bool
+  default     = false
+}
+
 ###############################################################################
 # Plan-tier + feature flags (tier-agnostic control model)
 ###############################################################################

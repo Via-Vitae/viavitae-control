@@ -35,6 +35,14 @@ locals {
   is_team       = contains(["team", "enterprise"], var.github_plan_tier)
   is_enterprise = var.github_plan_tier == "enterprise"
 
+  # --- Organization-level reads (opt-in; see var.manage_org_data) -------------
+  # null means "this plan did not read it", which is NOT the same claim as
+  # "2FA is enforced". `try` catches exactly one condition here: the module not
+  # being instantiated because count = 0, whose index into a zero-length tuple is
+  # an error. A failure of the read itself aborts the plan long before this local
+  # is evaluated, so a real error cannot be masked by it.
+  org_2fa_requirement_enabled = try(module.org_assertions[0].two_factor_requirement_enabled, null)
+
   # Effective controls: a paid control is active only if flag AND tier allow it.
   effective_controls = {
     secret_scanning_public      = var.enable_secret_scanning             # free for public repos
@@ -47,6 +55,7 @@ locals {
     sso_saml                    = var.enable_sso && local.is_enterprise
     allowed_actions_policy      = var.actions_allowed_mode != "all"
     code_owner_review_enforced  = var.branch_require_code_owner_reviews && var.branch_required_approving_review_count >= 1
+    org_2fa_asserted            = local.org_2fa_requirement_enabled != null
   }
 
   # Gap register: controls requested but not enforceable on the current tier or
@@ -59,5 +68,6 @@ locals {
     var.repos_have_default_branch ? "" : "branch protection DEFERRED for empty repos (no default branch). Set repos_have_default_branch=true or per-repo default_branch_exists once repos have content.",
     var.branch_required_approving_review_count == 0 ? "peer-review requirement is 0 (single-member org). Raise branch_required_approving_review_count to >=1 once a second member/team exists." : "",
     !var.branch_require_code_owner_reviews ? "CODEOWNERS review not enforced (branch_require_code_owner_reviews=false); enable once >=2 reviewers exist." : "",
+    local.org_2fa_requirement_enabled == null ? "org-wide 2FA ASSERTION SKIPPED (manage_org_data=false): this plan makes no organization-level read, so enforcement is UNVERIFIED here — not satisfied. Run scripts/assert_org_2fa.sh with an operator credential." : "",
   ])
 }
