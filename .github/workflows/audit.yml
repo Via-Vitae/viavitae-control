@@ -9,7 +9,16 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    # Least privilege for the built-in token: this job reads the repo from the
+    # git checkout and never writes back through GITHUB_TOKEN.
+    permissions:
+      contents: read
+    # Bounded so a stalled provider read (observed: `data.github_organization`
+    # "Still reading… [15m40s]") cannot hold the runner for an hour. The full
+    # refresh of 31 repos needs ~20 min, so the ceiling sits just above that.
+    timeout-minutes: 25
     env:
+      ORG: Via-Vitae
       # Bridge secret to env var — `secrets` context is not available in `if:`
       # conditionals (GitHub Actions limitation), but env vars are.
       HAS_ORG_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN != '' }}
@@ -32,8 +41,37 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      # Credential gates run BEFORE `Terraform plan` on purpose: a plan failure
+      # skips every later step, so a gate parked downstream can never report a
+      # verdict. The gate's exit 2 means "could not run" (surfaced as a warning),
+      # which keeps a skipped check from masquerading as a pass.
+      - name: Check CI credential (capability + least privilege)
+        env:
+          GH_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/check_ci_credential.sh
+          ./scripts/check_ci_credential.sh
+
+      - name: Detect drift (requires ORG_READ_TOKEN)
+        if: env.HAS_ORG_READ_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
+        run: |
+          chmod +x scripts/detect_drift.sh
+          ./scripts/detect_drift.sh
+
+      - name: Fail loudly if ORG_READ_TOKEN is absent
+        if: ${{ !env.HAS_ORG_READ_TOKEN }}
+        run: |
+          echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
+          echo "::error::Mint a READ-ONLY fine-grained PAT (repository access = All repositories, private repositories included; Metadata + Administration read-only; no organization permissions; no Contents/Workflows/Secrets; expiring) and add it as the ORG_READ_TOKEN repository secret. The credential contract is in provider.tf."
+          echo "::error::Do NOT reuse your interactive credential (\`gh auth token\`) and do NOT mint a classic PAT with admin:org/repo/workflow to make this step pass. CI only plans; it must not hold write power."
+          exit 1
+
       - name: Terraform plan
         env:
+          # Read-only fine-grained PAT; the pre-flight gate above rejects anything
+          # write-capable. Plan never applies (no apply workflow, no environment).
           GITHUB_TOKEN: ${{ secrets.TF_GITHUB_TOKEN }}
           # billing_email has no default (GDPR Art. 5(1)(c)); CI provides a
           # placeholder so plan can run. This is read-only — plan never applies.
@@ -48,19 +86,3 @@ jobs:
             echo "::error::.terraform-version ($PIN) != installed ($ACTUAL)"
             exit 1
           fi
-
-      - name: Detect drift (requires ORG_READ_TOKEN)
-        if: env.HAS_ORG_READ_TOKEN
-        env:
-          GITHUB_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
-          ORG: Via-Vitae
-        run: |
-          chmod +x scripts/detect_drift.sh
-          ./scripts/detect_drift.sh
-
-      - name: Fail loudly if ORG_READ_TOKEN is absent
-        if: ${{ !env.HAS_ORG_READ_TOKEN }}
-        run: |
-          echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
-          echo "::error::Create an org-read token with admin:org (read) scope and add it as a repository secret."
-          exit 1
