@@ -4,21 +4,32 @@
 #
 # The token is NEVER stored in code or state; the provider reads GITHUB_TOKEN only.
 #
-# CI role — `.github/workflows/audit.yml` runs `terraform plan` and nothing else
+# CI role - `.github/workflows/audit.yml` runs `terraform plan` and nothing else
 # (there is no apply workflow and the repo defines no environment), so CI needs
-# READ ONLY. Use a fine-grained PAT: repository access = All repositories,
-# Contents: read-only + Metadata: read-only, organization permissions
-# Members: read-only + Organization administration: read-only, with an expiry.
-# scripts/check_ci_credential.sh enforces this in CI and fails the job on any
-# write-capable credential.
+# READ ONLY. Use a fine-grained personal access token:
+#   repository access = All repositories, INCLUDING the org's private ones. A
+#     fine-grained token always sees public repositories, so a private-repo blind
+#     spot surfaces as "Cannot import non-existent remote object" during import
+#     and never as a 403 - which is why this line used to be wrong.
+#   Metadata: read-only        -> GET /repos/{owner}/{repo}, /orgs/{org}/repos,
+#     ruleset reads; also satisfies the provider's configure-time org lookup.
+#   Administration: read-only  -> branch protection, automated-security-fixes
+#     and vulnerability-alerts, i.e. what modules/repo/ instantiates.
+#   NO organization permissions. Organization administration read was only ever
+#     needed to read org full-detail fields; if a root `github_organization` data
+#     source is being read again, add it deliberately, not by default.
+#   NO Contents, NO Workflows, NO Secrets. Contents is unnecessary while every
+#     repos_data.tf entry keeps manage_files = false, and Workflows would let a
+#     compromised job rewrite the CI that audits it.
+# scripts/check_ci_credential.sh derives this read set from the configuration and
+# fails the job on a classic PAT or any blind spot, before `terraform plan` runs.
 #
-# Why a classic PAT cannot satisfy the CI role: GitHub documents that reading an
-# organization's full settings (GET /orgs/{org}) needs the `admin:org` scope for
-# personal access tokens (classic), and `admin:org` BUNDLES WRITE — the classic
-# scope set has no "read the organization settings" option. So making the plan
-# step green with a classic PAT necessarily hands CI apply-time org power, while a
-# fine-grained PAT can express `Organization administration: read` alone.
-#
+# Why a classic PAT cannot satisfy the CI role: the classic scope set has no
+# "read these repo settings" option. `admin:org` bundles org WRITE and `repo`
+# bundles content WRITE, so any classic token able to make the plan green also
+# hands an unattended job apply-time power. A fine-grained PAT is the only
+# credential that can express the read this job actually needs.
+
 # Operator role — local `terraform apply`: a separate, expiring credential held
 # only in the operator's own environment.
 #

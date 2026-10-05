@@ -64,7 +64,7 @@ jobs:
         if: ${{ !env.HAS_ORG_READ_TOKEN }}
         run: |
           echo "::error::ORG_READ_TOKEN secret is not set. Drift detection cannot run."
-          echo "::error::Mint a READ-ONLY fine-grained PAT (repository access = All repositories; Contents + Metadata read-only; organization Members + Organization administration read-only; expiring) and add it as the ORG_READ_TOKEN repository secret. The credential contract is in provider.tf."
+          echo "::error::Mint a READ-ONLY fine-grained PAT (repository access = All repositories, private repositories included; Metadata + Administration read-only; no organization permissions; no Contents/Workflows/Secrets; expiring) and add it as the ORG_READ_TOKEN repository secret. The credential contract is in provider.tf."
           echo "::error::Do NOT reuse your interactive credential (\`gh auth token\`) and do NOT mint a classic PAT with admin:org/repo/workflow to make this step pass. CI only plans; it must not hold write power."
           exit 1
 

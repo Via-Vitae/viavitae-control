@@ -50,12 +50,13 @@ controls automatically on Team/Enterprise), and **non-destructive by default**.
 ## Quickstart (local, read-only)
 
 ```bash
-# 1. Provide a READ-ONLY credential that can see org settings and every managed
-#    repo, and can write nothing: a fine-grained PAT (repository access = All
-#    repositories; Contents + Metadata read-only; organization Members +
-#    Organization administration read-only; expiring). Do NOT use `gh auth token`
-#    and do NOT use a classic PAT with admin:org/repo/workflow: those bundle
-#    write, and CI only plans. Contract: provider.tf; gate: check_ci_credential.sh.
+# 1. Provide a READ-ONLY credential that can see every managed repository and
+#    write nothing: a fine-grained PAT (repository access = All repositories,
+#    private repositories included; Metadata + Administration read-only; NO
+#    organization permissions; NO Contents/Workflows/Secrets; expiring). Do NOT
+#    use `gh auth token`, and do NOT mint a classic PAT with
+#    admin:org/repo/workflow to make a step pass - those bundle write, and CI
+#    only plans. Contract: provider.tf. Enforced by: check_ci_credential.sh.
 read -rs GITHUB_TOKEN && export GITHUB_TOKEN   # pasted at a prompt, never echoed
 
 # 2. Initialize with local state.
