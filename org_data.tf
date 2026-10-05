@@ -5,18 +5,30 @@
 # exposed only as a computed attribute on the github_organization data source.
 # Therefore 2FA enforcement is permanently out-of-band and requires a detective
 # control, not a resource.
+#
+# OPT-IN GATE: the assertions live in modules/org_assertions and are instantiated
+# only when var.manage_org_data = true (default false). Reading organization full
+# details requires a credential with organization administration access, and CI's
+# job is proving repository/ruleset drift — it never needs org 2FA state. Ungated,
+# every CI plan was structurally dependent on an org-admin credential sitting in a
+# PUBLIC repository's Actions secrets, and this read is the one that stalled into
+# `context deadline exceeded` in run 37236904591.
+#
+# With the gate closed the assertion runs out-of-band via
+# scripts/assert_org_2fa.sh (operator credential), and control_gaps /
+# p0_security_alerts report the state as UNKNOWN rather than implying it passed.
+#
+# WHAT THE GATE DOES NOT REMOVE: measured 2026-10-05 with TF_LOG=TRACE, `terraform
+# plan` issues exactly one `GET /orgs/{org}` with tf_rpc=Configure — the provider's
+# own bootstrap, because provider "github" sets owner. It fires identically with
+# the gate closed and open. Gating removes the DATA SOURCE read (the admin-only
+# fields), not that configure-time call, so it must not be described as making the
+# plan organization-free.
 # #############################################################################
 
-data "github_organization" "this" {
-  name = var.github_owner
-}
+module "org_assertions" {
+  count  = var.manage_org_data ? 1 : 0
+  source = "./modules/org_assertions"
 
-# Plan-time warning when 2FA is not enforced. This is a check block (Terraform >=1.5),
-# which emits a warning but does not fail the plan. A hard failure would block all
-# applies until a human enables 2FA out-of-band, creating a chicken-and-egg.
-check "two_factor_enforcement" {
-  assert {
-    condition     = data.github_organization.this.two_factor_requirement_enabled
-    error_message = "Org-wide 2FA is NOT enforced. Run policies/enforce_sso.sh --apply."
-  }
+  org = var.github_owner
 }

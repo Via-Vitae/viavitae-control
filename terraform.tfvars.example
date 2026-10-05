@@ -35,6 +35,15 @@ members_can_create_public_repositories = true
 # --- Adoption of existing repos ---------------------------------------------
 import_existing_repos = true
 
+# --- Organization-level data reads (opt-in) ----------------------------------
+# Keep false in CI: the plan then reads no organization full-detail field, so it
+# needs no organization-admin credential for them. (The provider still issues one
+# GET /orgs/{org} at configure time regardless of this flag; that needs only org
+# visibility.) Set true only for an operator-local plan run, where the org
+# full-detail read and the 2FA plan-time assertion are wanted. Out-of-band
+# verification is scripts/assert_org_2fa.sh either way.
+manage_org_data = false
+
 # --- S3 backend (only used when state/backend_s3.tf.example is enabled) ------
 # state_s3_bucket = "viavitae-tfstate-bootstrap"
 # state_s3_key    = "viavitae-control/terraform.tfstate"
