@@ -40,12 +40,13 @@
 #      visibility only — measured 2026-10-05 with TF_LOG=TRACE, that request fires
 #      with tf_rpc=Configure whether or not any org data source is declared.
 #   3. Organization full-detail fields — ONLY IF the root configuration still
-#      declares `data "github_organization"` outside a count-gated module. It does
-#      today (`org_data.tf`, for the 2FA `check` block), so this tree requires
-#      Organization administration: read-only. If the opt-in in open PR #8/#13
-#      (`var.manage_org_data`, default false) lands, the grep below stops matching
-#      and the requirement drops away automatically — the gate follows the config,
-#      it does not freeze today's answer.
+#      declares `data "github_organization"` outside a count-gated module. Detection
+#      is a config read, not a claim about behaviour, so the requirement follows the
+#      tree: it matched while org_data.tf declared the read at root, and it stopped
+#      matching once that read moved behind `var.manage_org_data` into
+#      modules/org_assertions. FORCE_NEEDS_ORG_DETAIL exists for the offline suite
+#      only, so the "requirement present" branch stays testable either way.
+#      Today the tree answers NO, so CI must not be handed Organization administration.
 #   4. Repository visibility, per repo, from repos_data.tf. `imports.tf` adopts
 #      every inventory entry except `create_new = true`, so a blind spot makes the
 #      plan structurally unable to pass — no amount of re-running helps. Missing
@@ -54,11 +55,14 @@
 # EXPECTED CREDENTIAL (contract in provider.tf)
 #   Fine-grained PAT, repository access = All repositories (the five private ones
 #   must be included), permissions: Metadata: read-only + Administration:
-#   read-only + Organization administration: read-only, expiring. The last one is
-#   required *because* org_data.tf reads a root github_organization (two_factor
-#   check); drop it once that read is gated behind an opt-in. NO Contents/Workflows
-#   /Secrets while every repos_data.tf entry keeps manage_files = false. Held in
-#   TF_GITHUB_TOKEN (plan) and ORG_READ_TOKEN (scripts/detect_drift.sh).
+#   read-only, expiring. NO Organization administration: the root tree stopped
+#   reading a github_organization data source when that read moved behind
+#   var.manage_org_data (default false) into modules/org_assertions, so the grant
+#   became unused power - if a future change re-declares it at root, assertion 3
+#   below starts demanding it again and this line must be re-read.
+#   NO Contents/Workflows/Secrets while every repos_data.tf entry keeps
+#   manage_files = false. Held in TF_GITHUB_TOKEN (plan) and ORG_READ_TOKEN
+#   (scripts/detect_drift.sh, scripts/assert_live_controls.sh).
 #
 # Exit contract (three-way, so a skipped gate can never masquerade as a pass):
 #   0 = credential satisfies every capability the current config needs, and is
@@ -122,10 +126,10 @@ if [[ "${is_classic}" == "true" ]]; then
       fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'admin:org' is org WRITE (members, org settings, webhooks) — apply-time power in a PUBLIC repo's Actions secrets, and no scope set offers a read-only alternative. CI only plans. Mint a fine-grained PAT instead; if this is \`gh auth token\`, that is the exact misuse provider.tf forbids."
       ;;
     *,repo,*)
-      fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'repo' writes repo content across every repo the account can reach, including the private compliance repos. Use a fine-grained PAT (Metadata + Administration + Organization administration read-only)."
+      fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'repo' writes repo content across every repo the account can reach, including the private compliance repos. Use a fine-grained PAT (Metadata + Administration read-only; Organization administration read-only only if this tree reads a root github_organization again)."
       ;;
     *)
-      fail "a scope-bearing credential (scopes: '${scopes:-none}') is in the CI credential slot. Any such token is wrong here: it cannot see private org repos without 'repo', which writes. Mint a fine-grained PAT (Metadata + Administration + Organization administration read-only, All repositories)."
+      fail "a scope-bearing credential (scopes: '${scopes:-none}') is in the CI credential slot. Any such token is wrong here: it cannot see private org repos without 'repo', which writes. Mint a fine-grained PAT (Metadata + Administration read-only, All repositories)."
       ;;
   esac
 fi
@@ -143,9 +147,14 @@ fi
 # --- 3. Org full-detail fields, ONLY if the config still asks for them -------
 # A root-scoped grep, not modules/: a data source behind `count = 0` is never read,
 # so only a root declaration forces the requirement. Detecting the declaration is a
-# config read, not a claim about behaviour — today it matches org_data.tf.
+# config read, not a claim about behaviour — on today's tree it matches nothing, so
+# this assertion is skipped and any org-admin visibility the token still holds is
+# reported as unused power instead of being silently accepted.
 needs_org_detail=false
-if grep -qrE '^data[[:space:]]+"github_organization"' "${ROOT}"/*.tf 2>/dev/null; then
+if [[ -n "${FORCE_NEEDS_ORG_DETAIL:-}" ]]; then
+  # Test-only override; the default path below always derives from the tree.
+  needs_org_detail="${FORCE_NEEDS_ORG_DETAIL}"
+elif grep -qrE '^data[[:space:]]+"github_organization"' "${ROOT}"/*.tf 2>/dev/null; then
   needs_org_detail=true
 fi
 

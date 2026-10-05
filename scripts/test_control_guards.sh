@@ -323,8 +323,11 @@ if [[ ${rc} -eq 1 ]] && grep -qi 'rejected (HTTP 401' <<<"${out}"; then
 else bad "CC3 did not report a 401 (exit ${rc})"; fi
 
 # CC4: valid fine-grained but org admin fields null -> exit 1 "cannot read org field"
+# FORCE_NEEDS_ORG_DETAIL=true is required here: this tree gates the org read behind
+# var.manage_org_data, so the derived default is false and the "requirement present"
+# branch would otherwise be unreachable (that inversion is CC7's job).
 printf '{"login":"Via-Vitae","total_private_repos":null,"default_repository_permission":null}' > "${FAKE_DIR}/org.json"
-out="$(GH_TOKEN="***" ORG=Via-Vitae FAKE_ROOT_STATUS=200 FAKE_SCOPES="" FAKE_PROBE_CODE=200 "${CC}" 2>&1)"; rc=$?
+out="$(GH_TOKEN="***" ORG=Via-Vitae FAKE_ROOT_STATUS=200 FAKE_SCOPES="" FAKE_PROBE_CODE=200 FORCE_NEEDS_ORG_DETAIL=true "${CC}" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q 'cannot read org field' <<<"${out}"; then
   pass "CC4 null org detail caught (exit 1)"
 else bad "CC4 missed null org detail (exit ${rc})"; fi
@@ -341,6 +344,16 @@ out="$(GH_TOKEN="***" ORG=Via-Vitae FAKE_ROOT_STATUS=200 FAKE_SCOPES="" FAKE_PRO
 if [[ ${rc} -eq 1 ]] && grep -q 'cannot see' <<<"${out}"; then
   pass "CC6 invisible repositories reported (exit 1)"
 else bad "CC6 did not report invisible repos (exit ${rc})"; fi
+
+# CC7: the org-detail requirement is DERIVED from the tree, not frozen into the
+# script. Nothing declares a root github_organization any more, so a credential
+# that can still see org full details must pass while being told the grant is
+# unused power - the opposite of CC4, from the same fixtures.
+printf '{"login":"Via-Vitae","total_private_repos":5,"default_repository_permission":"read"}' > "${FAKE_DIR}/org.json"
+out="$(GH_TOKEN="***" ORG=Via-Vitae FAKE_ROOT_STATUS=200 FAKE_SCOPES="" FAKE_PROBE_CODE=200 "${CC}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'unused power' <<<"${out}"; then
+  pass "CC7 requirement self-retracts with the config (exit 0 + unused-power notice)"
+else bad "CC7 still demands org detail this tree no longer reads (exit ${rc}): ${out}"; fi
 
 printf '\n=== control-guard tests %s ===\n' "$( [[ ${fail} -eq 0 ]] && echo 'PASSED' || echo 'FAILED' )"
 [[ ${fail} -eq 0 ]] || echo "A merge-gating guard misbehaved; do not trust it until this passes." >&2

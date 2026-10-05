@@ -15,11 +15,15 @@
 #     ruleset reads; also satisfies the provider's configure-time org lookup.
 #   Administration: read-only  -> branch protection, automated-security-fixes
 #     and vulnerability-alerts, i.e. what modules/repo/ instantiates.
-#   Organization administration: read-only -> required TODAY, not by default:
-#     org_data.tf declares a root `data "github_organization"` and the 2FA `check`
-#     block reads organization-admin-only fields from it. Drop this grant only by removing
-#     that root read (the count-gated opt-in in open PR #8/#13), never by leaving a
-#     field null - a null org field fails the plan's own assertion downstream.
+#   NO Organization administration -> the read that required it is no longer in the
+#     root tree: the 2FA assertion moved behind `var.manage_org_data` (default
+#     false) into modules/org_assertions, so `terraform plan` reads no
+#     organization full-detail field and CI has no reason to see one. Re-add the
+#     grant only by re-declaring a root `data "github_organization"` —
+#     scripts/check_ci_credential.sh derives the requirement from the tree and will
+#     start demanding it again on its own, and will call a retained grant
+#     "unused power - drop it" once nothing reads it. Verifying org 2FA is now an
+#     operator action: scripts/assert_org_2fa.sh (read-only, three-way exit).
 #   NO Contents, NO Workflows, NO Secrets. Contents is unnecessary while every
 #     repos_data.tf entry keeps manage_files = false, and Workflows would let a
 #     compromised job rewrite the CI that audits it.
