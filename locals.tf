@@ -59,5 +59,6 @@ locals {
     var.repos_have_default_branch ? "" : "branch protection DEFERRED for empty repos (no default branch). Set repos_have_default_branch=true or per-repo default_branch_exists once repos have content.",
     var.branch_required_approving_review_count == 0 ? "peer-review requirement is 0 (single-member org). Raise branch_required_approving_review_count to >=1 once a second member/team exists." : "",
     !var.branch_require_code_owner_reviews ? "CODEOWNERS review not enforced (branch_require_code_owner_reviews=false); enable once >=2 reviewers exist." : "",
+    length(var.branch_required_status_checks_contexts) == 0 && var.branch_required_status_checks_strict ? "required_status_checks is strict but declares ZERO contexts, so it gates nothing. 20 of 21 classic-protected repos carry live required checks (2-5 each) that would be REMOVED on apply. Populate branch_required_status_checks_contexts from audit-evidence/ first." : "",
   ])
 }

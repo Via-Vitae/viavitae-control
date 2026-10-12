@@ -33,7 +33,10 @@ resource "github_branch_protection" "this" {
   }
 
   required_status_checks {
-    strict   = var.required_status_checks_strict
-    contexts = []
+    strict = var.required_status_checks_strict
+    # Was hardcoded []: that made "strict = true" a no-op, because strictness
+    # over an empty check list gates nothing. Repos carrying live required
+    # status checks therefore lost that gate with no way to declare it.
+    contexts = var.required_status_checks_contexts
   }
 }
