@@ -25,7 +25,7 @@ companion to the effective-control matrix emitted by `terraform output`.
 | C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | `declared-not-applied` |
 | C10 | Least-privilege repo features (wiki/projects off) | CC6.1 | A.9.4 | Art. 25 | `modules/repo/main.tf` | `declared-not-applied` |
 | C11 | Org member permission baseline | CC6.1 | A.9.2 | Art. 32 | `org_settings.tf` | `declared-not-applied` |
-| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | `policies/enforce_sso.sh` | `out-of-band` (not IaC-settable in provider 6.13.0; detective control only) |
+| C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | Settings → Security (only setter) + `policies/check_org_security.sh` (monitor) | **live & verified 2026-10-12T15:43Z** (`two_factor_requirement_enabled=true`, read back via `gh` and `curl`). Not settable via REST, not modelable in Terraform (provider 6.13.0) → the baseline lives in `policies/org-security-baseline.json`, so the repository is the change record GitHub Free does not keep |
 | C13 | State encryption + locking | CC6.1 | A.10.1 | Art. 32 | `state/` (local now, S3 target) | `out-of-band` |
 | C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | `gap-plan-tier` |
 | C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | `gap-plan-tier` |
@@ -51,14 +51,30 @@ This single rule would have prevented F2, F5, F6 and F11.
 The scope agreed for this control plane is **non-destructive**: it will not flip
 repo visibility or rotate credentials automatically. The following need explicit action.
 
-- **P0-1 — All 30 repos are PUBLIC**, including compliance-sensitive ones:
-  `viavitae-compliance`, `viavitae-data-governance` (records of processing, DPIAs),
-  `viavitae-vendor-register` (GDPR Art. 28 sub-processors), `viavitae-threat-model`
-  (STRIDE/risk), `viavitae-policies`. Exposing DPIAs, threat models, and vendor/
-  sub-processor data publicly is itself a GDPR Art. 32 security failure and hands
-  attackers a roadmap. Review each and schedule **staged privatization**.
-- **P1-1 — 2FA not enforced org-wide** (`two_factor_requirement_enabled=false`).
-  Run `policies/enforce_sso.sh --apply` after confirming the member has 2FA enrolled.
+- **P0-1 (SUPERSEDED — the claim below was untrue as of 2026-10-12)** ~~All 30 repos are PUBLIC, including
+  `viavitae-compliance`, `viavitae-data-governance`, `viavitae-vendor-register`, `viavitae-threat-model`,
+  `viavitae-policies`~~. Live API: **26 public / 5 private**, and those five are exactly the private ones — all
+  five at `size=0` (no commits). The staged privatization this item called for has therefore already happened;
+  leaving the old text in place was itself the finding (a compliance doc asserting a risk the API contradicts
+  costs the whole evidence pack credibility). **What is actually exposed today:**
+  1. GDPR *working material* in public repos — 22 public repos with history carry files matching
+     `DPIA|sub-processor|personal data|STRIDE|threat model` (e.g. `viavitae-infra` 65, `viavitae-web` 37,
+     `viavitae-api` 39). These are templates/policies, not registers, so severity is disclosure-of-method rather
+     than disclosure-of-data.
+  2. **`viavitae-qa` (public) `fixtures/data/donors.json`** — 2 records with keys `first_name`, `last_name`,
+     `email`, `phone`, `address{street,city,postal_code}`, `total_donated_eur`, `parish_id`. Values look
+     synthetic (`+370 612 34567`-shaped), but a donor dataset shape (identified person + giving history + parish
+     affiliation) published in a GDPR-scoped org is a data-minimisation and template-disclosure problem, and the
+     org's own scanner cannot see it (see P1-8).
+  3. `secretary@parish.lt` used as a live-looking third-party contact in public `viavitae-web` tests (V-010).
+- ~~**P1-1 — 2FA not enforced org-wide**~~ **CLOSED 2026-10-12T15:43Z** — `two_factor_requirement_enabled=true`
+  on `Via-Vitae`, read back independently by `gh api` and `curl`. Side effects verified: sole owner still
+  `active admin`, outside collaborators `0`, private repo reads still succeed → **nobody lost access**.
+  Two caveats keep this honest: (1) it cannot be expressed in Terraform, so the control plane cannot see or hold
+  it; (2) Free-plan `GET /orgs/Via-Vitae/audit-log` → **404** and the org payload's `updated_at` did not move, so
+  **who enabled it, and when, is unrecoverable from GitHub**. Compensating control added: `check_org_security.sh`
+  + `org-security-baseline.json` (24 settings, self-test 7/7) which fails on any regression. Never cite C12 as
+  IaC-enforced. (Historic text of this item, kept for the audit trail:) `two_factor_requirement_enabled=false`. Not settable through the REST
 - **P1-2 — Single-member org** (`JourneyOfLife` only). Peer review and code-owner
   review cannot be enforced without locking out the sole admin. Add a second
   member/team, then raise `branch_required_approving_review_count = 1` and
@@ -76,6 +92,22 @@ repo visibility or rotate credentials automatically. The following need explicit
   content, set `repos_have_default_branch = true` (or per-repo `default_branch_exists`)
   and re-apply to activate protection.
 
+- **P1-8 — the PII scanner is blind by construction and was cited as proof.** `viavitae-docs/scripts/check-pii.py`
+  scans **only `content/**/*.md`**, so JSON/TS/YAML fixtures (including `donors.json` above) were never opened, and
+  when no `content/` directory exists it printed "No content/ directory found." and **returned 0** — a green gate
+  over zero files examined. It is wired into `viavitae-docs/.github/workflows/ci.yml` and asserted in
+  `.github/PULL_REQUEST_TEMPLATE.md` ("No PII in diff — `check-pii.py` reports no personal names, emails, phone
+  numbers"), which the tool could not substantiate outside the docs site. Fixed 2026-10-12: that path now exits
+  **2 (UNEVALUATED)** unless `PII_ALLOW_EMPTY=1` is set deliberately; verified rc=2 in `viavitae-qa`, rc=0 in
+  `viavitae-docs` (unchanged). Still open, by owner decision: extend the sweep beyond `content/*.md`, and note
+  the `personal_code` pattern (`LT\d{11}`) does not match a Lithuanian personal code as normally written
+  (11 bare digits, no `LT` prefix), so it under-detects the most sensitive field of all.
+- **P1-9 — an unaccounted seat.** `orgs/Via-Vitae` reports `plan.filled_seats=2` while every enumerable identity
+  source says one person: members `[JourneyOfLife]`, outside_collaborators `0`, `collaborators: 0`, and all six
+  teams have `memberCount` consistent with that one account. The billing-managers endpoint 404s and there is no
+  audit log on Free, so the second seat cannot be attributed from this host. Reconcile it in the UI (Settings →
+  Access: Billing managers) — a 2FA requirement covers billing managers too, and an unidentified account with
+  org access is a least-privilege finding regardless of plan.
 ## 3. Staged remediation roadmap
 
 1. **Day 0 (now, free):** Enforce 2FA; enable secret scanning + push protection +
