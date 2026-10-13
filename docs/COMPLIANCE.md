@@ -161,6 +161,53 @@ repo visibility or rotate credentials automatically. The following need explicit
   validates it as JSON, which a 0-byte stub can never satisfy, so D-02's off-host half cannot
   close until that script is made cloud-aware (`terraform state pull` -> encrypt -> verify).
   Not this repo's change to make unilaterally; recorded here so the dependency is visible.
+- **P1-13 — the Audit plan step hangs on the org data source because the CI token cannot
+  read the org (OPEN, diagnosed 2026-10-13 by differential reproduction).** Run
+  `38280087588` failed with `Terraform plan | failure | 16:49:46Z -> 17:09:53Z` (20m07s)
+  and its log shows the data source stalling, not the config:
+  `data.github_organization.this: Still reading... [30s elapsed]` then
+  `Still reading... [14m40s elapsed]`. The **same** plan run locally on the same commit,
+  with a working token and a full refresh (`terraform plan -input=false -no-color`), returns
+  `data.github_organization.this: Read complete after 9s [id=325435389]` and
+  `Plan: 26 to import, 51 to add, 27 to change, 0 to destroy` — the exact counts recorded in
+  `docs/superpowers/plans/2026-10-12-viavitae-branch-protection-baseline-import.md`. Two
+  conclusions follow. (1) The defect is the **secret** `TF_GITHUB_TOKEN`, not the HCL: an
+  org read that cannot be satisfied is retried until the provider gives up. This is the
+  documented side effect of C12 — "tokens that cannot read the org now return 403" — so a
+  token valid before 2FA enforcement is not necessarily valid after it. (2) `-refresh=false`
+  is **not** the fix; full refresh costs seconds here. Required: regenerate `TF_GITHUB_TOKEN`
+  with `admin:org` + `repo` + `workflow` and prove it with `gh api orgs/Via-Vitae --jq .login`
+  before storing it, and add `timeout-minutes` to the plan step so a credential problem
+  fails in sixty seconds and names itself instead of consuming twenty minutes of free-plan
+  minutes silently. Until then the Audit check is red and any statement that CI validates
+  this plane is untrue — do not mark C1/C2 `enforced-verified` on the strength of a run that
+  never reached the plan gate.
+  **Second data point (same defect, different commit):** on `fe12532` the step
+  `Terraform plan` ran `2026-10-13T19:35:06Z -> 19:55:14Z` (20m08s) and failed, while the
+  identical plan on the same host returns rc=0 with `Read complete after 9s`. The wall clock
+  is therefore stable at ~20m07s +- 1s regardless of content — the signature of a fixed
+  retry/timeout budget being exhausted on `GET /orgs/Via-Vitae`, not of a slow plan.
+- **P1-14 — a CI placeholder that would become live data if it were ever applied (risk
+  note, OPEN).** The plan step sets `TF_VAR_billing_email: ci-placeholder-not-applied`, and
+  `github_organization_settings.this` is currently **`will be created`** in every plan. So a
+  future `terraform apply` that reuses a plan or state produced with the placeholder would
+  write `ci-placeholder-not-applied` into the organisation's real billing contact — a
+  notification-loss failure, not merely a cosmetic one. Mitigation is procedural: applies run
+  locally with the real value only, and the saved-plan workflow must be introduced before CI
+  ever gains apply capability. Related to, but distinct from, the GDPR at-rest item in §9.
+- **P1-15 — the remediation itself created a group-readable archive (CLOSED 2026-10-13, and
+  the most instructive item in this register).** The backup loop published in
+  `state/README.md` omitted `umask 077`, so `age -o` inherited the session umask and wrote
+  `viavitae-control-terraform.tfstate.20261013T191400Z.age` at mode **`0664`** — a group-readable encrypted copy of live state, introduced by the very procedure written to
+  fix P1-10. Detection was not clever: a plain `ls -l` of the archive directory showed the
+  two timestamps side by side, one `0600` and one `0664`, which is how the omission became
+  visible. Remediation: `chmod go-rwx` over the archive directory (a follow-up
+  `find -perm /g+r -o -perm /o+r` now returns **0** files), the loop carries `umask 077` with
+  an explanatory comment, and `jol-control` state plus `terraform.tfvars` were re-encrypted
+  under 077 and verified by decrypt-and-compare (`tfstate ec031d22c70f524f`,
+  `tfvars d1f19e3fa36a4594`). The transferable rule: **verify the permissions of the artefacts
+  a control creates, not merely that the control ran** — a backup that leaks is worse than no
+  backup, because it adds copies while appearing to remove risk.
 
 ## 3. Staged remediation roadmap
 

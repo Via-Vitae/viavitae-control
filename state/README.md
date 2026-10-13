@@ -98,6 +98,10 @@ archive** of every control-plane state, verified by decrypt-and-compare rather t
 Re-run after every apply (appends a verified row to that run's manifest):
 
 ```bash
+umask 077          # REQUIRED: without this the archives are created 0644/0664 and the
+                   # backup set becomes the leak. Verified the hard way on 2026-10-13:
+                   # an earlier run of this loop omitted it and produced group-readable
+                   # archives of live state (P1-15).
 P=$(tr -d ' \n' </opt/jolarca/repos/jolarca-control/.state-backup-pubkey.txt)
 T=$(date -u +%Y%m%dT%H%M%SZ)
 M=/opt/jol/backup/tfstate/manifest-$T.tsv
