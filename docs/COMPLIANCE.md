@@ -187,6 +187,18 @@ repo visibility or rotate credentials automatically. The following need explicit
   identical plan on the same host returns rc=0 with `Read complete after 9s`. The wall clock
   is therefore stable at ~20m07s +- 1s regardless of content — the signature of a fixed
   retry/timeout budget being exhausted on `GET /orgs/Via-Vitae`, not of a slow plan.
+  **Cause now dated, not guessed:** `GET /orgs/Via-Vitae` from this host returns `200` and
+  the CLI prints `Via-Vitae`, while `actions/secrets` reports `TF_GITHUB_TOKEN` last updated
+  **2026-10-04T20:20:37Z** — eight days *before* the C12 2FA enforcement of 2026-10-12, which
+  is the change C12 itself predicted would make org reads return 403. The CI credential is
+  therefore the pre-2FA token. Fix: mint a token with `admin:org` + `repo` + `workflow`, prove
+  it with `gh api orgs/Via-Vitae --jq .login` **before** storing it, replace the secret, then
+  expect `Read complete after ~9s` in the step log instead of `Still reading`.
+  **Refinement, and it changes the fix:** the same variable name works on this host —
+  `GITHUB_TOKEN="$TF_GITHUB_TOKEN" terraform plan -input=false -no-color` returned rc=0 with
+  that 9s read — so a valid token already exists here and is simply not the value stored in
+  Actions. Re-store the working value rather than minting a third credential, then prove the
+  change from the step log, not from the colour of the check.
 - **P1-14 — a CI placeholder that would become live data if it were ever applied (risk
   note, OPEN).** The plan step sets `TF_VAR_billing_email: ci-placeholder-not-applied`, and
   `github_organization_settings.this` is currently **`will be created`** in every plan. So a
@@ -208,6 +220,45 @@ repo visibility or rotate credentials automatically. The following need explicit
   `tfvars d1f19e3fa36a4594`). The transferable rule: **verify the permissions of the artefacts
   a control creates, not merely that the control ran** — a backup that leaks is worse than no
   backup, because it adds copies while appearing to remove risk.
+- **P1-16 — the Audit workflow can never go green while `ORG_READ_TOKEN` is unset, so
+  fixing P1-13 alone will only move the failure (OPEN).** `GET /repos/Via-Vitae/viavitae-control/actions/secrets`
+  enumerates exactly one secret today: `TF_GITHUB_TOKEN`. There is **no `ORG_READ_TOKEN`**.
+  `audit.yml` therefore sets `HAS_ORG_READ_TOKEN` to false, skips `Detect drift`, and runs
+  `Fail loudly if ORG_READ_TOKEN is absent`, which ends the job with two `::error::` lines and
+  `exit 1`. That step is correct by design — an unconfigured detective control must not look
+  like a passing one — but it means the sequence matters: rotate the plan token first, observe
+  the run advance past `Terraform plan`, and only then add `ORG_READ_TOKEN` (read-only
+  `admin:org`) so the last step turns green for the right reason. Recording the dependency here
+  prevents the classic mistake of "fixed the token, still red, therefore the token was never the
+  problem". Same defect shape in the sibling planes: `journeyoflife-org/jol-control` enumerates
+  **no** repository secrets either, and its scheduled `Compliance Scan` has consequently failed
+  three times running (`2026-09-26`, `2026-10-03`, `2026-10-10`) on
+  `UNEVALUATED: 1 repo(s) are declared private (jol-dr) and the listing contains no private
+  repositories, so absence cannot be concluded from it`. Note the interpretation trap: that
+  workflow maps an *unevaluated* guardrail onto `exit 1`, the same code it uses for real drift,
+  so a red scheduled scan in `jol-control` is evidence of a missing credential — **not** of
+  repositories being out of sync. Run locally to tell them apart: `make drift` there reports
+  `NO DRIFT — All 40 repos match` with `"evaluated": true`, and the same guardrail's own fixture
+  list states the rule it is following ("private-blind CI token must NOT be reported as drift:
+  exit 2"). Cross-org lesson for this repo: a guardrail that collapses *refused* and *unevaluated*
+  into one exit code at the workflow layer loses the distinction the script laboured to make —
+  see `scripts/detect_drift.sh` in this repo, which keeps 0/1/2 separate end to end.
+- **P1-17 — an "off-disk" target that silently resolves onto the OS disk (OPEN; caused by my
+  own instruction, self-caught by `df`).** `sudo mkdir -p /media/jol/charity-vol` was given as
+  the staging step for a second medium. With no volume mounted it merely creates a directory on
+  **`/dev/nvme1n1p3`** — the root filesystem, the same physical drive holding `p6`
+  (`/opt/jol/backup`) and `p8` (the charity's `terraform.tfstate`) — and it writes into the
+  host's tightest filesystems (`/` 66%, `/home` 88%). `findmnt` on that path returns nothing,
+  which is the whole lesson: **a directory that is not a mountpoint is not a second medium.**
+  The real targets exist and are attached: `sda` and `sdb`, 14.6G each, `crypto_LUKS`, state
+  `running`; but `/dev/mapper` lists only `vgopt-lv_viavitae` and `vgopt-lv_jolarca`, so neither
+  is unlocked and nothing is mounted. Correct sequence: `sudo cryptsetup open /dev/sdb
+  charity-backup`, mount it on `/media/jol/charity-vol`, and **assert the mount before writing**
+  — refuse when `df --output=source /media/jol/charity-vol` still reports `nvme1n1p3`. Because
+  the volume is LUKS this also finally satisfies C13a for the archive copy: encrypted at rest,
+  on hardware the charity owns, no cloud, no cross-controller sharing, and it removes the
+  same-disk defect noted in C13b. One condition, non-negotiable: the age identity key must never
+  be stored on the medium holding the archives it decrypts.
 
 ## 3. Staged remediation roadmap
 

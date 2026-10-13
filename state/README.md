@@ -105,6 +105,9 @@ umask 077          # REQUIRED: without this the archives are created 0644/0664 a
 P=$(tr -d ' \n' </opt/jolarca/repos/jolarca-control/.state-backup-pubkey.txt)
 T=$(date -u +%Y%m%dT%H%M%SZ)
 M=/opt/jol/backup/tfstate/manifest-$T.tsv
+# Device guard (P1-17): an archive on the same physical disk as its source is not a backup.
+# Print the pair and read it — do not assume the destination is a second medium.
+echo "src=$(df --output=source /opt/viavitae/repos/viavitae-control | tail -1) dst=$(df --output=source /opt/jol/backup/tfstate | tail -1)"
 printf 'archive\tsha256\tcontent\n' > "$M"
 for f in /opt/viavitae/repos/viavitae-control/terraform.tfstate \
          /opt/jol/repos/jol-control/terraform.tfstate; do
