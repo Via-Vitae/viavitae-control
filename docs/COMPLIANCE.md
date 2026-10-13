@@ -5,6 +5,14 @@ Scope: **`Via-Vitae`** org (GitHub Free). Frameworks: **SOC 2**, **GDPR**,
 
 > This control plane manages Via-Vitae only. It is separate from `jol-control`
 > (which manages `journeyoflife-org`). The two orgs are never mixed.
+>
+> **Portfolio note (2026-10-13).** There are three planes, not two: `viavitae-control` ->
+> `Via-Vitae` (commercial IT), `jol-control` -> `journeyoflife-org` (charity, owns its
+> hardware), `jolarca-control` -> `jolarca-dev` (marketplace, PCI-DSS scope). The rule that
+> governs all three pairs is that no state, token, secret, CI configuration or backup
+> archive may be shared between any two of them. `jolarca-control/docs/security/isolation-model.md`
+> states this for the marketplace/mission pair only; extending it to the Via-Vitae pairings
+> is an amendment to that doctrine, not a change to this repo.
 
 This document maps each control to the Terraform resource / script that implements
 it, its status on the current plan, and residual gaps. It is the audit-facing
@@ -26,7 +34,9 @@ companion to the effective-control matrix emitted by `terraform output`.
 | C10 | Least-privilege repo features (wiki/projects off) | CC6.1 | A.9.4 | Art. 25 | `modules/repo/main.tf` | `declared-not-applied` |
 | C11 | Org member permission baseline | CC6.1 | A.9.2 | Art. 32 | `org_settings.tf` | `declared-not-applied` |
 | C12 | Org-wide 2FA requirement | CC6.1 | A.9.4 | Art. 32 | Settings → Security (only setter) + `policies/check_org_security.sh` (monitor) | **live & verified 2026-10-12T15:43Z** (`two_factor_requirement_enabled=true`, read back via `gh` and `curl`). Not settable via REST, not modelable in Terraform (provider 6.13.0) → the baseline lives in `policies/org-security-baseline.json`, so the repository is the change record GitHub Free does not keep |
-| C13 | State encryption + locking | CC6.1 | A.10.1 | Art. 32 | `state/` (local now, S3 target) | `out-of-band` |
+| C13a | State confidentiality at rest | CC6.1 | A.10.1 | Art. 5(1)(f), 32 | filesystem permissions plus the age archive in `state/` | `partial-out-of-band` — **not encrypted at rest**: `vgopt/lv_viavitae` is plain LVM and `dmsetup ls --target crypt` returns 0 devices, so no LUKS layer exists. Fixed 2026-10-13: `audit.tfplan` here was `0664` (a saved plan is state-equivalent) and is now `0600` |
+| C13b | State integrity, versioning, recoverability | CC7.1, A1.2 | A.8.13 | Art. 32(1)(c) | `/opt/jol/backup/tfstate` age archives plus manifest (`state/README.md`) | `declared-partially-rehearsed` — 4 archives round-trip verified 2026-10-13 by decrypt-and-compare; **off-host copy, key custody off-host, and the tier-2 plan-from-restore drill are all still open**; the archive volume shares physical disk `nvme1n1` with `jol-control`'s state |
+| C13c | State locking | CC6.1, CC8.1 | A.8.32 | Art. 32 | none — the local backend has no lock | `gap-blocked-external` — locking arrives only with a remote backend; S3 is **SCP-denied** (`p-r9i2lq77`, verified 2026-10-13) and HCP needs an ADR first. Interim: single-operator discipline, and `versions.tf` now floors Terraform at `>= 1.10` so a future `use_lockfile` cannot be silently unsupported |
 | C14 | Private-repo branch protection | CC8.1 | A.14.2 | Art. 32 | gated in module | `gap-plan-tier` |
 | C15 | Advanced Security on private repos | CC7.1 | A.12.6 | Art. 32 | gated in module | `gap-plan-tier` |
 | C16 | SAML SSO / SCIM provisioning | CC6.1 | A.9.2 | Art. 32 | `policies/sso_saml.md` | `gap-plan-tier` |
@@ -81,8 +91,18 @@ repo visibility or rotate credentials automatically. The following need explicit
   `branch_require_code_owner_reviews = true`.
 - **P1-3 — Actions unrestricted** today. `org_actions_policy.tf` defaults to a
   `selected` allow-list; review `actions_allowed_patterns` and pin to commit SHAs.
-- **P1-4 — Local Terraform state.** Migrate to the encrypted, locked S3 backend
-  (`state/README.md`) before this becomes the production system of record.
+- **P1-4 — Local Terraform state (re-scoped 2026-10-13, still open).** The original
+  instruction, "migrate to the encrypted, locked S3 backend", is **not executable**. Probed
+  live: `s3:ListAllMyBuckets` and `s3:CreateBucket` both return AccessDenied **with an
+  explicit deny in a service control policy**
+  (`arn:aws:organizations::376896792604:policy/o-omcubugbug/service_control_policy/p-r9i2lq77`)
+  for `arn:aws:iam::775093708742:user/viavitae-terraform`. No IAM change inside the member
+  account can override it. Re-scoped into: (a) a written ADR choosing HCP Terraform
+  (precedent and reference architecture: `jolarca-control` ADR-0006, which evaluated and
+  rejected S3 plus DynamoDB on 2026-09-25) against continued local state; (b) the interim
+  encrypted-archive control now documented in `state/README.md`; (c) the off-host copy and
+  restore-drill items tracked under C13b. Do not mark this closed on the strength of the
+  archive alone.
 - **P1-5 — Members may delete repos / change visibility** (`members_can_delete_repositories`,
   `members_can_change_repo_visibility` = true). Tighten via org settings once the
   control plane owns repo lifecycle.
@@ -108,6 +128,40 @@ repo visibility or rotate credentials automatically. The following need explicit
   audit log on Free, so the second seat cannot be attributed from this host. Reconcile it in the UI (Settings →
   Access: Billing managers) — a 2FA requirement covers billing managers too, and an unidentified account with
   org access is a least-privilege finding regardless of plan.
+- **P1-10 — state-equivalent artifacts were group-readable (CLOSED 2026-10-13).** This
+  repo's `audit.tfplan` was mode `0664`. A saved plan embeds prior state plus proposed
+  attribute values, so it is state-equivalent, and `.gitignore` never protected it from
+  local readers. A portfolio sweep (`find -perm /g+r` over `terraform.tfstate*`, `*.tfplan`,
+  `terraform.tfvars`) found the same class in `jol-control` — its `terraform.tfstate`
+  (195 KB, serial 306, 119 managed instances), two `.backup` copies and `terraform.tfvars` —
+  and in `jolarca-control` (`terraform.tfvars`). All seven files are now `0600` and the
+  sweep returns empty. Those two planes own their register entries; recording the fact here
+  only, because the exposure was visible from this host and the fix is the same one command.
+- **P1-11 — this plane has no plan-or-state safety gate.** `jol-control` ships
+  `scripts/plan_gate.py` and `scripts/state_gate.py`, both fail-closed (a missing, empty or
+  unparseable input exits 2 rather than passing) and both wired into its `plan.yml` and
+  `apply.yml`. `jolarca-control` ships `check_plan_safety.sh` (wired into three workflows)
+  and `check_workspace_execution_mode.sh` (wired into `apply.yml`). This repo ships **neither**
+  — `scripts/` holds only provenance, drift and inventory tooling. Running `jol-control`'s
+  gate read-only across all three roots today gave: `viavitae-control` SAFE, `jol-control`
+  SAFE, `jolarca-control` **REFUSED (rc 1)** because its local `terraform.tfstate` is 0 bytes.
+  Remediation must **reuse, not copy**: `jolarca-control`'s isolation doctrine already records
+  that two copies of a security policy is itself an ISO 27001 A.5.2 finding, and
+  `state_gate.py`'s own FIX HISTORY logs two regressions that fixtures caught. Publish one
+  copy, consume it pinned by commit SHA, and add a parity check in the style of
+  `jolarca-control/.github/workflows/context-parity.yml`.
+- **P1-12 — a stale snapshot of a *foreign* state lineage is the only on-disk copy for the
+  marketplace plane.** Captured today in `/opt/jol/backup/tfstate/manifest-20261013T190752Z.tsv`:
+  `jolarca-control`'s live HCP state is serial 14, lineage `f21fa4a8`, 48 managed instances,
+  while its local `terraform.tfstate.backup` is serial 151, lineage `4ef38186`, 35 instances.
+  A different lineage means Terraform will not treat that file as the same history, so
+  "restoring the backup" is not a rollback of 13 resources — it replaces the system of record
+  with an unrelated state. ADR-0006 section 6 already lists "remove local state" as not done;
+  the reason it stays open is that `state_backup.sh` reads `$REPO_ROOT/terraform.tfstate` and
+  validates it as JSON, which a 0-byte stub can never satisfy, so D-02's off-host half cannot
+  close until that script is made cloud-aware (`terraform state pull` -> encrypt -> verify).
+  Not this repo's change to make unilaterally; recorded here so the dependency is visible.
+
 ## 3. Staged remediation roadmap
 
 1. **Day 0 (now, free):** Enforce 2FA; enable secret scanning + push protection +
@@ -121,7 +175,9 @@ repo visibility or rotate credentials automatically. The following need explicit
    and enable code-owner review.
 4. **Stage 3 (Enterprise):** set `github_plan_tier = "enterprise"`,
    `enable_advanced_security = true`, `enable_sso = true`; configure IdP SAML/SCIM.
-5. **Continuous:** `detect_drift.sh` in CI; quarterly access review; state in S3.
+5. **Continuous:** `detect_drift.sh` in CI; quarterly access review; encrypted state archive
+   re-run after every apply (`state/README.md`) until the S3-or-HCP ADR lands, and an off-host
+   copy of that archive with the identity key held separately.
 
 ## 4. Assurance notes
 
