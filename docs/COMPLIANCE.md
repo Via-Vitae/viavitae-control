@@ -179,7 +179,11 @@ repo visibility or rotate credentials automatically. The following need explicit
   with `admin:org` + `repo` + `workflow` and prove it with `gh api orgs/Via-Vitae --jq .login`
   before storing it, and add `timeout-minutes` to the plan step so a credential problem
   fails in sixty seconds and names itself instead of consuming twenty minutes of free-plan
-  minutes silently. Until then the Audit check is red and any statement that CI validates
+  minutes silently. **Applied 2026-10-13, at the job level:** `audit.yml` now carries
+  `timeout-minutes: 15` on the `audit` job, not on the step — these gates are `run:` steps and
+  step-level timeouts are only reliably honoured on action (`uses:`) steps, so a step-level value
+  would have looked like a control and behaved like none. Until the secret itself is replaced the
+  Audit check stays red, and any statement that CI validates
   this plane is untrue — do not mark C1/C2 `enforced-verified` on the strength of a run that
   never reached the plan gate.
   **Second data point (same defect, different commit):** on `fe12532` the step
@@ -194,11 +198,31 @@ repo visibility or rotate credentials automatically. The following need explicit
   therefore the pre-2FA token. Fix: mint a token with `admin:org` + `repo` + `workflow`, prove
   it with `gh api orgs/Via-Vitae --jq .login` **before** storing it, replace the secret, then
   expect `Read complete after ~9s` in the step log instead of `Still reading`.
-  **Refinement, and it changes the fix:** the same variable name works on this host —
-  `GITHUB_TOKEN="$TF_GITHUB_TOKEN" terraform plan -input=false -no-color` returned rc=0 with
-  that 9s read — so a valid token already exists here and is simply not the value stored in
-  Actions. Re-store the working value rather than minting a third credential, then prove the
-  change from the step log, not from the colour of the check.
+  **Which credential actually works, now traced — and it is not either of the two suspects.**
+  Three separate Terraform credentials exist on this estate, and only one of them can read the
+  organisation:
+  1. The **interactive shell** of the operator: `GITHUB_TOKEN="$TF_GITHUB_TOKEN" terraform plan
+     -input=false -no-color` produced `/tmp/vv_local_plan.txt` with rc=0 and
+     `Read complete after 9s`. This is the only proven-working credential. It lives in a login
+     session, is not exported to any non-interactive context, and cannot be read from here.
+  2. **`~/.terraformrc`**: one `credentials` block, mode `0600`, last modified `2026-10-10 18:27`,
+     holding a bearer string of roughly 93 characters (`token = "…"` — the redacted line measured
+     102 characters including the syntax, so the value itself is shorter; the shape matches a
+     fine-grained PAT). Probed without ever printing the value:
+     `curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $(awk -F'\"' '/token/{print $2}' ~/.terraformrc) https://api.github.com/orgs/Via-Vitae`
+     → **`401`**, and `GET /user` with the same value → **`401`**. The credential is dead.
+  3. **Actions secret `TF_GITHUB_TOKEN`**, written `2026-10-04T20:20:37Z` → the 20-minute hang.
+  Two conclusions. First, the fix is narrow: copy the *value already working in the operator's
+  shell* into the Actions secret — no new token has to be minted, and the earlier instruction to
+  generate a fresh `admin:org` token was more work than the evidence requires. Second, and less
+  comfortable: a **stale credential is installed as the default fallback**. Any non-interactive
+  Terraform run on this host (cron, a systemd timer, a different shell, an agent) picks up
+  `~/.terraformrc`, authenticates with a value that returns `401`, and fails — while the operator's
+  own session succeeds. That asymmetry is how "it worked locally" stays true for months next to a
+  permanently red CI. The dead value should be removed or replaced, and the working one registered
+  in the credential inventory with its scope proven, not assumed. Note also that this file sits on
+  `nvme1n1p7` under `/home`: outside every repository, outside the age-encrypted backup set, and
+  absent from the archive manifest, yet it is the tier where the age identity key already lives.
 - **P1-14 — a CI placeholder that would become live data if it were ever applied (risk
   note, OPEN).** The plan step sets `TF_VAR_billing_email: ci-placeholder-not-applied`, and
   `github_organization_settings.this` is currently **`will be created`** in every plan. So a
