@@ -220,29 +220,33 @@ repo visibility or rotate credentials automatically. The following need explicit
   `tfvars d1f19e3fa36a4594`). The transferable rule: **verify the permissions of the artefacts
   a control creates, not merely that the control ran** — a backup that leaks is worse than no
   backup, because it adds copies while appearing to remove risk.
-- **P1-16 — the Audit workflow can never go green while `ORG_READ_TOKEN` is unset, so
-  fixing P1-13 alone will only move the failure (OPEN).** `GET /repos/Via-Vitae/viavitae-control/actions/secrets`
-  enumerates exactly one secret today: `TF_GITHUB_TOKEN`. There is **no `ORG_READ_TOKEN`**.
-  `audit.yml` therefore sets `HAS_ORG_READ_TOKEN` to false, skips `Detect drift`, and runs
-  `Fail loudly if ORG_READ_TOKEN is absent`, which ends the job with two `::error::` lines and
-  `exit 1`. That step is correct by design — an unconfigured detective control must not look
-  like a passing one — but it means the sequence matters: rotate the plan token first, observe
-  the run advance past `Terraform plan`, and only then add `ORG_READ_TOKEN` (read-only
-  `admin:org`) so the last step turns green for the right reason. Recording the dependency here
-  prevents the classic mistake of "fixed the token, still red, therefore the token was never the
-  problem". Same defect shape in the sibling planes: `journeyoflife-org/jol-control` enumerates
-  **no** repository secrets either, and its scheduled `Compliance Scan` has consequently failed
-  three times running (`2026-09-26`, `2026-10-03`, `2026-10-10`) on
+- **P1-16 — Audit has a *second*, independent blocker: `ORG_READ_TOKEN` does not exist, and
+  the workflow is written to fail loudly when it is missing (OPEN).** The gate is
+  `.github/workflows/audit.yml:15`, `HAS_ORG_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN != '' }}`
+  — no fallback value. With the secret absent, `Detect drift` (line 53, `if: env.HAS_ORG_READ_TOKEN`)
+  is skipped and `Fail loudly if ORG_READ_TOKEN is absent` (lines 61–66) prints two `::error::`
+  lines and `exit 1`. Absence is verified, not assumed: `GET /orgs/Via-Vitae/actions/secrets`
+  returns `total_count: 0` and the repository list returns exactly one name, `TF_GITHUB_TOKEN`
+  (updated `2026-10-04T20:20:37Z`). That design is right — an unconfigured detective control must
+  not look like a passing one — but it changes the order of work: **repairing P1-13 moves the
+  failure to line 66 rather than making the run green.** Not yet observed end to end: no run of
+  this workflow has ever reached step 12; the real predecessors `38278859430` (`f98716f`,
+  `2026-10-12T16:38:53Z`), `38280087588` (`aeeec59`, `2026-10-12T16:49:36Z`) and `38455975767`
+  (`fe12532`, `2026-10-13T19:34:58Z`) all failed at `Terraform plan`.
+  *Correction kept on the record:* an earlier draft of this entry asserted that a run showed
+  `Detect drift` executing while `Fail loudly` was skipped, citing run `38460626100`. That run id
+  returns `HTTP 404: Not Found`; it does not exist, and the behaviour it was used to describe does
+  not exist either — the workflow has no `|| secrets.GITHUB_TOKEN` fallback. The claim is withdrawn.
+  Same missing credential in the sibling plane, different consequence: `jol-control` also has
+  `total_count: 0` repository secrets, and its scheduled `Compliance Scan` failed three times
+  running (`2026-09-26`, `2026-10-03`, `2026-10-10`) on
   `UNEVALUATED: 1 repo(s) are declared private (jol-dr) and the listing contains no private
-  repositories, so absence cannot be concluded from it`. Note the interpretation trap: that
-  workflow maps an *unevaluated* guardrail onto `exit 1`, the same code it uses for real drift,
-  so a red scheduled scan in `jol-control` is evidence of a missing credential — **not** of
-  repositories being out of sync. Run locally to tell them apart: `make drift` there reports
-  `NO DRIFT — All 40 repos match` with `"evaluated": true`, and the same guardrail's own fixture
-  list states the rule it is following ("private-blind CI token must NOT be reported as drift:
-  exit 2"). Cross-org lesson for this repo: a guardrail that collapses *refused* and *unevaluated*
-  into one exit code at the workflow layer loses the distinction the script laboured to make —
-  see `scripts/detect_drift.sh` in this repo, which keeps 0/1/2 separate end to end.
+  repositories, so absence cannot be concluded from it`. That workflow maps an unevaluated
+  guardrail to `exit 1` — the same code it uses for real drift — so its red check is evidence of
+  a missing credential, **not** of repositories being out of sync: run locally, the same script
+  reports `NO DRIFT — All 40 repos match` with `"evaluated": true`. Required here: mint one
+  read-only `admin:org` token per organisation and set `ORG_READ_TOKEN` in `viavitae-control`,
+  `jol-control` and `jolarca-control`, then re-run and confirm `Detect drift` executes.
 - **P1-17 — an "off-disk" target that silently resolves onto the OS disk (OPEN; caused by my
   own instruction, self-caught by `df`).** `sudo mkdir -p /media/jol/charity-vol` was given as
   the staging step for a second medium. With no volume mounted it merely creates a directory on

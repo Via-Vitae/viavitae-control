@@ -105,9 +105,15 @@ umask 077          # REQUIRED: without this the archives are created 0644/0664 a
 P=$(tr -d ' \n' </opt/jolarca/repos/jolarca-control/.state-backup-pubkey.txt)
 T=$(date -u +%Y%m%dT%H%M%SZ)
 M=/opt/jol/backup/tfstate/manifest-$T.tsv
-# Device guard (P1-17): an archive on the same physical disk as its source is not a backup.
-# Print the pair and read it — do not assume the destination is a second medium.
-echo "src=$(df --output=source /opt/viavitae/repos/viavitae-control | tail -1) dst=$(df --output=source /opt/jol/backup/tfstate | tail -1)"
+# Device guard (P1-17): an archive on the same PHYSICAL disk as its source is not a backup.
+# Compare disks, not partition names: nvme1n1p6 and nvme1n1p8 are one drive.
+# Verified 2026-10-13: viavitae-control src = /dev/mapper/vgopt-lv_viavitae (nvme2n1),
+# destination /opt/jol/backup/tfstate = /dev/nvme1n1p6 -> genuinely a second disk here.
+# For jol-control (src /dev/nvme1n1p8) the same destination is NOT a second disk.
+sd=$(df --output=source /opt/viavitae/repos/viavitae-control | tail -1)
+dd=$(df --output=source /opt/jol/backup/tfstate | tail -1)
+echo "src=$sd dst=$dd"
+case "$dd" in *nvme1n1*) echo "WARN: destination sits on OS disk nvme1n1 - unlock a LUKS volume instead (P1-17)";; esac
 printf 'archive\tsha256\tcontent\n' > "$M"
 for f in /opt/viavitae/repos/viavitae-control/terraform.tfstate \
          /opt/jol/repos/jol-control/terraform.tfstate; do
