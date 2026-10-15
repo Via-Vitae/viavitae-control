@@ -53,6 +53,7 @@ INVENTORY="${INVENTORY:-${ROOT}/repos_data.tf}"
 
 command -v gh >/dev/null 2>&1 || { echo "gh CLI required" >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 2; }
+command -v python3 >/dev/null 2>&1 || { echo "python3 required (parses the inventory lists)" >&2; exit 2; }
 [[ -f "${INVENTORY}" ]] || { echo "inventory not found: ${INVENTORY}" >&2; exit 2; }
 if [[ -z "${GITHUB_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1; then
   echo "no credential: set GITHUB_TOKEN or authenticate gh" >&2
@@ -60,24 +61,66 @@ if [[ -z "${GITHUB_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1; then
 fi
 
 # Declared opt-ins: "<repo>\t<[bracketed,list]>" for blocks carrying the field.
+# Parsed with python rather than awk because repos_data.tf writes some of these
+# lists on one line and some across several (the per-repo baselines added in PR
+# #19). A line-oriented awk parse reads the opening `[` as the whole value and
+# reports "not a valid array" - which is an ERROR, not a pass, but still silently
+# drops those repositories from the assertion. Bracket counting handles both
+# shapes, and the coverage notice below states how much of the inventory was
+# actually asserted.
 mapfile -t DECL < <(
-  awk '
-    /^[[:space:]]*#/ { next }
-    /^[[:space:]]{4}"[^"]+"[[:space:]]*=[[:space:]]*\{/ {
-      if (name != "" && decl != "") printf "%s\t%s\n", name, decl
-      name = $0; sub(/^[[:space:]]*"/, "", name); sub(/".*$/, "", name); decl = ""; next
-    }
-    /^[[:space:]]*required_status_checks_contexts[[:space:]]*=/ {
-      line = $0
-      sub(/^[^=]*=[[:space:]]*/, "", line)
-      sub(/[[:space:]]*\][[:space:]]*$/, "]", line)
-      sub(/^[[:space:]]+/, "", line)
-      sub(/[[:space:]]+$/, "", line)
-      decl = line
-    }
-    END { if (name != "" && decl != "") printf "%s\t%s\n", name, decl }
-  ' "${INVENTORY}"
+  python3 - "${INVENTORY}" <<'PY'
+import re, sys, pathlib
+
+text = pathlib.Path(sys.argv[1]).read_text().splitlines()
+
+
+def emit(name, value):
+    # HCL allows a trailing comma inside a list; JSON does not. Drop it so the
+    # value below can be parsed by jq instead of being reported as invalid.
+    value = re.sub(r",\s*\]", "]", value.strip())
+    print(f"{name}\t{value}")
+
+
+repo = None
+field = None
+buf = ""
+depth = 0
+for raw in text:
+    line = raw.rstrip()
+    if re.match(r'^    "[^"]+"\s*=\s*\{\s*$', line):
+        repo = line.split('"')[1]
+        field = None
+        buf = ""
+        continue
+    if repo is None:
+        continue
+    if re.match(r'^    \},?\s*$', line):
+        repo = None
+        continue
+    if field is None:
+        m = re.match(r'^\s*required_status_checks_contexts\s*=\s*(.*)$', line)
+        if m:
+            buf, field = m.group(1), True
+            depth = buf.count("[") - buf.count("]")
+            if depth <= 0:
+                emit(repo, buf)
+                field, buf = None, ""
+            continue
+        continue
+    # inside a multi-line list
+    buf += " " + line.strip()
+    depth += line.count("[") - line.count("]")
+    if depth <= 0:
+        emit(repo, buf)
+        field, buf = None, ""
+PY
 )
+
+# Coverage, printed rather than assumed: this guard only asserts repositories that
+# declare the field explicitly. Everything else inherits
+# var.branch_required_status_checks_contexts and is NOT checked here.
+total_inventory="$(grep -cE '^    "[^"]+"[[:space:]]*=[[:space:]]*\{' "${INVENTORY}" || echo 0)"
 
 if [[ "${#DECL[@]}" -eq 0 ]]; then
   echo "NOTICE: no repo declares required_status_checks_contexts - nothing asserted."
@@ -87,6 +130,7 @@ fi
 
 fails=0
 checked=0
+printf 'NOTICE asserting %s of %s inventory repositories (the rest inherit var.branch_required_status_checks_contexts and are not covered here).\n' "${#DECL[@]}" "${total_inventory}" >&2
 
 for entry in "${DECL[@]}"; do
   repo="${entry%%$'\t'*}"
