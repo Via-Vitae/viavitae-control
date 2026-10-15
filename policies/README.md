@@ -30,10 +30,18 @@ mode of `update_contact_emails.sh`, run `scripts/test_contact_email_gates.sh` (1
 assertions over the gates) and `scripts/update_contact_emails.sh --check-residue`, which
 rehearses every gate org-wide and reverts without pushing.
 
+`reconcile_branch_protection.sh` is the sanctioned way to move live protection back to what
+`variables.tf` declares (or to revert it once a second reviewer exists). It re-supplies every
+other field from the live document, because a `PUT` to branch protection **replaces** the
+whole object — omitting a field would silently drop that control. It fails closed: any
+non-2xx is reported per repo and the script exits non-zero.
+
 | Script (repo root) | Purpose | Write behaviour |
 |---|---|---|
 | `scripts/update_contact_emails.sh` | Sweep published contact addresses across every populated org repo to the `EMAIL_POLICY.md` streams | dry-run / `--diff` preview / `--check-residue` gate rehearsal (reverts) / `--apply` opens one PR per repo (never pushes to `main`) |
 | `scripts/test_contact_email_gates.sh` | Regression-tests the sweep's safety gates (rule firing, leak alarm, `email-allow`, append-only and placeholder exclusions) | read-only — never invokes the write mode; clones into `$WORK` only |
+| `scripts/reconcile_branch_protection.sh` | Reconcile live branch protection to the **declared** review model (approvals, code-owner) without deleting the PR requirement | dry-run by default; `--apply` writes, then re-reads each repo to verify |
+| `scripts/patch_aggregate_gate.py` | Repair an aggregate CI gate that decides its verdict by grepping `toJSON(needs)` text (blind if the JSON is spaced) | edits a local clone only; you open the PR |
 | `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 

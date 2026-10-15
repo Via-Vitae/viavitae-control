@@ -130,6 +130,17 @@ variable "branch_required_status_checks_strict" {
   default     = true
 }
 
+# Declared as empty so this change cannot silently rewrite 20 live protections.
+# The measured live reality is NOT empty and is partly unsatisfiable — see
+# docs/COMPLIANCE.md P1-13 for the per-repo baseline to adopt once state is
+# restored (P1-12). A required context that no workflow reports freezes every PR
+# in that repo, so the names must be copied from the job names exactly.
+variable "branch_required_status_checks_contexts" {
+  description = "Default required status-check context names for managed repos (empty gates nothing)."
+  type        = list(string)
+  default     = []
+}
+
 variable "enable_dependabot_alerts" {
   description = "Enable Dependabot vulnerability alerts on managed repos."
   type        = bool
@@ -185,6 +196,18 @@ variable "actions_allowed_patterns" {
     "actions/cache@*",
     "github/codeql-action@*",
     "dependabot/*",
+    # Added 2026-10-15. viavitae-web, viavitae-demos and viavitae-qa all call
+    # pnpm/action-setup; it is not GitHub-owned and not a verified creator, so the
+    # allow-list rejected it and their CI died before creating a single job
+    # (conclusion=startup_failure, 0 check runs, no logs) — which also meant their
+    # required status checks could never report, freezing every PR. Correlation was
+    # exact across 20 populated repos: pnpm_refs>0 <=> startup_failure. Pinned to the
+    # two commit SHAs actually in use rather than @* so this stays a bounded grant;
+    # Dependabot moves the pin and must update this pattern in the same PR.
+    # NOTE: live also carries "actions/setup-terraform@*", which is not a real action
+    # (the provider action is hashicorp/setup-terraform) — recorded as drift, left alone.
+    "pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413",
+    "pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1",
   ]
 }
 

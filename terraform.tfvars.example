@@ -26,6 +26,19 @@ branch_require_code_owner_reviews      = false
 branch_enforce_admins                  = true
 branch_require_last_push_approval      = false
 
+# Required status checks. Names are matched EXACTLY (case-sensitive) against the
+# check a workflow reports; "strict" without a listed context gates nothing, and a
+# listed context no job reports freezes every PR in that repo. Measured live on
+# 2026-10-15 (undeclared by this repo, see docs/COMPLIANCE.md P1-13):
+#   most repos            = ["CI status", "Compliance status"]
+#   viavitae-web          = ["Analyze (javascript-typescript)", "Action SHA pinning",
+#                            "Governance files", "CI status", "Compliance status"]
+#   Via-Vitae/.github     = ["CI status"]
+#   viavitae-demos        = kebab-case names its jobs never report  -> frozen
+#   viavitae-qa           = includes "CI status", which its ci.yml does not produce
+# branch_required_status_checks_contexts = ["CI status", "Compliance status"]
+branch_required_status_checks_contexts = []
+
 # --- Allowed Actions policy --------------------------------------------------
 actions_allowed_mode = "selected"   # all | selected | disabled
 # actions_allowed_patterns = [ ... ]  # see variables.tf defaults

@@ -23,6 +23,8 @@
 # --check-residue rewrites in the scratch clone, runs the residue and leak gates
 # exactly as --apply would, then reverts. It is the only way to exercise the
 # residue gate without pushing, so scripts/test_contact_email_gates.sh uses it.
+# Both gates run for every repo, including ones with nothing to rewrite: skipping
+# them made a repo holding an unmapped address report as "clean".
 #
 # Exit 0 on success; 1 if the residue gate finds a live-domain role address not
 # covered by the table (that means the table needs a rule, not a retry).
@@ -235,7 +237,18 @@ for repo in ${REPOS}; do
 
   hits="$(grep -rlIF -f "${PATTERNS}" \
             --exclude-dir=.git --exclude=.contact-hits.txt "${dir}" 2>/dev/null || true)"
-  # Base-inbox leak gate: published personal address is a finding, not a rewrite.
+  # Drop append-only evidence and build artefacts before anything else.
+  if [[ -n "${hits}" ]]; then
+    hits="$(printf '%s\n' "${hits}" | sed "s#^${dir}/##" | grep -vE "${repo_exclude}" || true)"
+  fi
+  files=()
+  if [[ -n "${hits}" ]]; then
+    mapfile -t files < <(printf '%s\n' "${hits}" | sort)
+  fi
+
+  # --- Gates run for EVERY repo, before the "nothing to rewrite" shortcut. ---------
+  # Skipping them when no file matched a rule made a repo containing an unmapped
+  # live-domain address report as "clean" — a gate that does not run cannot return OK.
   leak="$(grep -rInIF "${BASE_INBOX}" --exclude-dir=.git "${dir}" 2>/dev/null \
            | sed "s#^${dir}/##" \
            | filter_out_paths "${repo_leak_allow}" || true)"
@@ -244,14 +257,36 @@ for repo in ${REPOS}; do
     printf '%s\n' "${leak}" | sed 's/^/        /' >&2
     leaked=1
   fi
-  # Drop append-only evidence and build artefacts before anything else.
-  if [[ -n "${hits}" ]]; then
-    hits="$(printf '%s\n' "${hits}" | sed "s#^${dir}/##" | grep -vE "${repo_exclude}" || true)"
+
+  # Rewrite in the scratch clone for EVERY mode, so all four modes evaluate the same
+  # post-state and cannot disagree. A projection (filtering the pre-state text instead)
+  # was tried first and was wrong: dropping any line containing a mapped address also
+  # dropped an UNMAPPED address sitting on the same line, so the dry-run stayed silent
+  # where --check-residue blocked. Non-apply modes revert below.
+  pre_report=""
+  if [[ ${#files[@]} -gt 0 && ${APPLY} -eq 0 && ${CHECK} -eq 0 && ${DIFF} -eq 0 ]]; then
+    pre_report="$(grep -hInIF -f "${PATTERNS}" -- "${files[@]/#/${dir}/}" \
+                   | sed "s#^${dir}/##" | sed 's/^/      was: /' | sort -u | sed -n '1,10p' || true)"
+    kept_addrs="$(grep -hIofE "${KEEP_RE}" -- "${files[@]/#/${dir}/}" 2>/dev/null | sort -u | tr '\n' ' ' || true)"
   fi
-  if [[ -z "${hits}" ]]; then
-    printf '%-34s clean\n' "${repo}"; continue
+  if [[ ${#files[@]} -gt 0 ]]; then
+    python3 "${REWRITER}" "${TABLE}" "${files[@]/#/${dir}/}" >/dev/null
   fi
-  mapfile -t files < <(printf '%s\n' "${hits}" | sort)
+
+  resid="$(residue_lines "${dir}" "${repo_exclude}")"
+
+  if [[ ${#files[@]} -eq 0 ]]; then
+    if [[ -n "${resid}" ]]; then
+      echo "      ! UNMAPPED residue in ${repo} (no rule matched any address here):" >&2
+      printf '%s\n' "${resid}" | sed 's/^/        /' >&2
+      unmapped=1
+    else
+      printf '%-34s clean\n' "${repo}"
+      # In rehearsal, say so explicitly: the gates ran here, they did not skip it.
+      [[ ${CHECK} -eq 1 ]] && printf '      gates OK for %s (nothing to rewrite)\n' "${repo}"
+    fi
+    continue
+  fi
 
   printf '%-34s %d file(s)  [base: %s]\n' "${repo}" "${#files[@]}" "${base_branch}"
   printf '      %s\n' "${files[@]}"
@@ -260,24 +295,22 @@ for repo in ${REPOS}; do
 
   if [[ ${APPLY} -eq 0 && ${CHECK} -eq 0 ]]; then
     if [[ ${DIFF} -eq 1 ]]; then
-      # Apply in the scratch clone only, show the patch, then revert it.
-      python3 "${REWRITER}" "${TABLE}" "${files[@]/#/${dir}/}" >/dev/null
       git -C "${dir}" --no-pager diff --stat | sed -n '1,25p'
       git -C "${dir}" --no-pager diff -U0 | grep -E '^[+-][^+-]' | sed -n '1,12p'
-      git -C "${dir}" checkout -q -- .
     else
-      grep -hInIF -f "${PATTERNS}" -- "${files[@]/#/${dir}/}" \
-        | sed "s#^${dir}/##" | sed 's/^/      was: /' | sort -u | sed -n '1,10p' || true
-      kept="$(grep -hIofE "${KEEP_RE}" -- "${files[@]/#/${dir}/}" 2>/dev/null | sort -u | tr '\n' ' ' || true)"
-      [[ -n "${kept}" ]] && printf '      kept (placeholder/sample): %s\n' "${kept}"
+      [[ -n "${pre_report}" ]] && printf '%s\n' "${pre_report}"
+      [[ -n "${kept_addrs}" ]] && printf '      kept (placeholder/sample): %s\n' "${kept_addrs}"
     fi
+    if [[ -n "${resid}" ]]; then
+      echo "      ! UNMAPPED residue in ${repo} (would block --apply):" >&2
+      printf '%s\n' "${resid}" | sed 's/^/        /' >&2
+      unmapped=1
+    fi
+    # Nothing was going to be committed: put the scratch clone back as found.
+    git -C "${dir}" checkout -q -- .
     echo
     continue
   fi
-
-  python3 "${REWRITER}" "${TABLE}" "${files[@]/#/${dir}/}" >/dev/null
-
-  resid="$(residue_lines "${dir}" "${repo_exclude}")"
 
   if [[ ${CHECK} -eq 1 ]]; then
     # Gate rehearsal: report, revert, and never push.
@@ -298,6 +331,7 @@ for repo in ${REPOS}; do
     unmapped=1; git -C "${dir}" checkout -q -- . ; continue
   fi
 
+  # --apply reached the gate cleanly: keep the rewrite (it becomes the commit).
   git -C "${dir}" checkout -q -B "${BRANCH}" "${base_branch}"
   git -C "${dir}" add -A -- "${files[@]}"
   git -C "${dir}" -c user.name="${COMMIT_NAME}" -c user.email="${COMMIT_EMAIL}" \
