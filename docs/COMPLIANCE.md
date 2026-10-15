@@ -57,8 +57,14 @@ repo visibility or rotate credentials automatically. The following need explicit
   (STRIDE/risk), `viavitae-policies`. Exposing DPIAs, threat models, and vendor/
   sub-processor data publicly is itself a GDPR Art. 32 security failure and hands
   attackers a roadmap. Review each and schedule **staged privatization**.
-- **P1-1 — 2FA not enforced org-wide** (`two_factor_requirement_enabled=false`).
-  Run `policies/enforce_sso.sh --apply` after confirming the member has 2FA enrolled.
+- **P1-1 — 2FA enforced org-wide — CLOSED (re-verified 2026-10-15).**
+  `gh api orgs/Via-Vitae --jq .two_factor_requirement_enabled` → `true` (this register
+  previously recorded `false`). Consequence, measured while trying to provision a second
+  reviewer: a GitHub account without 2FA **cannot accept any invitation into this org** —
+  `PATCH /user/repository_invitations/{id}` returns
+  `403 "The Via Vitae organization requires all members to have two-factor authentication
+  enabled."` See P1-10.
+  `policies/enforce_sso.sh --apply` remains the IaC-less path for re-asserting it.
 - **P1-2 — Single-member org** (`JourneyOfLife` only). Peer review and code-owner
   review cannot be enforced without locking out the sole admin. Add a second
   member/team, then raise `branch_required_approving_review_count = 1` and
@@ -67,6 +73,7 @@ repo visibility or rotate credentials automatically. The following need explicit
   `selected` allow-list; review `actions_allowed_patterns` and pin to commit SHAs.
 - **P1-4 — Local Terraform state.** Migrate to the encrypted, locked S3 backend
   (`state/README.md`) before this becomes the production system of record.
+  See P1-12 for the current, worse state of affairs.
 - **P1-5 — Members may delete repos / change visibility** (`members_can_delete_repositories`,
   `members_can_change_repo_visibility` = true). Tighten via org settings once the
   control plane owns repo lifecycle.
@@ -99,26 +106,64 @@ repo visibility or rotate credentials automatically. The following need explicit
   `terraform.tfvars.example` note were **untracked/modified locally only**
   (`git ls-tree HEAD policies/` listed no `EMAIL_POLICY.md`). **Closed 2026-10-15** by
   PR #15 (squash-merged to `main`); the org sweep PRs now cite a policy that exists.
-- **P1-10 — Change approval is deadlocked, and drifted from the declared config.**
-  Measured 2026-10-15: 19 of 21 populated public repos require **1 approving review**
-  with `enforce_admins=true` (`viavitae-qa` requires 0), while `variables.tf` and
-  `terraform.tfvars.example` declare **0**. The org has one member
-  (`gh api orgs/Via-Vitae/members` → `JourneyOfLife`); `IterVitae` holds an **admin
-  invitation that was never accepted**, so nobody but the author can approve and **no PR
-  in those 19 repos can merge**. This is the single-member lockout that
-  `policies/restore_peer_review.md` warns about, already in effect. Resolve by accepting
-  the invitation (web UI, as `IterVitae`) **or** by reconciling the live count back to the
-  declared `0` via Terraform — do not merge with an admin bypass.
-- **P1-11 — Required status checks can never report in 3 repos.** `viavitae-web`,
-  `viavitae-demos` and `viavitae-qa` require contexts (`CI status`, `Compliance status`,
-  `Action SHA pinning`, `Governance files`) whose workflows end in **`startup_failure`**,
-  so no check run is produced (verified: `gh run list --branch <sweep>` shows
-  `startup_failure`; the check-run annotations endpoint returns 404 and the jobs list is
-  empty because the workflow never started). Pre-existing, not caused by the sweep: a
-  scheduled `Compliance check` run on 2026-10-12 failed identically. Consequence: **any**
-  PR in those repos is permanently `BLOCKED`. Triage from the Actions run page (the API
-  exposes no log for a startup failure), then re-run the gate rehearsal in
-  `scripts/test_contact_email_gates.sh`.
+- **P1-10 — Change approval is deadlocked; every PR in 19 repos is unmergeable.**
+  Measured 2026-10-15: 19 of 21 populated public repos require **1 approving review** with
+  `enforce_admins=true` (`viavitae-qa` requires 0), while `variables.tf` defaults
+  `branch_required_approving_review_count` to `0` and `terraform.tfvars.example` sets `0`.
+  The org has one member (`gh api orgs/Via-Vitae/members` → `JourneyOfLife`). The intended
+  second reviewer, `IterVitae`, cannot be provisioned: its org invitation (role `admin`,
+  created 2026-10-12) is still **pending**, and the 20 per-repo `push` invitations raised on
+  2026-10-15 could not be accepted because **that account has no 2FA enrolled** (403, see
+  P1-1); they were revoked again, leaving `permission=read` and no pending invitations.
+  Net effect: the author cannot approve their own PR, `gh pr merge --auto` is refused
+  (`enablePullRequestAutoMerge` off), and no `--admin` bypass was used — the 20
+  contact-address PRs stay open. Resolve in this order:
+  1. enroll 2FA on `IterVitae` (human step: passkey/TOTP),
+  2. accept the org invitation, then set `role=member` (not `admin`) and add it to the
+     `architects` team (already `push` on 30 repos) — least privilege, keeps the gate,
+  3. approve and squash-merge; **then** raise the declared count to `1` in
+     `terraform.tfvars` so config matches live.
+  If 2FA cannot be enrolled, the fallback is to reconcile live back to the declared `0`
+  (`DELETE /repos/Via-Vitae/<repo>/branches/main/protection/required_pull_request_reviews`)
+  and keep the SOC 2 CC1.4 separation-of-duties gap documented here until a real second
+  reviewer exists.
+- **P1-11 — Required status checks can never report in 3 repos; cause not yet known.**
+  `viavitae-web`, `viavitae-demos` and `viavitae-qa` require contexts (`CI status`,
+  `Compliance status`, `Action SHA pinning`, `Governance files`) whose workflows end in
+  **`startup_failure`**: zero check runs, empty job list, no logs, annotations endpoint
+  404. Proof that reviews are not the cause: `viavitae-qa#18` needs **0** reviews yet is
+  `BLOCKED` with `statusCheckRollup = []`. Pre-existing, not caused by the sweep: a
+  scheduled `Compliance check` run on 2026-10-12 failed identically. Four candidate causes
+  were tested and **refuted**: (a) unresolvable action pins — only `viavitae-api` has two
+  (`aquasecurity/trivy-action@a9c7b0f0…`, `astral-sh/setup-uv@e58605a9…`) and its CI passes,
+  while every pin in the failing repos resolves; (b) the Actions allow-list — identical
+  (`selected`, `github_owned_allowed=true`, `verified_allowed=true`, same 9 patterns) in
+  failing and passing repos; (c) duplicate YAML keys or `needs:` on unknown jobs — a strict
+  parse of all 21 repos' workflows is clean; (d) references to a reusable workflow in the
+  empty `viavitae-reusable-workflows` repo — no such reference exists. The exact message is
+  only rendered in the Actions run page (not the REST API), so this needs one browser look:
+  https://github.com/Via-Vitae/viavitae-qa/actions/runs/38744206861
+  Consequence until then: **any** PR in those three repos is permanently unmergeable,
+  including `viavitae-web` — the public charity site, whose dead `security@`/`dpo@`
+  contacts therefore stay published.
+- **P1-12 — The control plane has NO state on this host; IaC reconciliation is currently
+  impossible.** Verified 2026-10-15: no `terraform.tfstate`, no `.terraform/`, no
+  `backend.tf`, and no `backend` block in any committed `*.tf` (the only occurrence is in
+  the ignored `state/backend_s3.tf.example`) — yet §Status below claims "Terraform state
+  contains 5 of 30 repositories". That state is **not here**. Recoverable: age-encrypted
+  backups exist at `/opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.20261013T190752Z.age`
+  and `…T191400Z.age` (27,738 bytes, mode 600, X25519 recipient), key at
+  `~/.config/age/state-backup-key.txt`; both predate every 2026-10-15 change.
+  Rules while this holds:
+  - `terraform plan` here would build state from scratch and propose **creating** ~30 repos
+    plus their protections and org settings. Such a plan is invalid evidence — never apply it.
+  - Consequently the P1-10 fallback (reconciling `required_approving_review_count` to the
+    declared `0`) cannot be done through Terraform, and doing it out-of-band would add more
+    unmanaged drift.
+  - Restore first, then plan:
+    `age -d -i ~/.config/age/state-backup-key.txt <newest>.age > terraform.tfstate && terraform init`
+  - Do not run `terraform init -force`; do not import into a new backend as part of this
+    remediation.
 
 ## 3. Staged remediation roadmap
 
