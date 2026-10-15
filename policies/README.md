@@ -15,6 +15,7 @@ mapping, its plan-tier requirement, and how it is verified.
 | `restore_peer_review.md` | Runbook to restore 1-approval review once a 2nd reviewer exists | Free+ (public) / Team+ (private) | one-line variable flip |
 | `AUDIT_PROMPT.md` | Evidence-gated AI-agent audit prompt for control-plane audits | Free+ | paste into agent session |
 | `AI_WORKFLOW_POLICY.md` | Mandatory workflow policy for AI-assisted development (15 levers + review checklist) | Free+ | enforce via PR review |
+| `EMAIL_POLICY.md` | Role-based email address segmentation + migration plan; ships `viavitae-gmail-filters.xml` (bulk Gmail filter import) | Free+ | document + tfvars convention |
 
 ## Why scripts and not resources?
 
@@ -25,6 +26,12 @@ them by `var.enable_sso` / plan tier, and record the residual gap in
 `docs/COMPLIANCE.md`. This keeps the control plane honest under audit.
 
 All scripts default to **dry-run**; pass `--apply` to make changes.
+
+| Script (repo root) | Purpose | Write behaviour |
+|---|---|---|
+| `scripts/update_contact_emails.sh` | Sweep published contact addresses across every populated org repo to the `EMAIL_POLICY.md` streams | dry-run / `--diff` preview / `--apply` opens one PR per repo (never pushes to `main`) |
+| `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
+| `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 
 ## Audit prompt
 
