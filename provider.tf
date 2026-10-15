@@ -15,9 +15,11 @@
 #     ruleset reads; also satisfies the provider's configure-time org lookup.
 #   Administration: read-only  -> branch protection, automated-security-fixes
 #     and vulnerability-alerts, i.e. what modules/repo/ instantiates.
-#   NO organization permissions. Organization administration read was only ever
-#     needed to read org full-detail fields; if a root `github_organization` data
-#     source is being read again, add it deliberately, not by default.
+#   Organization administration: read-only -> required TODAY, not by default:
+#     org_data.tf declares a root `data "github_organization"` and the 2FA `check`
+#     block reads organization-admin-only fields from it. Drop this grant only by removing
+#     that root read (the count-gated opt-in in open PR #8/#13), never by leaving a
+#     field null - a null org field fails the plan's own assertion downstream.
 #   NO Contents, NO Workflows, NO Secrets. Contents is unnecessary while every
 #     repos_data.tf entry keeps manage_files = false, and Workflows would let a
 #     compromised job rewrite the CI that audits it.

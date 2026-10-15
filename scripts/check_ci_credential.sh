@@ -18,19 +18,20 @@
 # over-scope the credential:
 #
 #   1. Credential class. CI only plans; there is no apply workflow and the repo
-#      defines no environment. A personal access token (classic) is rejected
-#      outright: the classic scope set has no "read organization settings" option
-#      (`admin:org` bundles WRITE), so any classic token in this slot is either
-#      under- or over-privileged by construction.
+#      defines no environment. A scope-bearing credential — a personal access
+#      token (classic) or an OAuth token — is rejected outright: neither can
+#      express "read these org repositories' settings" without also granting write,
+#      so any token like that in this slot is over-privileged by construction.
 #
 #      LIMIT OF THIS PROBE, STATED PLAINLY: `X-OAuth-Scopes` is present for a
-#      classic PAT and absent for a fine-grained PAT or App token (measured
-#      2026-10-05 against GET https://api.github.com with both endpoint choices;
-#      the root also works, so a minimal fine-grained PAT with no account
-#      permission is not misread as a dead credential). It therefore detects the
-#      WRONG CREDENTIAL TYPE. It cannot detect that a fine-grained PAT was minted
-#      with, say, Contents: write: GitHub exposes no read-only endpoint that
-#      reports a token's own granted permissions, and probing for write capability
+#      classic PAT *and* for the gh CLI's OAuth token (`gho_`, measured 2026-10-16:
+#      admin:org, gist, read:user, repo, user:email, workflow), and absent for a
+#      fine-grained PAT or App token (measured 2026-10-05; the API root is used so a
+#      minimal fine-grained PAT is not misread as a dead credential). So this proves
+#      a WRITE-CAPABLE SCOPE SET, not the literal token type — the messages say so,
+#      because "don't use a classic PAT" would wrongly reassure an operator who
+#      pasted `gh auth token` into the secret. GitHub exposes no read-only endpoint
+#      reporting a fine-grained token's own grants, and probing for write capability
 #      would mean attempting a write from CI. Fine-grained read-only-ness is
 #      enforced by the mint procedure and the org's token settings, NOT by this
 #      gate. What the gate can and does prove is every READ the config requires.
@@ -39,10 +40,12 @@
 #      visibility only — measured 2026-10-05 with TF_LOG=TRACE, that request fires
 #      with tf_rpc=Configure whether or not any org data source is declared.
 #   3. Organization full-detail fields — ONLY IF the root configuration still
-#      declares `data "github_organization"` outside a count-gated module.
-#      var.manage_org_data (default false) removed that dependency; asserting
-#      these fields unconditionally would demand read access the config never
-#      uses and push operators back toward admin:org.
+#      declares `data "github_organization"` outside a count-gated module. It does
+#      today (`org_data.tf`, for the 2FA `check` block), so this tree requires
+#      Organization administration: read-only. If the opt-in in open PR #8/#13
+#      (`var.manage_org_data`, default false) lands, the grep below stops matching
+#      and the requirement drops away automatically — the gate follows the config,
+#      it does not freeze today's answer.
 #   4. Repository visibility, per repo, from repos_data.tf. `imports.tf` adopts
 #      every inventory entry except `create_new = true`, so a blind spot makes the
 #      plan structurally unable to pass — no amount of re-running helps. Missing
@@ -51,11 +54,11 @@
 # EXPECTED CREDENTIAL (contract in provider.tf)
 #   Fine-grained PAT, repository access = All repositories (the five private ones
 #   must be included), permissions: Metadata: read-only + Administration:
-#   read-only, expiring. NO organization permissions while var.manage_org_data is
-#   false; add Organization administration: read-only only if you open it. NO
-#   Contents/Workflows/Secrets while every repos_data.tf entry keeps
-#   manage_files = false. Held in TF_GITHUB_TOKEN (plan) and ORG_READ_TOKEN
-#   (scripts/detect_drift.sh, scripts/assert_live_controls.sh).
+#   read-only + Organization administration: read-only, expiring. The last one is
+#   required *because* org_data.tf reads a root github_organization (two_factor
+#   check); drop it once that read is gated behind an opt-in. NO Contents/Workflows
+#   /Secrets while every repos_data.tf entry keeps manage_files = false. Held in
+#   TF_GITHUB_TOKEN (plan) and ORG_READ_TOKEN (scripts/detect_drift.sh).
 #
 # Exit contract (three-way, so a skipped gate can never masquerade as a pass):
 #   0 = credential satisfies every capability the current config needs, and is
@@ -89,7 +92,7 @@ command -v curl >/dev/null 2>&1 || skip "curl not available."
 # The API root is probed rather than /user: a minimal fine-grained PAT carries no
 # account permissions, so /user answers 403 for exactly the credential we WANT.
 # Only `X-OAuth-Scopes` presence matters here, and the root returns it for any
-# authenticated classic PAT.
+# scope-bearing credential (classic PAT or OAuth token).
 if ! headers="$(curl -s -D - -o /dev/null -H "Authorization: Bearer ${GH_TOKEN}" "${API}" 2>/dev/null)"; then
   skip "could not reach ${API} to classify the credential (network failure)."
 fi
@@ -108,19 +111,21 @@ if printf '%s\n' "${headers}" | tr -d '\r' | grep -qi '^x-oauth-scopes:'; then
   is_classic=true
 fi
 
+# `is_classic` keeps its name for the git blame trail, but it means "reports an
+# OAuth/classic scope set", which includes `gho_` OAuth tokens from the gh CLI.
 if [[ "${is_classic}" == "true" ]]; then
   case ",${scopes}," in
     *,workflow,*)
-      fail "a classic PAT (scopes: ${scopes}) is in the CI credential slot. 'workflow' writes .github/workflows/* into every repo the token reaches — code execution in those repos' CI. No instantiated resource needs it while repos_data.tf keeps manage_files = false; file-write power belongs to the operator credential, never to CI. Mint a fine-grained PAT instead."
+      fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'workflow' writes .github/workflows/* into every repo the token reaches — code execution in those repos' CI. No instantiated resource needs it while repos_data.tf keeps manage_files = false; file-write power belongs to the operator credential, never to CI. Mint a fine-grained PAT instead (never \`gh auth token\`)."
       ;;
     *,admin:org,*)
-      fail "a classic PAT (scopes: ${scopes}) is in the CI credential slot. 'admin:org' is org WRITE (members, org settings, webhooks) — apply-time power in a PUBLIC repo's Actions secrets, and the classic scope set offers no read-only alternative. CI only plans. Mint a fine-grained PAT instead."
+      fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'admin:org' is org WRITE (members, org settings, webhooks) — apply-time power in a PUBLIC repo's Actions secrets, and no scope set offers a read-only alternative. CI only plans. Mint a fine-grained PAT instead; if this is \`gh auth token\`, that is the exact misuse provider.tf forbids."
       ;;
     *,repo,*)
-      fail "a classic PAT (scopes: ${scopes}) is in the CI credential slot. 'repo' writes repo content across every repo the account can reach, including the private compliance repos. Use a fine-grained PAT (Metadata + Administration read-only)."
+      fail "a scope-bearing credential (classic PAT or OAuth token; scopes: ${scopes}) is in the CI credential slot. 'repo' writes repo content across every repo the account can reach, including the private compliance repos. Use a fine-grained PAT (Metadata + Administration + Organization administration read-only)."
       ;;
     *)
-      fail "a classic PAT (scopes: '${scopes:-none}') is in the CI credential slot. Any read-only classic token is still wrong here: it cannot see private org repos without 'repo', which writes. Mint a fine-grained PAT (Metadata + Administration read-only, All repositories)."
+      fail "a scope-bearing credential (scopes: '${scopes:-none}') is in the CI credential slot. Any such token is wrong here: it cannot see private org repos without 'repo', which writes. Mint a fine-grained PAT (Metadata + Administration + Organization administration read-only, All repositories)."
       ;;
   esac
 fi
@@ -136,9 +141,9 @@ if ! jq -e --arg o "${ORG}" '(.login // "") == $o' <<<"${org_json}" >/dev/null; 
 fi
 
 # --- 3. Org full-detail fields, ONLY if the config still asks for them -------
-# A root-scoped grep, not modules/: modules/org_assertions declares the same data
-# source behind count = var.manage_org_data ? 1 : 0, and a count of 0 is never
-# read. Detecting the declaration is a config read, not a claim about behaviour.
+# A root-scoped grep, not modules/: a data source behind `count = 0` is never read,
+# so only a root declaration forces the requirement. Detecting the declaration is a
+# config read, not a claim about behaviour — today it matches org_data.tf.
 needs_org_detail=false
 if grep -qrE '^data[[:space:]]+"github_organization"' "${ROOT}"/*.tf 2>/dev/null; then
   needs_org_detail=true
@@ -214,6 +219,6 @@ if [[ -n "${INVISIBLE}" ]]; then
 fi
 
 # A fine-grained PAT reports no X-OAuth-Scopes header, so a reach here means the
-# credential declared no classic scopes at all.
-note "capability probes complete: credential is not a classic PAT, can resolve /orgs/${ORG}, and can read all ${#import_targets[@]} declared repositories."
+# credential declared no OAuth/classic scope set at all.
+note "capability probes complete: credential reports no OAuth/classic scope set, can resolve /orgs/${ORG}, and can read all ${#import_targets[@]} declared repositories."
 echo "OK: CI credential satisfies the read set derived from this configuration and holds no write capability."
