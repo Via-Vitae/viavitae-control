@@ -168,6 +168,11 @@ Re-measured 2026-10-15 (this paragraph was stale — see `docs/COMPLIANCE.md` P1
   here for admins too. See P1-18 for the method and the full table.
 - Published contact channels are all plus-addressed streams now (P1-7 closed, P1-8 closed:
   private vulnerability reporting on 26/26 public repos).
+- **This repo's `Audit` CI job is red, and has been** — `Terraform plan` cannot import the five
+  private repos with the configured `TF_GITHUB_TOKEN`, and `detect_drift.sh` never runs because
+  `ORG_READ_TOKEN` is not set. `fmt`/`validate`/`provenance` pass. See P1-23 for the exact fix
+  (a credential, not a workflow edit) and for why making the step green-by-configuration would
+  have been the wrong move.
 - Peer review is currently **0 approvals** on every repo, because the org has one member and
   the second account cannot join without 2FA (P1-10). Separation of duties is a documented
   gap, not a control, until that changes.

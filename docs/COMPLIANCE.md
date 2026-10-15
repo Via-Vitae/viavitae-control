@@ -422,6 +422,34 @@ repo visibility or rotate credentials automatically. The following need explicit
   record. The fix is provisioning: deploy a staging API+web pair, set `STAGING_API_URL`,
   `STAGING_WEB_URL` and the `BASE_URL_DEMO_*` variables on the `staging` environment, after which
   both workflows work unchanged. Owner decision (infra spend), tracked as day-2 work.
+- **P1-23 — this repo's own `Audit` workflow has been red on every run since the private repos
+  were added to `imports.tf`, and CI drift detection has therefore never run.** Evidence from
+  `Audit` runs on `main` (38799094376) and on a PR (38810532022): `Terraform format check`,
+  `init` and `validate` all succeed, `Terraform plan` exits 1 with
+  `Error: Cannot import non-existent remote object` exactly **5 times**, and the five addresses
+  are precisely the private repos — `viavitae-policies`, `viavitae-compliance`,
+  `viavitae-data-governance`, `viavitae-threat-model`, `viavitae-vendor-register` — plus
+  `Post "https://api.github.com/graphql": context deadline exceeded`. The plan itself is fine:
+  in CI (empty state) it reports `26 to import, 3 to add, 26 to change, 0 to destroy`.
+  Cause, corrected mid-investigation: `TF_GITHUB_TOKEN` **is** configured (updated
+  2026-10-04T20:20:37Z) — my first reading, "the secret is missing", was wrong. What the token
+  lacks is **access to the private repositories**: every public object imports cleanly and only
+  the private five resolve as non-existent. GitHub returns 404 rather than 403 for a
+  token-scoped miss, and Terraform reports 404 as "non-existent remote object", which is why the
+  message misleads.
+  Second consequence, quieter but worse: `ORG_READ_TOKEN` is **not** configured (the repo has
+  exactly one secret), so `Detect drift (requires ORG_READ_TOKEN)` is skipped on every run, and
+  the `Fail loudly if ORG_READ_TOKEN is absent` step never executes because the job already
+  failed at plan. Day-2 §7 of this document claims "`detect_drift.sh` in CI" as a continuous
+  control — **it has never run**. Until it does, drift is detected only when a human runs the
+  script, as in this session.
+  Owner actions, in order: (1) re-issue or re-scope `TF_GITHUB_TOKEN` so it can read the five
+  private repos (and the org), then (2) create `ORG_READ_TOKEN`, after which the plan step and
+  the drift step both become meaningful. Deliberately *not* done here: marking the plan step
+  `continue-on-error`, or giving the loud-failure step `if: always()`. The first would turn a red
+  evidence job into a green lie — the exact defect P1-15 was about; the second would add a
+  permanently red leg that blocks nothing and trains people to ignore it, the P1-19 defect. The
+  fix is a credential, not a workflow edit.
 
 ## 3. Staged remediation roadmap
 
@@ -458,7 +486,10 @@ repo visibility or rotate credentials automatically. The following need explicit
    code-owner review (revert P1-10), declared and live together.
 6. **Stage 3 (Enterprise):** set `github_plan_tier = "enterprise"`,
    `enable_advanced_security = true`, `enable_sso = true`; configure IdP SAML/SCIM.
-7. **Continuous:** `detect_drift.sh` in CI; quarterly access review; state in S3.
+7. **Continuous:** `detect_drift.sh` in CI — **not yet true, see P1-23**: the step is skipped on
+   every run because `ORG_READ_TOKEN` is unset, and the job fails earlier at `Terraform plan`
+   because `TF_GITHUB_TOKEN` cannot read the five private repos. Quarterly access review;
+   state in S3.
 
 ## 4. Assurance notes
 
