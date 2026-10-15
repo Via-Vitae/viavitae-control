@@ -522,6 +522,47 @@ verified `0` pending and `permission=read`.
 
 ---
 
+## Follow-up execution (2026-10-15, owner steps a–e)
+
+The owner then issued five numbered steps (`a`–`e`) to be executed in order, with judgement
+applied to any material finding encountered. Result per step, with the measurement that proves it:
+
+| Step | Outcome | Evidence |
+|---|---|---|
+| (a) close superseded PRs | done | `viavitae-control` #7 and #10 closed with comments naming what supersedes them and what stays useful (#10's staged-import idea is retained in P1-18) |
+| (b) web gate: repair then patch | done, in that order | `viavitae-web` #33 restored a coherent vitest/coverage 2.1.x pair + reformatted 4 files; #35 replaced the verdict. Both merged with all checks green; `main` now `Lint`/`Unit`/`Build`/`CI status` = success, fragile-matcher files = **0** org-wide |
+| (c) review the plan deliberately, then apply | **review complete, apply not run** | Plan is 26 imports / 46 creates / 27 updates / **0 destroys**. Effects measured per attribute (see P1-18). The owner's line listed only `plan`/`show` commands, and AI_WORKFLOW_POLICY §"plan-only authority" requires an explicit apply statement, so the apply is held for that decision |
+| (d) enrol 2FA on `IterVitae`, restore the review gate | **not possible by an agent** | 2FA enrolment is a device/browser action on a human account; the org blocks membership acceptance without it (verified earlier: `403 requires all members to have two-factor authentication`). Review count therefore stays 0, and `branch_required_approving_review_count = 1` is not set in `terraform.tfvars` |
+| (e) fix P1-19 and P1-16 before requiring either | P1-19 done, P1-16 measured and held | 10 landing PRs merged (`#5` each, `merged=10 held=0`); verified `Detect languages=success`, JS leg gone, **0 failing legs** on all ten. P1-16 re-measured at 59 alerts and 17 open bump PRs — merging those is a product-behaviour decision, so it is reported, not done |
+
+Findings discovered while executing, and their disposition:
+
+- **web's `main` was red because of two things, one of them mine** — see P1-17. Attribution was
+  established by checking out the pre-sweep commit and running the same commands, not by arguing.
+- **qa's `main` was red for three reasons**, one pre-existing dependency major, one generated-file
+  formatting rule that could never pass, one non-recursive ignore (P1-17, fixed in `viavitae-qa#19`).
+- **`viavitae-qa` has no aggregate CI job at all**, so no CI leg there can block a merge (P1-17).
+- **`viavitae-qa`'s browser/accessibility/load gates cannot run**: `staging` environment exists with
+  **0 repository variables**; `nightly-e2e` therefore reports `success` while skipping its whole
+  matrix (P1-22).
+- Three majors have now landed broken through an unreacting gate, which is the strongest argument
+  this session produced for P1-15 and is recorded as P1-21.
+
+Errors made in this step, recorded in the same spirit as the ones above:
+
+1. "`Nightly e2e` passes, so the allow-list fix restored real e2e coverage" — **wrong**. It
+   *starts* now; every real job skips. Corrected in P1-22 after reading the workflow's guards.
+2. A first attempt at comparing planned vs live branch protection read `{"enabled": false}` as
+   `bool(dict)` → always true, and used provider key names (`allows_force_pushes`) instead of API
+   names (`allow_force_pushes`). It "proved" an apply would unlock 20 branches — the opposite of
+   the truth. Rebuilt with explicit `.enabled` unpacking; the corrected result is in P1-18.
+3. Repeated shell-quoting failures (nested `python3 -c` with escaped quotes, `gh api --arg`, a
+   heredoc that failed as a whole) wasted steps and produced empty output files that I re-read
+   rather than trusting. A broken terminal capture also swallowed stdout for part of the session;
+   routing results to files and reading them was the fix, and is how every number above was read.
+
+---
+
 ## Review checklist (required — policy §5)
 
 ### Pre-commit checklist
@@ -558,7 +599,8 @@ verified `0` pending and `permission=read`.
 ### Post-merge checklist
 
 - [ ] **Post-merge plan confirms no drift** — paste `terraform plan` summary after Task 3
-- [ ] **Sweep reports zero remaining dead addresses** — clean-clone dry-run after merge
+- [x] **Sweep reports zero remaining dead addresses** — clean-clone dry-run after merge measures
+  `0 repo(s) with changes, 0 file(s)`; re-verified at the end of this follow-up step
 - [x] **Task 2 executed (2026-10-15)** — 20 PRs opened **and all 20 merged**; final sweep
   measures `0 repos / 0 files`; rehearsal `gates OK` x21, exit 0
 - [x] **Task 2 Step 6 re-measured** — clean-clone dry-run reports 0 repos with changes
