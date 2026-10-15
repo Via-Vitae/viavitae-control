@@ -287,7 +287,9 @@ repo visibility or rotate credentials automatically. The following need explicit
     **Nothing is loosened by an apply.** The 13 are `viavitae-web`, `viavitae-template`,
     `viavitae-demos` and the ten landings; the module declares `true` (see
     `modules/repo/branch_protection.tf`), and since every repo merges by squash this only
-    forbids merge commits, not existing history.
+    forbids merge commits, not existing history. Independently confirmed on 2026-10-16 by
+    `scripts/assert_live_controls.sh`, which reached the same conclusion from the live API
+    without reading a plan at all.
     Org level: `dependabot_alerts_enabled_for_new_repositories`,
     `dependabot_security_updates_enabled_for_new_repositories` and
     `dependency_graph_enabled_for_new_repositories` go false→true (currently off live);
@@ -411,6 +413,14 @@ repo visibility or rotate credentials automatically. The following need explicit
   one line — `required_status_checks_contexts = ["Compliance status", "CI status"]` for
   `viavitae-qa` in `repos_data.tf` — after the advisories are cleared. The second half (peer
   grouping in each repo's `dependabot.yml`) is still untouched.
+  A third control now exists for the class of problem behind P1-13/P1-18:
+  `scripts/assert_live_controls.sh` (PR #9, merged 2026-10-16) asks the live API every CI run
+  whether the *declared* merge controls are the ones in force, rather than trusting a stored
+  plan. Its first run reproduced the P1-18 finding independently — `viavitae-web` and
+  `viavitae-demos` report `required_linear_history=false` against the declared `true` — and it
+  exits 1 with a printed coverage notice (`asserting 5 of 31 inventory repositories`) because
+  repos that inherit `var.branch_required_status_checks_contexts` are not covered by it.
+  The CI step is gated on `ORG_READ_TOKEN`, so it stays inert until P1-23 is fixed.
 - **P1-22 — `viavitae-qa`'s browser and load gates cannot run: the environment is configured
   but has no variables.** `GET /repos/Via-Vitae/viavitae-qa/actions/variables` returns
   `total_count: 0` while a `staging` environment exists, so every `${{ vars.STAGING_* }}` and

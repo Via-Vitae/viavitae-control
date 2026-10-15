@@ -46,6 +46,8 @@ non-2xx is reported per repo and the script exits non-zero.
 | `scripts/rollout_aggregate_gate.sh` | Open the gate repair as one PR per repo | dry-run by default; `APPLY=1` pushes a branch and opens the PR; merging stays manual |
 | `scripts/rollout_workflow_patch.sh` | Same harness, generalised: any patcher (`PATCHER=`) with a branch, title, body and an optional `VERIFY_ABSENT` pattern | dry-run by default; `APPLY=1` pushes and opens PRs; never merges, never touches `main` |
 | `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
+| `scripts/assert_live_controls.sh` | Assert the **declared merge controls** (contexts, strict, enforce_admins, linear history, force-push/deletion) against the live API — the gap `detect_drift.sh` cannot see, because inventory equality says nothing about enforcement | read-only; exit 0 match, 1 divergence, 2 could not run; prints its own coverage (`N of M` repositories) |
+| `scripts/check_ci_credential.sh` | Pre-flight the CI plan credential: reject anything write-capable and prove every read the **current configuration** requires, before `terraform plan` runs | read-only GETs; exit 0 correct, 1 wrong class or blind spot (names the repos), 2 could not run; never prints the token |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 
 ## Audit prompt
