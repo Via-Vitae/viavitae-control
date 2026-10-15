@@ -109,6 +109,24 @@ variable "required_status_checks_strict" {
   default     = true
 }
 
+# Each name must match a check the repository's workflows ACTUALLY produce,
+# byte-for-byte including case. A required context no job reports is not a gate:
+# it parks every PR forever. Two such cases were measured in this org on
+# 2026-10-15 — viavitae-demos required `compliance-status`/`action-pinning`/
+# `governance` while its jobs are named `Compliance status`/`Action SHA pinning`/
+# `Governance files`, and viavitae-qa required `CI status` with no such job in
+# ci.yml. Both froze every merge in those repos.
+variable "required_status_checks_contexts" {
+  description = <<-EOT
+    Exact check-run context names required before merging (case-sensitive; each
+    must be produced by a workflow in the repository). An empty list gates nothing:
+    strict alone only forces the listed contexts to be current, so declare the
+    contexts you actually want enforced.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "apply_private_branch_protection" {
   description = <<-EOT
     Whether branch protection may be applied to PRIVATE repos (requires GitHub

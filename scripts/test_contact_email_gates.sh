@@ -42,6 +42,13 @@ clone_probe() { # echoes a fresh scratch dir containing $PROBE_REPO
   printf '%s' "${d}"
 }
 
+# Commit a planted state into the scratch clone. Without this the plant is an
+# uncommitted edit, and "is the tree clean after the run?" would measure the test's
+# own write instead of whether the sweeper reverted itself.
+commit_plant() { # $1 = repo dir
+  git -C "$1" -c user.name=test -c user.email=test@example.invalid commit -q -am "test: planted fixture" || true
+}
+
 printf '\n=== contact-email gate tests (org=%s repo=%s work=%s) ===\n\n' "${ORG}" "${PROBE_REPO}" "${WORK}"
 
 # --- T0 syntax ---------------------------------------------------------------
@@ -128,20 +135,48 @@ fi
 # --- T7 placeholder residue must NOT block (gate rehearsal, no push) ---------
 d7="$(clone_probe "${WORK}/t7")"
 printf '\nSigned-off-by: Your Name <you@viavitae.com>\n' >> "${d7}/${PROBE_REPO}/CONTRIBUTING.md"
+commit_plant "${d7}/${PROBE_REPO}"
 WORKDIR="${d7}" "${SWEEPER}" --check-residue --repos "${PROBE_REPO}" >/dev/null 2>&1
 rc=$?
 if [[ ${rc} -eq 0 ]]; then pass "T7 placeholder residue does not block the gate"; else bad "T7 placeholder treated as unmapped residue (exit ${rc})"; fi
 
 # --- T8 an address with no rule MUST block the gate --------------------------
+# Plant BOTH: a mappable address (so the sweeper has work to do and therefore
+# rewrites, exercising the revert) and an unmapped live-domain address (the thing
+# the gate must refuse). The repos are now all clean on main, so without the
+# mappable half there would be nothing to rewrite and the revert would go untested.
 d8="$(clone_probe "${WORK}/t8")"
-printf '\nEscalate to security@viavitae.xyz\n' >> "${d8}/${PROBE_REPO}/SECURITY.md"
+printf '\nReport to security@viavitae.com or security@viavitae.invalid\n' >> "${d8}/${PROBE_REPO}/SECURITY.md"
+commit_plant "${d8}/${PROBE_REPO}"
 WORKDIR="${d8}" "${SWEEPER}" --check-residue --repos "${PROBE_REPO}" >/dev/null 2>&1
 rc=$?
 if [[ ${rc} -eq 1 ]]; then pass "T8 unmapped live-domain address blocks the gate (exit 1)"; else bad "T8 gate stayed silent on an unmapped address (exit ${rc})"; fi
 
-# --- T9 gate rehearsal leaves the scratch tree untouched ---------------------
+# --- T9 gate rehearsal must revert its own rewrite ---------------------------
 after9="$(git -C "${d8}/${PROBE_REPO}" status --porcelain | wc -l)"
-if [[ "${after9}" == "0" ]]; then pass "T9 --check-residue reverted its own edits"; else bad "T9 --check-residue left ${after9} modified file(s)"; fi
+if [[ "${after9}" == "0" ]]; then
+  pass "T9 --check-residue reverted its own rewrite (planted commit intact, worktree clean)"
+else
+  bad "T9 --check-residue left ${after9} modified file(s) — a later run would under-count"
+fi
+
+# --- T9b the plain dry-run must report the same block ------------------------
+# A gate that only runs inside the write mode cannot be audited; and skipping the
+# gates for repos with nothing to rewrite once let an unmapped address read "clean".
+d9="$(clone_probe "${WORK}/t9b")"
+printf '\nReport to security@viavitae.com or security@viavitae.invalid\n' >> "${d9}/${PROBE_REPO}/SECURITY.md"
+commit_plant "${d9}/${PROBE_REPO}"
+out9="$(WORKDIR="${d9}" "${SWEEPER}" --repos "${PROBE_REPO}" 2>&1)"; rc9=$?
+if [[ ${rc9} -eq 1 ]] && grep -q 'UNMAPPED residue' <<<"${out9}"; then
+  pass "T9b dry-run also blocks on an unmapped address (gate is not write-mode only)"
+else
+  bad "T9b dry-run reported no problem (exit ${rc9}) — gate does not always run"
+fi
+if ! grep -qE "^${PROBE_REPO} +clean" <<<"${out9}"; then
+  pass "T9b repo with an unmapped address was not labelled clean"
+else
+  bad "T9b labelled a repo holding an unmapped address as 'clean'"
+fi
 
 printf '\n=== gate tests %s ===\n' "$( [[ ${fail} -eq 0 ]] && echo 'PASSED' || echo 'FAILED' )"
 [[ ${fail} -eq 0 ]] || echo "Do not run the sweeper's write mode until these pass." >&2
