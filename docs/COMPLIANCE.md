@@ -231,17 +231,31 @@ repo visibility or rotate credentials automatically. The following need explicit
   consequence of a gate that was already lying. Repaired at the source: `viavitae-template`
   PR #3 and `.github` PR #8 (shared reusable workflow) now compute the verdict with
   `contains(needs.*.result, 'failure')` passed in as `GATE_BAD`, preserving `id: eval` and the
-  `result` output; both merged with all checks green. **17 repos still carry the old pattern**
-  (`viavitae-web`, `-infra` (incl. `codeql.yml`), `-brand`, `-api`, `-docs`, `.github`'s
-  `ci.yml`, the ten `viavitae-landing-*`): apply with
-  `scripts/patch_aggregate_gate.py <clone-dir> <workflow> [--check]`, one PR per repo.
-  Expect some repos to go red on the first honest run (that is P1-17, not a regression).
-- **P1-16 — 31 open Dependabot alerts on default branches.** Measured: `viavitae-web` 20 open
-  alerts, `viavitae-qa` 11 (`viavitae-api` and `viavitae-clients` 0). The site repo carries
-  high-severity advisories. `enable_dependabot_security_updates` is declared `true`; the
-  updates are not landing, so either the flag is not effective on the Free plan for these
-  repos or lockfiles need a human bump. Review at
-  https://github.com/Via-Vitae/viavitae-web/security/dependabot
+  `result` output; both merged with all checks green. The 17 repos that still carried the old
+  pattern (`viavitae-web`, `-infra` (incl. `codeql.yml`), `-brand`, `-api`, `-docs`, `.github`'s
+  `ci.yml`, the ten `viavitae-landing-*`) have all since been migrated — see the status entry at
+  the end of this list, which is the authoritative count.
+  Tooling: `scripts/patch_aggregate_gate.py <clone-dir> [--write]`, one PR per repo via
+  `scripts/rollout_aggregate_gate.sh`. Applying it did make some repos go red on their first
+  honest run; those were pre-existing failures, recorded as P1-17, not regressions.
+- **P1-16 — 59 open Dependabot alerts on default branches (re-measured 2026-10-15).**
+  Counted with `GET /repos/{org}/{repo}/dependabot/alerts?state=open` over all 31 repos:
+  `viavitae-web` 38 (5 critical, 10 high, 21 moderate, 2 low), `viavitae-qa` 11 (4 high,
+  5 moderate, 2 low), `viavitae-docs` 9 (2 critical, 1 high, 5 moderate, 1 low),
+  `viavitae-api` 1 moderate; every other repo reports none. The earlier "31 / web 20" figures
+  were a partial read and are superseded by these numbers.
+  Two explanations that were *assumed and are now refuted*: the flag is not the problem —
+  `GET /repos/{o}/{r}/automated-security-fixes` already returns `enabled: true` on every repo
+  sampled, so the 25 `github_repository_dependabot_security_updates` creates in the plan merely
+  re-assert the live value; and coverage is not missing either — 17 open Dependabot pull
+  requests exist (`viavitae-web` 8, `viavitae-qa` 5, `viavitae-docs` 3, `viavitae-api` 1).
+  The backlog is therefore purely an unmerged-queue: a human has to accept each bump.
+  Not merged in this session on purpose. A dependency bump changes what runs in production,
+  which `policies/AI_WORKFLOW_POLICY.md` treats as an owner decision ("plan-only authority"),
+  and this repo has just seen three majors land unreviewed (P1-21). Suggested order once the
+  owner takes it up: patch-level security bumps first (`viavitae-web` #34, `next` 15.5.25→
+  15.5.27), then grouped minors now that the verdicts are honest, then majors (`next-intl`
+  3→4) with the release notes read.
 - **P1-18 — `terraform apply` would have aborted partway, and an inspection caught it
   before it happened.** The restored plan created `github_repository_dependabot_security_updates`
   for **all 30** repos including the 5 private ones, where Dependabot needs GitHub Team; on
@@ -254,44 +268,122 @@ repo visibility or rotate credentials automatically. The following need explicit
   - `github_organization_settings` is not in state, but **creating it cannot disable org
     2FA** — verified against the provider schema: `two_factor_requirement_enabled` is not an
     attribute of that resource in `integrations/github` 6.13.
-  - The remaining real effect of an apply is a **tightening**: `required_linear_history`
-    false→true on 13 repos (the module declares `true`), plus `has_wiki`/`has_projects` off
-    and `delete_branch_on_merge` on for 25 repos, and `provenance` becoming a **required**
-    status check on the `protect-main` ruleset. Reviews, code-owner, `enforce_admins` and
-    required contexts all match live after P1-10/P1-13.
-  **No apply was run.** The plan was saved to a `0600` file and read only.
-- **P1-19 — CodeQL's `Analyze (javascript-typescript)` leg fails on `main` in all ten
-  `viavitae-landing-*` repos, invisibly.** Measured 2026-10-15 on each landing repo's `main`
-  commit: the JS/TS leg concludes `failure` while `CI status` and `Compliance status` are
-  `success` — because that leg is **not** in their required contexts, and the repos' static
-  templates hold little or no JS for CodeQL to build. `viavitae-web`, `viavitae-demos` and
-  `viavitae-brand` report `success` for the same leg, so this is a landing-tier defect, not a
-  CodeQL outage. Consequence: code scanning results for those ten repos are absent from the
-  dashboard while the badge looks green. Either fix the leg or drop the language from the
-  matrix per repo; do not add it as a required context while it fails.
-- **P1-20 — `viavitae-web` still carries the lying aggregate gate, on purpose.** After this
-  session's rollout, one repo is left: `viavitae-web/.github/workflows/ci.yml`. Its
-  `ci-status` job still counts failures by grepping `toJSON(needs)` text, so it reports
-  `success` while `Lint` and `Unit + contract tests` fail on the PR. Patching the gate alone
-  would freeze merges on the public charity site until those two legs are repaired, so the
-  order is a decision for the owner, not a side effect of a script:
-  `REPOS="viavitae-web" APPLY=1 ./scripts/rollout_aggregate_gate.sh` (fix Lint/Unit first,
-  or accept the freeze). Verified state of that repo's `main`: JS CodeQL leg `success`,
-  `CI status`/`Compliance status` `success` — so on `main` the gate is currently telling the
-  truth by luck; the lie only appears on PRs with red legs.
-- **P1-17 — Real, previously invisible test failures in `viavitae-web` and `viavitae-qa`.**
-  Now that CI actually starts: `viavitae-web` fails `Lint` and `Unit + contract tests`;
-  `viavitae-qa` fails `Lint`, `Typecheck`, `Playwright @smoke`, `axe accessibility scan` and
-  `Dependency scan (Trivy)`. These predate this remediation (the workflows had not run since
-  the allow-list broke them). Fix them before restoring `CI status` in `viavitae-qa` (P1-13)
-  or raising approval counts back to 1 (P1-10), otherwise those repos simply re-freeze.
-- **P1-15 status after rollout (2026-10-15): 16 of 17 fragile aggregate gates replaced.**
+  - **What an apply actually writes, measured rather than inferred.** The plan is 26 imports,
+    46 creates, 27 updates, **0 destroys**. The updates are visible per attribute:
+    `delete_branch_on_merge` false→true and `has_projects` true→false on 25 repos,
+    `has_wiki` true→false on 22, the org `allowed_actions_config` (the two `pnpm/action-setup`
+    pins from P1-3), one repo `description`, and the `protect-main` ruleset gaining
+    `provenance` as a required status check with `strict` false→true.
+    The 20 classic protections are **creates**, so the plan shows no before/after for them and
+    *cannot* show their drift. Each planned document was therefore compared field by field with
+    `GET /repos/{o}/{r}/branches/main/protection`:
+
+    | attribute | repos | direction |
+    |---|---|---|
+    | `required_linear_history` | 13 | false→true (tightening) |
+    | `dismiss_stale_reviews` | 1 (`viavitae-qa`) | false→true (tightening) |
+    | everything else | 6 repos identical | no change |
+
+    **Nothing is loosened by an apply.** The 13 are `viavitae-web`, `viavitae-template`,
+    `viavitae-demos` and the ten landings; the module declares `true` (see
+    `modules/repo/branch_protection.tf`), and since every repo merges by squash this only
+    forbids merge commits, not existing history.
+    Org level: `dependabot_alerts_enabled_for_new_repositories`,
+    `dependabot_security_updates_enabled_for_new_repositories` and
+    `dependency_graph_enabled_for_new_repositories` go false→true (currently off live);
+    secret scanning, push protection and advanced security for new repos stay `false` because
+    that is already the live value; `billing_email` matches live; `email`, `name`, `blog`,
+    `description`, `location`, `twitter_username` and `company` are planned as `null`, i.e. the
+    provider does not send them, so the org profile address set today survives the apply.
+  - Reviews, code-owner flags, `enforce_admins` and required contexts all match live after
+    P1-10/P1-13 (`protection contexts: match=20 mismatch=0 fetch_errors=0`).
+  - The new `provenance` required check is **satisfiable**: the job is named `provenance` in
+    `.github/workflows/provenance.yml`, and it reports on 5/5 recent PRs to this repo. Note the
+    live ruleset has `bypass_actors: []`, so if that workflow ever stops firing, merges into
+    `viavitae-control` are blocked for admins too — the check is a real dependency, not decoration.
+  - Method warning, because it produced a false finding here first: live protection flags are
+    objects (`{"enabled": false}`), so `bool(live["lock_branch"])` is **always true** and the
+    API names are `allow_force_pushes`/`allow_deletions`, not the provider's
+    `allows_*`. An unsuspicious comparison using those two readings "proved" that an apply
+    would unlock all 20 branches. Unpacking `enabled` and matching the real key names reversed
+    it. Any future drift comparison must read `.enabled`, never the container.
+  **No apply was run.** The plan was saved to a `0600` file and read only; `terraform apply`
+  still needs an explicit owner statement (AI_WORKFLOW_POLICY §"plan-only authority").
+- **P1-19 — CodeQL's `Analyze (javascript-typescript)` leg failed on `main` in all ten
+  `viavitae-landing-*` repos, invisibly. CLOSED.** Measured 2026-10-15 before the fix: the JS/TS
+  leg concluded `failure` while `CI status`/`Compliance status` were `success`, because that leg
+  is not in their required contexts. Cause, proven rather than guessed: each landing contains
+  **0 JavaScript/TypeScript files** (`find` over a clean clone: `py=1 js=0` for all ten) while
+  `codeql.yml` asserted `matrix.language: ["python", "javascript-typescript"]` and, in addition,
+  a workflow-level `CODEQL_LANGUAGES` env that nothing read — two sources of truth, one of them
+  false, including the header comment claiming those were "the two languages present across
+  ViaVitae repositories". `viavitae-api` carries the same file and passes because it really has
+  both languages (`py=104 js=1`), which is what isolated the defect to the landing tier.
+  Fix: port the `detect` job that `viavitae-template` already uses — languages are listed from
+  the files present, `analyze` builds its matrix with `fromJson(needs.detect.outputs.languages)`,
+  and a repo with no scannable source completes as a no-op instead of failing. Detection was
+  chosen over deleting `javascript-typescript` from the list, because deleting it silently loses
+  coverage the day someone adds a script. Delivered by
+  `scripts/patch_codeql_detect.py` + `scripts/rollout_workflow_patch.sh` as ten PRs (each repo's
+  `#5`), merged only after that repo's own required contexts passed (`merged=10 held=0`).
+  Verified on `main` afterwards: `Detect languages=success`, `Analyze (python)=success`, the JS
+  leg is absent, and **0 failing check runs** on all ten repos. Action pins unchanged; no landing
+  requires an `Analyze (...)` context, so removing a leg could not freeze merges.
+- **P1-20 — `viavitae-web` carried the lying aggregate gate. CLOSED, in the safe order.**
+  The owner choice recorded in the previous revision of this entry was real: patching the gate
+  alone would have frozen merges on the public charity site, because its `Lint` and
+  `Unit + contract tests` legs were failing underneath. The order taken was repair first, then
+  gate. `viavitae-web` PR #33 fixed both legs (see P1-17 for the causes), PR #35 then replaced
+  the verdict, and both merged with all checks green. `main` now computes the verdict from
+  `GATE_BAD: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}`;
+  the `toJSON(needs)` line survives only as a log line, not as the decision. A re-scan of every
+  populated repo reports **0** files containing the fragile matcher.
+  Honest limit: the new verdict has been observed to pass over a green run, not yet observed to
+  *fail* over a red one, because nothing in the org is currently red. Its behaviour is the
+  documented `contains()` semantics plus the patcher's refusal checks, and P1-15's test suite
+  covers the matcher replacement.
+- **P1-17 — Red legs on `main`, now attributed and mostly repaired.** These were invisible only
+  because CI had not started since the allow-list broke it (P1-11/P1-3), and because in both
+  repos the failing legs are not required contexts.
+  - `viavitae-web` failed `Lint` and `Unit + contract tests`. Two causes, found by reproducing
+    them locally (pnpm 9.15.0 via `packageManager`): Dependabot PR #19 had bumped `vitest`
+    2.1.0 → 4.1.11 while `@vitest/coverage-v8` stayed 2.1.9 and `vite` stayed 5.4.21, and
+    vitest 4 requires vite ≥ 6, so every run aborted at startup with
+    `ERR_PACKAGE_PATH_NOT_EXPORTED: ./module-runner`; and `prettier --check` rejected four
+    markdown files whose published addresses grew wider in the contact sweep — **that part was
+    caused here**. Fixed in PR #33 by reverting to the coherent 2.1.x pair
+    (`pnpm install --lockfile-only` now reports 0 unmet peers) and reformatting. `main` after:
+    `Lint`, `Unit + contract tests`, `Build`, `Contract check`, axe and `CI status` all success.
+    A coordinated vitest-4 + vite-6 upgrade remains available if the team wants it; a half
+    upgrade is worse than either state.
+  - `viavitae-qa` failed `Lint` and `Typecheck`. Three independent causes, each verified
+    against the pre-sweep commit `3ace752` so the blame is accurate: Dependabot PR #11 bumped
+    `@faker-js/faker` 9.9.0 → 10.5.0, which renamed `internet.userName()` to
+    `internet.username()` (the compiler names the replacement; only one caller, in the donor
+    fixture generator); `prettier --check` could never pass because it formats
+    `pnpm-lock.yaml`, a generated file; and `markdownlint --ignore node_modules` is not
+    recursive, so it linted the vendored markdown under `fixtures/node_modules/` and
+    `performance/node_modules/` — a latent third failure that only became reachable once the
+    first two were fixed, because the repo's `lint` script chains the commands. Fixed in PR #19
+    (add `.prettierignore` for lockfiles, use `--ignore '**/node_modules/**'` in both
+    `package.json` and `ci.yml`, rename the faker call, reformat four files that this session
+    changed). `main` after: `Lint`, `Typecheck`, `Unit tests` success.
+  - Still red, for reasons that are not code defects: see P1-16 (`Dependency scan (Trivy)`,
+    11 alerts) and P1-22 (`Playwright @smoke`, `axe accessibility scan`).
+  - Structural note explaining why none of this ever blocked anything: `viavitae-qa`'s `ci.yml`
+    has **no aggregate `CI status` job at all** (its jobs are lint/typecheck/unit/sast/
+    dependency-scan) and its only required context is `Compliance status`, which lives in a
+    different workflow. So no CI leg of that repository can block a merge. Restoring a gate
+    there means adding the aggregate job (the `viavitae-template` shape) and then declaring it —
+    a compliance decision about which contexts to require, not a mechanical fix.
+- **P1-15 status (2026-10-15): 17 of 17 fragile aggregate gates replaced. CLOSED.**
   Fixed at source in `viavitae-template` and `.github`'s reusable workflow, then rolled out to
   `viavitae-infra` (ci.yml **and** codeql.yml), `viavitae-brand`, `viavitae-api`,
   `viavitae-docs`, `.github` and the ten `viavitae-landing-*` repos — 15 PRs, each merged only
   after its own required contexts (`CI status`, `Compliance status`) reported SUCCESS; the
-  rollout skipped nothing (`merged=15 held=0`). Re-scan of every populated repo's workflows
-  shows exactly one residual fragile file: `viavitae-web/.github/workflows/ci.yml` (P1-20).
+  rollout skipped nothing (`merged=15 held=0`), and `viavitae-web` followed (PR #35) as soon as
+  its red legs were repaired — 16 PRs in total. A re-scan of every populated repo's workflows
+  now reports **0** files containing the `"result":"failure"` text matcher.
   Tooling: `scripts/patch_aggregate_gate.py` is content-anchored (it matches the step that
   greps the JSON, not a step name — `codeql.yml` names its step `Evaluate CodeQL gates`),
   refuses to write if the patched YAML will not parse or if a fragile matcher survives, keeps
@@ -299,6 +391,37 @@ repo visibility or rotate credentials automatically. The following need explicit
   dry-run by default and pushes nothing unless `APPLY=1` — an earlier revision pushed in
   dry-run while claiming not to, which is exactly the failure mode this register exists to
   catch.
+- **P1-21 — three dependency majors reached `main` broken, because nothing reacted to them.**
+  `viavitae-web` PR #19 (vitest 2→4, incompatible with the pinned vite 5) and `viavitae-qa`
+  PR #11 (faker 9→10, renamed API) both merged with a red result and a green `CI status`, and
+  the third case is quieter still: `pnpm-lock.yaml` has never been satisfiable by
+  `prettier --check` in `viavitae-qa`, so `Lint` was red from the day it was written. The
+  verdict bug is fixed (P1-15/P1-20); the process gap is not. Two owner decisions close it:
+  require `CI status` where an honest aggregate exists (and create one in `viavitae-qa`, which
+  has none — P1-17), and group peer-coupled dependencies in each repo's `dependabot.yml` so a
+  bump PR carries `vitest`+`@vitest/*`+`vite` (and `playwright`+`@playwright/test`) together
+  instead of resolving one half of a contract. Neither was changed here: dependabot config
+  edits alter what lands in production unattended.
+- **P1-22 — `viavitae-qa`'s browser and load gates cannot run: the environment is configured
+  but has no variables.** `GET /repos/Via-Vitae/viavitae-qa/actions/variables` returns
+  `total_count: 0` while a `staging` environment exists, so every `${{ vars.STAGING_* }}` and
+  `${{ vars.BASE_URL_DEMO_* }}` expands to empty. Consequences, both observed: `pr-smoke.yml`
+  fails its health check (`/health returned 000000`, i.e. curl given a blank URL) so
+  `Playwright @smoke` and `axe accessibility scan` are red on every PR; `nightly-e2e.yml` does
+  the same check but as a gated job, emits `staging-up=false` as a *warning*, and skips its
+  entire matrix — so a workflow named "Nightly e2e" has reported `success` while testing
+  nothing, on eight consecutive runs (2026-10-06…15, which were `startup_failure` for the
+  allow-list reason, then skipped). Verified by dispatching it manually today: `success` with
+  every real job skipped.
+  Correction to a claim made earlier in this session: "the nightly e2e suite itself passes" was
+  wrong — it never ran. The correct statement is that no Playwright/axe/k6/Lighthouse evidence
+  exists for `viavitae-qa` today, and the org's published assurance about e2e coverage should be
+  read as unmet until staging exists.
+  Not "fixed" here deliberately: making `pr-smoke` skip the way `nightly-e2e` does would turn a
+  loud absence of evidence into a quiet one, which is the pattern this register exists to
+  record. The fix is provisioning: deploy a staging API+web pair, set `STAGING_API_URL`,
+  `STAGING_WEB_URL` and the `BASE_URL_DEMO_*` variables on the `staging` environment, after which
+  both workflows work unchanged. Owner decision (infra spend), tracked as day-2 work.
 
 ## 3. Staged remediation roadmap
 
@@ -311,14 +434,23 @@ repo visibility or rotate credentials automatically. The following need explicit
    repos (P1-8).
    **Done 2026-10-15:** P1-7 (all 26 public repos clean, 0 remaining), P1-8 (PVR on all 26
    public repos), P1-1 (2FA already enforced), P1-3 (allow-list corrected + declared),
-   P1-10 (reconciled to declared), P1-11 (CI restored), P1-14, P1-15 at source.
+   P1-10 (reconciled to declared), P1-11 (CI restored), P1-14, P1-15 (17/17 repos, verified 0
+   residual), P1-19 (landings' CodeQL legs), P1-20 (web's gate), P1-12 (state restored, `0600`),
+   P1-13 (contexts declarable and matching live 20/20), P1-17 (web and qa `Lint`/`Typecheck`).
 2. **Day 0a (before any other change): restore state (P1-12).** Nothing in this control plane
    is reconcilable while `terraform.tfstate` is absent; decrypt the newest age backup, then
    `terraform init` and read a real plan before touching protection, contexts or the review
    count from here.
-3. **Day 0b: make the gates honest again.** Apply `scripts/patch_aggregate_gate.py` per repo
-   (P1-15, 17 repos), restore `CI status` in `viavitae-qa` (P1-13), fix the red jobs
-   (P1-17), clear the Dependabot alerts (P1-16).
+3. **Day 0b: make the gates honest again. — DONE for the verdicts; three items remain.**
+   `scripts/patch_aggregate_gate.py` is applied in all 17 repos and no fragile matcher survives.
+   Still open, in dependency order:
+   a. give `viavitae-qa` an aggregate job and require it (P1-17) — until then nothing in that
+      repo's CI can block a merge;
+   b. decide which required contexts to declare where a gate is honest but optional, and group
+      peer-coupled dependencies so majors land complete (P1-21);
+   c. clear the 59 Dependabot alerts by merging the 17 open bump PRs, patch-level security
+      fixes first (P1-16), and provision `viavitae-qa` staging so its browser/load gates run
+      instead of failing or silently skipping (P1-22).
 4. **Stage 1 (Team upgrade):** finish flipping sensitive repos private; private-repo
    branch protection activates automatically via the feature flag.
 5. **Stage 2 (grow the team):** enroll 2FA on `IterVitae`, accept the invitation as

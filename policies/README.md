@@ -26,7 +26,7 @@ them by `var.enable_sso` / plan tier, and record the residual gap in
 `docs/COMPLIANCE.md`. This keeps the control plane honest under audit.
 
 All scripts default to **dry-run**; pass `--apply` to make changes. Before using the write
-mode of `update_contact_emails.sh`, run `scripts/test_contact_email_gates.sh` (12
+mode of `update_contact_emails.sh`, run `scripts/test_contact_email_gates.sh` (14
 assertions over the gates) and `scripts/update_contact_emails.sh --check-residue`, which
 rehearses every gate org-wide and reverts without pushing.
 
@@ -42,6 +42,9 @@ non-2xx is reported per repo and the script exits non-zero.
 | `scripts/test_contact_email_gates.sh` | Regression-tests the sweep's safety gates (rule firing, leak alarm, `email-allow`, append-only and placeholder exclusions) | read-only — never invokes the write mode; clones into `$WORK` only |
 | `scripts/reconcile_branch_protection.sh` | Reconcile live branch protection to the **declared** review model (approvals, code-owner) without deleting the PR requirement | dry-run by default; `--apply` writes, then re-reads each repo to verify |
 | `scripts/patch_aggregate_gate.py` | Repair an aggregate CI gate that decides its verdict by grepping `toJSON(needs)` text (blind if the JSON is spaced) | edits a local clone only; you open the PR |
+| `scripts/patch_codeql_detect.py` | Replace a hard-coded CodeQL `matrix.language` list with the `detect` job already used by `viavitae-template`, so an absent language cannot fail a leg | refuses to write if the YAML will not parse or a literal survives; idempotent; edits a local clone only |
+| `scripts/rollout_aggregate_gate.sh` | Open the gate repair as one PR per repo | dry-run by default; `APPLY=1` pushes a branch and opens the PR; merging stays manual |
+| `scripts/rollout_workflow_patch.sh` | Same harness, generalised: any patcher (`PATCHER=`) with a branch, title, body and an optional `VERIFY_ABSENT` pattern | dry-run by default; `APPLY=1` pushes and opens PRs; never merges, never touches `main` |
 | `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 

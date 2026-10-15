@@ -155,9 +155,17 @@ Re-measured 2026-10-15 (this paragraph was stale — see `docs/COMPLIANCE.md` P1
   serial 13, 9 managed resources: 6 repositories, the org Actions permission, one branch
   protection, one Dependabot-updates resource). It is **not** in an S3 backend, and there is
   no locking — see `state/README.md` and P1-4/P1-12/C13c.
-- `terraform apply` has **not** been run in this work. The current plan is readable and
-  contains **0 destroys**; its remaining effect is a tightening (required linear history on
-  13 repos, `provenance` as a required check on this repo's ruleset) — see P1-18.
+- `terraform apply` has **not** been run in this work. The current plan is readable and contains
+  **0 destroys** — 26 imports, 46 creates, 27 updates. Because the 20 classic protections arrive
+  as *creates*, the plan cannot show their drift, so each planned document was compared field by
+  field with the live API instead: an apply writes `required_linear_history` true on 13 repos and
+  `dismiss_stale_reviews` true on `viavitae-qa`, leaves 6 repos identical, and **loosens nothing**.
+  Visible updates also include `delete_branch_on_merge` on and `has_projects`/`has_wiki` off for
+  22–25 repos. At org level it turns **on** Dependabot alerts, security updates and the dependency
+  graph for new repositories (currently off), and adds `provenance` as a required status check on
+  this repo's `protect-main` ruleset — verified satisfiable (the check reports on 5/5 recent PRs),
+  and note the ruleset has no bypass actors, so that workflow becoming disabled would block merges
+  here for admins too. See P1-18 for the method and the full table.
 - Published contact channels are all plus-addressed streams now (P1-7 closed, P1-8 closed:
   private vulnerability reporting on 26/26 public repos).
 - Peer review is currently **0 approvals** on every repo, because the org has one member and
