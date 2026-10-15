@@ -340,21 +340,26 @@ populated repo (the file is edited in place, never replaced by a PR-generated co
 
 ## Task 3: Org-level settings (live writes — needs authorization)
 
-- [ ] **Step 0: Locate the state before touching it.** This working copy has **no**
-  `terraform.tfstate` and **no** `.terraform/` directory (verified with `ls`), while
-  `docs/COMPLIANCE.md` states that state holds 5 repositories. Planning from an empty or
-  absent state would propose recreating org resources, and `apply` of that plan would be a
-  destructive event dressed up as an email change.
+- [ ] **Step 0: Locate the state before touching it.** Verified on 2026-10-15: this working
+  copy has **no** `terraform.tfstate`, **no** `.terraform/`, **no** `backend.tf`, and no
+  `backend` block in any committed `*.tf`. The only backend definition is the ignored
+  `state/backend_s3.tf.example`. The state itself exists as age-encrypted backups:
+  `/opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.20261013T190752Z.age` and
+  `…T191400Z.age` (key: `~/.config/age/state-backup-key.txt`), both predating this work.
+
+Planning from an absent state would build a fresh one and propose **creating** ~30 repos
+plus their protections and org settings — a destructive event dressed up as an email change.
 
 ```bash
-ls -la terraform.tfstate .terraform 2>&1 | head
-find /opt/viavitae -maxdepth 3 -name 'terraform.tfstate' 2>/dev/null
-terraform init                        # backend as declared in provider.tf / backend.tf
+ls -la terraform.tfstate .terraform backend.tf 2>&1 | head
+ls -la /opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.*.age
+# restore newest, then initialise against the declared backend:
+# age -d -i ~/.config/age/state-backup-key.txt <newest>.age > terraform.tfstate
+terraform init
 ```
 
-**STOP and report** if no state is found, or if `backend.tf` is absent while
-`state/backend_s3.tf.example` is uncopyied. Do not `terraform init -force` and do not
-import state into a new backend as part of this change.
+**STOP and report** if the restore is not explicitly authorized, or if `plan` shows any
+`to add`. Do not `terraform init -force`, and do not migrate backends as part of this change.
 
 - [ ] **Step 1: Org profile contact email.**
 
@@ -491,8 +496,8 @@ which it was not before (it only ran inside the write mode).
 
 | finding | measured | effect |
 |---|---|---|
-| P1-10 | 19 repos require 1 approving review, `enforce_admins=true`; org has one member; `IterVitae` has an **unaccepted admin invitation** | 17 PRs sit at `REVIEW_REQUIRED` and **cannot be merged by the author**; this is the lockout the peer-review runbook warns about, already live |
-| P1-11 | `viavitae-web`, `viavitae-demos`, `viavitae-qa`: their `CI`/`Compliance check` runs end in `startup_failure` (no check runs, empty jobs list, 404 annotations), and a scheduled run on 2026-10-12 failed the same way | 3 PRs are `BLOCKED` even with a review — required contexts can never report |
+| P1-10 | 19 repos require 1 approving review, `enforce_admins=true`; org has one member; `IterVitae`'s admin invitation (2026-10-12) is **unaccepted** | 19 PRs sit at `REVIEW_REQUIRED`. Provisioning the reviewer was **attempted and reverted**: 20 per-repo `push` invitations were created, then acceptance failed with `403 "The Via Vitae organization requires all members to have two-factor authentication enabled"` — the second account has no 2FA. All 20 invitations were revoked; `permission=read` and no pending invitations remain. **No `--admin` bypass and no `enforce_admins` change was used** |
+| P1-11 | `viavitae-web`, `viavitae-demos`, `viavitae-qa`: `CI`/`Compliance check` runs end in `startup_failure` (0 check runs, empty jobs, no logs, annotations 404). `viavitae-qa#18` proves reviews are not the cause: it needs **0** reviews and is still `BLOCKED` with `statusCheckRollup = []` | 3 PRs cannot merge regardless of reviewer provisioning. Cause **not determined**: four theories were tested and refuted (unresolvable pins — only `viavitae-api` has any and its CI passes; the Actions allow-list — byte-identical between failing and passing repos; duplicate YAML keys / `needs:` on unknown jobs — strict parse of all 21 repos clean; reusable-workflow reference into the empty `viavitae-reusable-workflows` repo — no such reference exists). GitHub renders the message only in the run page |
 
 No merge was forced. `gh pr merge --admin` and relaxing `enforce_admins` were both
 rejected as options: the finding being remediated is that published controls were untrue,
