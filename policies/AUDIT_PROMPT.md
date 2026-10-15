@@ -93,7 +93,12 @@ terraform providers schema -json | jq '.provider_schemas | keys'
 
 **Pass criteria:**
 - Logged in as `JourneyOfLife` (or authorized agent)
-- Token scopes include `admin:org`, `repo`, `workflow`
+- The interactive credential can read organization settings (`admin:org` on a
+  classic PAT, or Organization administration: read-only on a fine-grained PAT).
+  That credential belongs to THIS gate only: the CI credential is a separate,
+  read-only fine-grained PAT, and copying this one into a repository secret is a
+  finding in itself. Contract: provider.tf; CI enforcement:
+  scripts/check_ci_credential.sh.
 - Terraform version matches `.terraform-version`
 - Org is `Via-Vitae` (not `journeyoflife-org`)
 
