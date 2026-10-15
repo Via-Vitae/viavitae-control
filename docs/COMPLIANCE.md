@@ -96,10 +96,29 @@ repo visibility or rotate credentials automatically. The following need explicit
   repos and drop the PGP claim until a key with a published fingerprint exists.
 - **P1-9 — Email-segmentation policy is not yet on `main`.** `policies/EMAIL_POLICY.md`,
   `policies/viavitae-gmail-filters.xml`, the README address table and the
-  `terraform.tfvars.example` note are **untracked/modified locally only**
-  (`git status --porcelain`), verified against `git ls-tree HEAD policies/` which
-  lists no `EMAIL_POLICY.md`. Until this lands, the org has no published role-address
-  mapping and the Gmail filters that make plus-addressing operational do not exist.
+  `terraform.tfvars.example` note were **untracked/modified locally only**
+  (`git ls-tree HEAD policies/` listed no `EMAIL_POLICY.md`). **Closed 2026-10-15** by
+  PR #15 (squash-merged to `main`); the org sweep PRs now cite a policy that exists.
+- **P1-10 — Change approval is deadlocked, and drifted from the declared config.**
+  Measured 2026-10-15: 19 of 21 populated public repos require **1 approving review**
+  with `enforce_admins=true` (`viavitae-qa` requires 0), while `variables.tf` and
+  `terraform.tfvars.example` declare **0**. The org has one member
+  (`gh api orgs/Via-Vitae/members` → `JourneyOfLife`); `IterVitae` holds an **admin
+  invitation that was never accepted**, so nobody but the author can approve and **no PR
+  in those 19 repos can merge**. This is the single-member lockout that
+  `policies/restore_peer_review.md` warns about, already in effect. Resolve by accepting
+  the invitation (web UI, as `IterVitae`) **or** by reconciling the live count back to the
+  declared `0` via Terraform — do not merge with an admin bypass.
+- **P1-11 — Required status checks can never report in 3 repos.** `viavitae-web`,
+  `viavitae-demos` and `viavitae-qa` require contexts (`CI status`, `Compliance status`,
+  `Action SHA pinning`, `Governance files`) whose workflows end in **`startup_failure`**,
+  so no check run is produced (verified: `gh run list --branch <sweep>` shows
+  `startup_failure`; the check-run annotations endpoint returns 404 and the jobs list is
+  empty because the workflow never started). Pre-existing, not caused by the sweep: a
+  scheduled `Compliance check` run on 2026-10-12 failed identically. Consequence: **any**
+  PR in those repos is permanently `BLOCKED`. Triage from the Actions run page (the API
+  exposes no log for a startup failure), then re-run the gate rehearsal in
+  `scripts/test_contact_email_gates.sh`.
 
 ## 3. Staged remediation roadmap
 

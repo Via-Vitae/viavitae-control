@@ -76,7 +76,9 @@ Only run `terraform apply` after reviewing the plan and the staged rollout in
 4. **Detect shadow repos:** `scripts/detect_drift.sh` (wire into CI).
 5. **Refresh inventory:** `scripts/generate_inventory.sh` (merge the diff by PR).
 6. **Re-point published contact addresses:** `scripts/update_contact_emails.sh`
-   (dry-run by default; `--diff` to preview, `--apply` to open one PR per repo).
+   (dry-run by default; `--diff` to preview, `--check-residue` to rehearse every gate
+   without pushing, `--apply` to open one PR per repo). Safety gates are regression-
+   tested by `scripts/test_contact_email_gates.sh`.
 
 ## Communication addresses
 
