@@ -9,6 +9,14 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    # Job-level ceiling (P1-13). A healthy run costs about two minutes: fmt, init, validate,
+    # a plan whose org read takes ~9s, and the drift check. Set at the job level rather than on
+    # the `Terraform plan` step because this project's gates are `run:` steps, and step-level
+    # timeouts are only reliably honoured on action (`uses:`) steps. Without this, a credential
+    # that cannot read the org makes the provider retry until it gives up, and every push burns
+    # ~20 minutes of free-plan minutes to produce the same red check (observed 2026-10-12 and
+    # 2026-10-13 at 20m07s and 20m08s). Fail fast, and let the log name the cause.
+    timeout-minutes: 15
     env:
       # Bridge secret to env var — `secrets` context is not available in `if:`
       # conditionals (GitHub Actions limitation), but env vars are.

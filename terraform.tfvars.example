@@ -26,6 +26,13 @@ branch_require_code_owner_reviews      = false
 branch_enforce_admins                  = true
 branch_require_last_push_approval      = false
 
+# Status checks that must pass before merge. WARNING: [] combined with
+# branch_required_status_checks_strict = true gates NOTHING - strictness over an
+# empty list is a no-op. 20 of the 21 classic-protected repos currently carry 2-5
+# live required contexts, so leaving this empty and applying removes that gate.
+# Populate from audit-evidence/live-branch-protection-<date>.txt before applying.
+branch_required_status_checks_contexts = []
+
 # --- Allowed Actions policy --------------------------------------------------
 actions_allowed_mode = "selected"   # all | selected | disabled
 # actions_allowed_patterns = [ ... ]  # see variables.tf defaults

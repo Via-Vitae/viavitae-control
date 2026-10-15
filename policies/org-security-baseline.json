@@ -1,0 +1,33 @@
+{
+  "org": "Via-Vitae",
+  "recorded_at": "2026-10-12T15:52:59Z",
+  "recorded_by": "architects@via-vitae.com",
+  "repo_commit": "3f8fd40605f5535c6b7587e3972901b20817ca36",
+  "source": "GET /orgs/Via-Vitae",
+  "settings": {
+    "two_factor_requirement_enabled": true,
+    "default_repository_permission": "read",
+    "default_repository_branch": "main",
+    "members_can_delete_repositories": true,
+    "members_can_change_repo_visibility": true,
+    "members_can_create_repositories": true,
+    "members_can_create_public_repositories": true,
+    "members_can_create_private_repositories": true,
+    "members_can_create_internal_repositories": "absent",
+    "members_can_fork_private_repositories": "absent",
+    "members_can_invite_outside_collaborators": true,
+    "members_can_create_teams": true,
+    "web_commit_signoff_required": "absent",
+    "deploy_keys_enabled_for_repositories": "absent",
+    "readers_can_create_discussions": true,
+    "advanced_security_enabled_for_new_repositories": "absent",
+    "dependabot_alerts_enabled_for_new_repositories": "absent",
+    "dependabot_security_updates_enabled_for_new_repositories": "absent",
+    "dependency_graph_enabled_for_new_repositories": "absent",
+    "secret_scanning_enabled_for_new_repositories": "absent",
+    "secret_scanning_push_protection_enabled_for_new_repositories": "absent",
+    "secret_scanning_validity_checks_enabled": "absent",
+    "plan.name": "free",
+    "billing_email": "journey4oflife+viavitae.github@gmail.com"
+  }
+}

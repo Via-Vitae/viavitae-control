@@ -23,7 +23,9 @@ terraform.tfvars.json
 secrets.*
 
 # --- Audit evidence (may contain sensitive values from plan output) ----------
-audit-evidence/terraform-plan.txt
+# Generated terraform plans stay out of the repo; only reviewed .md/.json evidence
+# is committed intentionally. Covers terraform-plan.txt and pre-apply-plan.txt.
+audit-evidence/*.txt
 
 # --- Python (legacy scaffold in this repo) -----------------------------------
 .venv/
@@ -36,3 +38,4 @@ Thumbs.db
 .idea/
 *.iml
 .vscode/
+audit-evidence/*.txt

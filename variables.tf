@@ -130,6 +130,20 @@ variable "branch_required_status_checks_strict" {
   default     = true
 }
 
+variable "branch_required_status_checks_contexts" {
+  description = <<-EOT
+    Status check contexts required before merge on classic-protected branches.
+    Defaults to empty, which preserves the previous plan exactly — but note that
+    `strict = true` over an empty context list gates nothing. As of the
+    2026-10-12 live read, 20 of the 21 classic-protected repos carry 2-5 required
+    contexts that this module cannot currently express; applying with the default
+    would remove those checks. Populate from the live values captured in
+    audit-evidence/ before applying, or move those repos onto rulesets.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "enable_dependabot_alerts" {
   description = "Enable Dependabot vulnerability alerts on managed repos."
   type        = bool

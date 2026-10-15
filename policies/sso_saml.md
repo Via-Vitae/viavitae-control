@@ -15,7 +15,7 @@ centrally-managed authentication for access to systems that process personal dat
 
 | Control | Enforceable on Free? | Mechanism |
 |---|---|---|
-| Org-wide 2FA requirement | **Yes** | REST `PATCH /orgs/{org}` — automated in `enforce_sso.sh` |
+| Org-wide 2FA requirement | **Yes (Free plan)** | **Organization Settings → Security page** — *not* settable via REST `PATCH /orgs/{org}`, which returns 200 and ignores the field (verified 2026-10-12). `enforce_sso.sh` detects and verifies by read-back only |
 | SAML SSO + IdP-managed access | **No** (Enterprise) | Manual IdP config; no OSS Terraform resource |
 | SCIM user provisioning | **No** (Enterprise) | Manual / IdP |
 

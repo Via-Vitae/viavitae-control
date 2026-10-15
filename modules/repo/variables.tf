@@ -109,6 +109,18 @@ variable "required_status_checks_strict" {
   default     = true
 }
 
+variable "required_status_checks_contexts" {
+  description = <<-EOT
+    Status check contexts that must pass before merging. An empty list means
+    "strict, but nothing is actually gated", which is weaker than declaring the
+    checks. Populate with the required check names each repo genuinely runs
+    (e.g. CI test/lint jobs); leaving it empty on a repo that has live required
+    checks silently removes that gate on apply.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "apply_private_branch_protection" {
   description = <<-EOT
     Whether branch protection may be applied to PRIVATE repos (requires GitHub
