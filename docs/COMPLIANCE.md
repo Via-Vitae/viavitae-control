@@ -260,12 +260,45 @@ repo visibility or rotate credentials automatically. The following need explicit
     status check on the `protect-main` ruleset. Reviews, code-owner, `enforce_admins` and
     required contexts all match live after P1-10/P1-13.
   **No apply was run.** The plan was saved to a `0600` file and read only.
+- **P1-19 — CodeQL's `Analyze (javascript-typescript)` leg fails on `main` in all ten
+  `viavitae-landing-*` repos, invisibly.** Measured 2026-10-15 on each landing repo's `main`
+  commit: the JS/TS leg concludes `failure` while `CI status` and `Compliance status` are
+  `success` — because that leg is **not** in their required contexts, and the repos' static
+  templates hold little or no JS for CodeQL to build. `viavitae-web`, `viavitae-demos` and
+  `viavitae-brand` report `success` for the same leg, so this is a landing-tier defect, not a
+  CodeQL outage. Consequence: code scanning results for those ten repos are absent from the
+  dashboard while the badge looks green. Either fix the leg or drop the language from the
+  matrix per repo; do not add it as a required context while it fails.
+- **P1-20 — `viavitae-web` still carries the lying aggregate gate, on purpose.** After this
+  session's rollout, one repo is left: `viavitae-web/.github/workflows/ci.yml`. Its
+  `ci-status` job still counts failures by grepping `toJSON(needs)` text, so it reports
+  `success` while `Lint` and `Unit + contract tests` fail on the PR. Patching the gate alone
+  would freeze merges on the public charity site until those two legs are repaired, so the
+  order is a decision for the owner, not a side effect of a script:
+  `REPOS="viavitae-web" APPLY=1 ./scripts/rollout_aggregate_gate.sh` (fix Lint/Unit first,
+  or accept the freeze). Verified state of that repo's `main`: JS CodeQL leg `success`,
+  `CI status`/`Compliance status` `success` — so on `main` the gate is currently telling the
+  truth by luck; the lie only appears on PRs with red legs.
 - **P1-17 — Real, previously invisible test failures in `viavitae-web` and `viavitae-qa`.**
   Now that CI actually starts: `viavitae-web` fails `Lint` and `Unit + contract tests`;
   `viavitae-qa` fails `Lint`, `Typecheck`, `Playwright @smoke`, `axe accessibility scan` and
   `Dependency scan (Trivy)`. These predate this remediation (the workflows had not run since
   the allow-list broke them). Fix them before restoring `CI status` in `viavitae-qa` (P1-13)
   or raising approval counts back to 1 (P1-10), otherwise those repos simply re-freeze.
+- **P1-15 status after rollout (2026-10-15): 16 of 17 fragile aggregate gates replaced.**
+  Fixed at source in `viavitae-template` and `.github`'s reusable workflow, then rolled out to
+  `viavitae-infra` (ci.yml **and** codeql.yml), `viavitae-brand`, `viavitae-api`,
+  `viavitae-docs`, `.github` and the ten `viavitae-landing-*` repos — 15 PRs, each merged only
+  after its own required contexts (`CI status`, `Compliance status`) reported SUCCESS; the
+  rollout skipped nothing (`merged=15 held=0`). Re-scan of every populated repo's workflows
+  shows exactly one residual fragile file: `viavitae-web/.github/workflows/ci.yml` (P1-20).
+  Tooling: `scripts/patch_aggregate_gate.py` is content-anchored (it matches the step that
+  greps the JSON, not a step name — `codeql.yml` names its step `Evaluate CodeQL gates`),
+  refuses to write if the patched YAML will not parse or if a fragile matcher survives, keeps
+  `id:`/`GITHUB_OUTPUT` wiring, and is idempotent. `scripts/rollout_aggregate_gate.sh` is
+  dry-run by default and pushes nothing unless `APPLY=1` — an earlier revision pushed in
+  dry-run while claiming not to, which is exactly the failure mode this register exists to
+  catch.
 
 ## 3. Staged remediation roadmap
 
