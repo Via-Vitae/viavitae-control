@@ -64,11 +64,13 @@ repo only.
 
 | Action | File | Responsibility |
 |---|---|---|
-| Create | `scripts/update_contact_emails.sh` | Mapping table, exclusions, residue gate, dry-run/`--diff`/`--apply` PR flow |
+| Create | `scripts/update_contact_emails.sh` | Mapping table, exclusions, residue gate, dry-run/`--diff`/`--check-residue`/`--apply` PR flow |
+| Create | `scripts/test_contact_email_gates.sh` | 12 read-only assertions over the sweep's safety gates; never invokes the write mode |
 | Modify | `policies/EMAIL_POLICY.md` | Role→artifact publication table, deliverability evidence, append-only + placeholder exclusions, `mai:email` exception, Phase 2 exit condition |
 | Modify | `README.md` | Corrects "never commit these addresses" to the real rule (public docs yes, Terraform state no); registers the script in day-2 workflow |
 | Modify | `policies/README.md` | Registers the script in the write-behaviour table |
-| Modify | `docs/COMPLIANCE.md` | Adds P1-7 (undeliverable channels), P1-8 (untrue `SECURITY.md` claims) and P1-9 (the email policy itself is still uncommitted); extends Day-0 roadmap |
+| Modify | `docs/COMPLIANCE.md` | Adds P1-7 (undeliverable channels), P1-8 (untrue `SECURITY.md` claims), P1-9 (policy uncommitted — closed by PR #15), P1-10 (review deadlock + drift) and P1-11 (required checks that can never report); extends Day-0 roadmap |
+| Modify | `policies/restore_peer_review.md` | Its "current state" was stale (claimed 0 required reviews everywhere and `IterVitae` a read-only collaborator); corrected to the measured 1-review lockout + pending admin invitation, with the live-state verify commands |
 | Modify (org) | 134 files in 20 repos | `SECURITY.md`, `SUPPORT.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `LICENSE`, `QODER.md`, `docs/DPIA-template.md`, `.github/ISSUE_TEMPLATE/bug_report.yml`, `profile/README.md`, `lib/constants.ts`, `tests/unit/constants.test.ts`, `k8s/ingress/cert-manager/cluster-issuer.yaml`, `policies/domain-policy.yaml`, `docs/runbooks/*` |
 | Never touched | `CHANGELOG.md`, `docs/adr/**`, `policies/viavitae-gmail-filters.xml` | Append-only evidence of the original finding; the filter archive's `mai:email` must stay the real account address |
 
@@ -448,6 +450,53 @@ every downstream clone for a metadata-only gain. Record the residue as accepted 
   with an out-of-band fingerprint exists.
 - [ ] Tracker already exists: `viavitae-infra` ADR-000 action item "Add MX records for
   `viavitae.site` and provision `security@viavitae.site` with a PGP key".
+
+---
+
+## Post-execution review (2026-10-15, after PR #15 landed)
+
+The operator re-ran the dry-run once `main` contained the policy, and it exposed **two
+defects in my own tooling** — both of the same kind: a gate that cannot tell a published
+contact from a documented mention of one.
+
+| defect | symptom | fix |
+|---|---|---|
+| leak gate matched the detector's own pattern | `BASE-INBOX LEAK in viavitae-control` on `scripts/update_contact_emails.sh:68` (`BASE_INBOX='journey4oflife@gmail.com'`), on `policies/EMAIL_POLICY.md`'s `mai:email` exception, and on this plan's own evidence rows | `DEFINITION_PATH_RE` — exempts the script, policy, `docs/COMPLIANCE.md`, `docs/superpowers/plans|specs/` and `README.md` **only inside `viavitae-control`**, plus an inline `email-allow` marker for deliberate mentions elsewhere |
+| sweep proposed rewriting its own mapping table | `viavitae-control 5 file(s)` including `scripts/update_contact_emails.sh` lines 41–42 (the `MAP` rules) and `README.md`'s "Why not `security@viavitae.com`?" — a self-mutating sweep that would silently disable itself | the exemption above **and** `SWEEP_SKIP_REPOS=viavitae-control` (applies only to auto-discovered repo sets; `--repos` still overrides it) |
+
+Scoping matters: another repo's `README.md` **does** publish a real contact and must stay
+in the sweep, and a base inbox pasted into any repo's `SECURITY.md` must still alarm. That
+is why the exemption is per-repo rather than a global path filter.
+
+Evidence after the fix (`scripts/test_contact_email_gates.sh`, `viavitae-landing-diocese`,
+throwaway clones, no writes):
+
+```
+T0 sweeper parses                    T1a address rule fired
+T1b sentence rule fired (PGP)        T1c no dead role address left in sample
+T2 DCO placeholder untouched         T3 planted base-inbox leak trips gate (exit 1)
+T4 email-allow marker honoured       T5 CHANGELOG.md excluded yet demonstrably named one
+T6 --diff leaves scratch tree clean  T7 placeholder residue does not block
+T8 unmapped address blocks gate      T9 --check-residue reverted its own edits
+=== gate tests PASSED ===  (exit 0)
+```
+
+Org-wide gate rehearsal — `--check-residue`, which runs the `--apply` gate path and
+reverts — over 20 repos / 134 files: `gates OK` 20 times, **0 residue and 0 leak alarms**,
+exit 0, with `viavitae-control` reported as skipped by policy. This is what proves the 20
+already-open PRs would each clear the gate; it also made the residue gate testable at all,
+which it was not before (it only ran inside the write mode).
+
+### Why the 20 PRs are still open
+
+| finding | measured | effect |
+|---|---|---|
+| P1-10 | 19 repos require 1 approving review, `enforce_admins=true`; org has one member; `IterVitae` has an **unaccepted admin invitation** | 17 PRs sit at `REVIEW_REQUIRED` and **cannot be merged by the author**; this is the lockout the peer-review runbook warns about, already live |
+| P1-11 | `viavitae-web`, `viavitae-demos`, `viavitae-qa`: their `CI`/`Compliance check` runs end in `startup_failure` (no check runs, empty jobs list, 404 annotations), and a scheduled run on 2026-10-12 failed the same way | 3 PRs are `BLOCKED` even with a review — required contexts can never report |
+
+No merge was forced. `gh pr merge --admin` and relaxing `enforce_admins` were both
+rejected as options: the finding being remediated is that published controls were untrue,
+and the fix cannot be a new instance of bypassing one.
 
 ---
 

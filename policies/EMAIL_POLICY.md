@@ -103,6 +103,18 @@ a key is generated **and** its fingerprint is published out of band.
    signed-in account. It is an account identifier for a local import, not a
    published contact channel. Do not "fix" it during an email sweep.
 
+   **Naming is not publishing.** The sweep distinguishes an address that is
+   *published as a contact channel* from an address that is *named as evidence or
+   as a definition*. Inside `viavitae-control` only, these paths are exempt from
+   both the rewrite list and the base-inbox leak gate: `scripts/update_contact_emails.sh`
+   (it contains the detector pattern and the mapping table — rewriting it would
+   neuter the tool while leaving the leak in place), `policies/EMAIL_POLICY.md`,
+   `docs/COMPLIANCE.md`, `docs/superpowers/plans|specs/`, and `README.md`. The
+   exemption is scoped per repo on purpose: another repo's `README.md` publishes a
+   real contact and is still swept, and a base inbox pasted into any repo's
+   `SECURITY.md` still trips the gate. An intentional mention outside those paths
+   carries an inline `email-allow` marker on its line.
+
 4. **Append-only evidence is never rewritten.** `CHANGELOG.md` entries and ADRs
    (e.g. `viavitae-infra/docs/adr/ADR-000-governance-sole-owner-four-eyes.md`)
    record that the old addresses **were** undeliverable. Substituting the new
@@ -120,7 +132,10 @@ a key is generated **and** its fingerprint is published out of band.
    carries the address table, the exclusions above, an append-only path filter,
    a base-inbox leak gate and a residue gate. It defaults to dry-run; `--diff`
    prints the patch without committing; `--apply` opens one PR per repo and never
-   pushes to `main`. Merging is **manual after a peer review** — this org has
+   pushes to `main`. `viavitae-control` is skipped by policy (`SWEEP_SKIP_REPOS`)
+   because its old strings are definitions, not contacts; passing `--repos
+   viavitae-control` overrides the skip but still protects the definition paths.
+   Merging is **manual after a peer review** — this org has
    `allow_auto_merge=false`, so `gh pr merge --auto` is refused; use
    `gh pr merge <n> -R Via-Vitae/<repo> --squash`. Commits are authored with
    `+viavitae.github` so a DCO sign-off line does not re-publish the base inbox.

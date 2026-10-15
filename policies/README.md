@@ -25,11 +25,15 @@ than pretend these are declarative, we implement them as reviewed scripts, gate
 them by `var.enable_sso` / plan tier, and record the residual gap in
 `docs/COMPLIANCE.md`. This keeps the control plane honest under audit.
 
-All scripts default to **dry-run**; pass `--apply` to make changes.
+All scripts default to **dry-run**; pass `--apply` to make changes. Before using the write
+mode of `update_contact_emails.sh`, run `scripts/test_contact_email_gates.sh` (12
+assertions over the gates) and `scripts/update_contact_emails.sh --check-residue`, which
+rehearses every gate org-wide and reverts without pushing.
 
 | Script (repo root) | Purpose | Write behaviour |
 |---|---|---|
-| `scripts/update_contact_emails.sh` | Sweep published contact addresses across every populated org repo to the `EMAIL_POLICY.md` streams | dry-run / `--diff` preview / `--apply` opens one PR per repo (never pushes to `main`) |
+| `scripts/update_contact_emails.sh` | Sweep published contact addresses across every populated org repo to the `EMAIL_POLICY.md` streams | dry-run / `--diff` preview / `--check-residue` gate rehearsal (reverts) / `--apply` opens one PR per repo (never pushes to `main`) |
+| `scripts/test_contact_email_gates.sh` | Regression-tests the sweep's safety gates (rule firing, leak alarm, `email-allow`, append-only and placeholder exclusions) | read-only — never invokes the write mode; clones into `$WORK` only |
 | `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 

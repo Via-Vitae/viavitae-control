@@ -17,7 +17,12 @@
 #   ./scripts/update_contact_emails.sh                        # report only
 #   ./scripts/update_contact_emails.sh --repos ".github viavitae-web"
 #   ./scripts/update_contact_emails.sh --diff                 # patch, no commit
+#   ./scripts/update_contact_emails.sh --check-residue        # run every gate, push nothing
 #   ./scripts/update_contact_emails.sh --apply                # branch + PR
+#
+# --check-residue rewrites in the scratch clone, runs the residue and leak gates
+# exactly as --apply would, then reverts. It is the only way to exercise the
+# residue gate without pushing, so scripts/test_contact_email_gates.sh uses it.
 #
 # Exit 0 on success; 1 if the residue gate finds a live-domain role address not
 # covered by the table (that means the table needs a rule, not a retry).
@@ -32,7 +37,9 @@ COMMIT_EMAIL="${COMMIT_EMAIL:-journey4oflife+viavitae.github@gmail.com}"
 COMMIT_NAME="${COMMIT_NAME:-JourneyOfLife}"
 APPLY=0
 DIFF=0
+CHECK=0
 REPOS=""
+REPOS_EXPLICIT=0
 
 # --- Mapping table: exact full-address literals only. ------------------------
 # Full addresses (never "@domain" patterns) so contributor placeholders such as
@@ -66,7 +73,27 @@ SENTENCE=(
 # policies/viavitae-gmail-filters.xml, whose mai:email attribute must equal the
 # real account address or Gmail refuses the import.
 BASE_INBOX='journey4oflife@gmail.com'
+
+# Paths that NAME an address instead of PUBLISHING it. Applied ONLY inside
+# viavitae-control, because there these strings are the tool's own detector, the
+# documented role mapping, and the evidence of the finding:
+#   - this script (its BASE_INBOX pattern and its MAP table are the detector; a sweep
+#     that rewrote them would neuter the tool and still leave the leak)
+#   - the policy/README that document the role mapping and the mai:email exception
+#   - plans/specs/COMPLIANCE, which record what the dead addresses were
+# Scoped per-repo on purpose: another repo's README.md publishes a real contact and
+# must still be swept, and a base-inbox leak there must still alarm.
+DEFINITION_PATH_RE='scripts/update_contact_emails\.sh$|policies/EMAIL_POLICY\.md$|docs/COMPLIANCE\.md$|docs/superpowers/(plans|specs)/|(^|/)README\.md$|viavitae-gmail-filters\.xml$'
+
+# Applied in every repo: the filter archive's account attribute must stay the real
+# address or Gmail refuses the import.
 BASE_INBOX_ALLOW='viavitae-gmail-filters\.xml$'
+
+# The control plane is not a published contact surface: in this repo the old
+# strings are the mapping table and the audit narrative, so sweeping it would
+# rewrite its own rules. It is skipped unless passed explicitly to --repos, and
+# even then DEFINITION_PATH_RE above still protects the definitions.
+SWEEP_SKIP_REPOS="${SWEEP_SKIP_REPOS:-viavitae-control}"
 
 # Addresses deliberately NOT rewritten (placeholders, sample tenant data, other
 # legal entities). Used by the residue gate to separate "intentional" from
@@ -77,7 +104,7 @@ KEEP_RE='you@viavitae\.(com|site|eu)|author@viavitae\.eu|approver@viavitae\.eu|@
 # these addresses WERE undeliverable (viavitae-infra ADR-000); substituting the new
 # value into that narrative would falsify the audit trail — it is the fix history of
 # the very finding being remediated. Follow-up entries are added forward by hand.
-EXCLUDE_PATH_RE='(^|/)CHANGELOG\.md$|(^|/)docs/adr/|(^|/)node_modules/|(^|/)dist/|(\.lock|package-lock\.json|pnpm-lock\.yaml|yarn\.lock)$|gmail-filters\.xml$'
+EXCLUDE_PATH_RE="(^|/)CHANGELOG\\.md\$|(^|/)docs/adr/|(^|/)node_modules/|(^|/)dist/|(\\.lock|package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock)\$|viavitae-gmail-filters\\.xml\$"
 
 usage() { sed -n '/^# Usage:/,/^# Exit/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 2; }
 
@@ -88,17 +115,27 @@ filter_out_paths() {
   local exclude_re="$1" line path
   while IFS= read -r line; do
     path="${line%%:*}"
+    if printf '%s' "${line}" | grep -q 'email-allow'; then continue; fi
     if ! printf '%s' "${path}" | grep -qE "${exclude_re}"; then
       printf '%s\n' "${line}"
     fi
   done
 }
 
+# Compute the residue gate for the current repo: a live-domain role address that
+# no rule maps and no KEEP entry excuses. Echoes the offending lines.
+residue_lines() { # $1 = dir, $2 = repo_exclude
+  grep -rInIE '(security|dpo|legal|billing|privacy|platform|brand|info|support|hello)@viavitae\.[a-z]+' \
+    --exclude-dir=.git "$1" 2>/dev/null | sed "s#^$1/##" \
+    | filter_out_paths "$2" | grep -Ev "${KEEP_RE}" || true
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --apply) APPLY=1; shift ;;
     --diff) DIFF=1; shift ;;
-    --repos) REPOS="${2:?--repos takes a space-separated list}"; shift 2 ;;
+    --check-residue) CHECK=1; shift ;;
+    --repos) REPOS="${2:?--repos takes a space-separated list}"; REPOS_EXPLICIT=1; shift 2 ;;
     --org) ORG="${2:?--org needs a value}"; shift 2 ;;
     -h|--help) usage ;;
     *) echo "unknown argument: $1" >&2; usage ;;
@@ -158,13 +195,34 @@ if [[ -z "${REPOS}" ]]; then
   REPOS="$(gh api "orgs/${ORG}/repos?per_page=100" --jq '.[].name' | tr '\n' ' ')"
 fi
 
-repos_touched=0; files_touched=0; unmapped=0; leaked=0; skipped=()
+repos_touched=0; files_touched=0; unmapped=0; leaked=0; skipped=(); skipped_by_policy=()
+
+# Apply the policy skip list only when the repo set was discovered automatically.
+# If the operator names repos with --repos, that is an explicit override and is honored.
+if [[ ${REPOS_EXPLICIT} -eq 0 && -n "${SWEEP_SKIP_REPOS}" ]]; then
+  kept=()
+  for candidate in ${REPOS}; do
+    if [[ " ${SWEEP_SKIP_REPOS} " == *" ${candidate} "* ]]; then
+      skipped_by_policy+=("${candidate} (control plane: holds the mapping table and the audit narrative)")
+    else
+      kept+=("${candidate}")
+    fi
+  done
+  REPOS="${kept[*]:-}"
+fi
 
 printf '\n=== %s: contact-address remediation (%s) ===\n\n' "${ORG}" \
   "$(if [[ ${APPLY} -eq 1 ]]; then echo 'APPLY — PRs will be opened'; else echo 'DRY-RUN — nothing pushed'; fi)"
 
 for repo in ${REPOS}; do
   dir="${WORKDIR}/${repo}"
+  # Inside the control plane only, additionally protect the definitions/evidence.
+  repo_exclude="${EXCLUDE_PATH_RE}"
+  repo_leak_allow="${BASE_INBOX_ALLOW}"
+  if [[ "${repo}" == "viavitae-control" ]]; then
+    repo_exclude="${EXCLUDE_PATH_RE}|${DEFINITION_PATH_RE}"
+    repo_leak_allow="${BASE_INBOX_ALLOW}|${DEFINITION_PATH_RE}"
+  fi
   if [[ ! -d "${dir}/.git" ]]; then
     if ! git clone -q --depth 1 --single-branch "https://github.com/${ORG}/${repo}" "${dir}" 2>/dev/null; then
       skipped+=("${repo} (clone failed — empty repo or no access)"); continue
@@ -180,7 +238,7 @@ for repo in ${REPOS}; do
   # Base-inbox leak gate: published personal address is a finding, not a rewrite.
   leak="$(grep -rInIF "${BASE_INBOX}" --exclude-dir=.git "${dir}" 2>/dev/null \
            | sed "s#^${dir}/##" \
-           | filter_out_paths "${BASE_INBOX_ALLOW}" || true)"
+           | filter_out_paths "${repo_leak_allow}" || true)"
   if [[ -n "${leak}" ]]; then
     echo "      ! BASE-INBOX LEAK in ${repo} (publishes the personal address):" >&2
     printf '%s\n' "${leak}" | sed 's/^/        /' >&2
@@ -188,7 +246,7 @@ for repo in ${REPOS}; do
   fi
   # Drop append-only evidence and build artefacts before anything else.
   if [[ -n "${hits}" ]]; then
-    hits="$(printf '%s\n' "${hits}" | sed "s#^${dir}/##" | grep -vE "${EXCLUDE_PATH_RE}" || true)"
+    hits="$(printf '%s\n' "${hits}" | sed "s#^${dir}/##" | grep -vE "${repo_exclude}" || true)"
   fi
   if [[ -z "${hits}" ]]; then
     printf '%-34s clean\n' "${repo}"; continue
@@ -200,7 +258,7 @@ for repo in ${REPOS}; do
   repos_touched=$(( repos_touched + 1 ))
   files_touched=$(( files_touched + ${#files[@]} ))
 
-  if [[ ${APPLY} -eq 0 ]]; then
+  if [[ ${APPLY} -eq 0 && ${CHECK} -eq 0 ]]; then
     if [[ ${DIFF} -eq 1 ]]; then
       # Apply in the scratch clone only, show the patch, then revert it.
       python3 "${REWRITER}" "${TABLE}" "${files[@]/#/${dir}/}" >/dev/null
@@ -219,9 +277,21 @@ for repo in ${REPOS}; do
 
   python3 "${REWRITER}" "${TABLE}" "${files[@]/#/${dir}/}" >/dev/null
 
-  resid="$(grep -rInIE '(security|dpo|legal|billing|privacy|platform|brand|info|support|hello)@viavitae\.[a-z]+' \
-             --exclude-dir=.git "${dir}" 2>/dev/null | sed "s#^${dir}/##" \
-             | filter_out_paths "${EXCLUDE_PATH_RE}" | grep -Ev "${KEEP_RE}" || true)"
+  resid="$(residue_lines "${dir}" "${repo_exclude}")"
+
+  if [[ ${CHECK} -eq 1 ]]; then
+    # Gate rehearsal: report, revert, and never push.
+    if [[ -n "${resid}" ]]; then
+      echo "      ! UNMAPPED residue in ${repo} (would block --apply):" >&2
+      printf '%s\n' "${resid}" | sed 's/^/        /' >&2
+      unmapped=1
+    else
+      printf '      gates OK for %s\n' "${repo}"
+    fi
+    git -C "${dir}" checkout -q -- .
+    continue
+  fi
+
   if [[ -n "${resid}" ]]; then
     echo "      ! UNMAPPED residue in ${repo}:" >&2
     printf '%s\n' "${resid}" | sed "s#^${dir}/#        #" >&2
@@ -272,9 +342,13 @@ done
 
 printf '\n=== summary: %d repo(s) with changes, %d file(s); %d skipped ===\n' \
   "${repos_touched}" "${files_touched}" "${#skipped[@]}"
-if [[ ${#skipped[@]} -gt 0 ]]; then printf '  - %s\n' "${skipped[@]}"; fi
-if [[ ${APPLY} -eq 0 ]]; then
-  printf 'Dry-run only. Re-run with --apply to open PRs (squash-merge after peer review).\n'
+if [[ ${#skipped[@]} -gt 0 ]]; then printf '  - no commits: %s\n' "${skipped[*]}"; fi
+if [[ ${#skipped_by_policy[@]} -gt 0 ]]; then
+  printf '  - skipped by policy (definitions/evidence live here, not published contacts):\n'
+  printf '      %s\n' "${skipped_by_policy[@]}"
+fi
+if [[ ${APPLY} -eq 0 && ${CHECK} -eq 0 ]]; then
+  printf 'Dry-run only. Re-run with --diff to preview patches, --check-residue to rehearse\n  every gate without pushing, or --apply to open PRs (squash-merge after peer review).\n'
 fi
 if [[ ${unmapped} -eq 1 ]]; then
   echo "STOP: add a MAP rule for the residue above and re-run." >&2; exit 1
