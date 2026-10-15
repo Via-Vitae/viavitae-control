@@ -33,15 +33,18 @@ module "repo" {
   require_last_push_approval      = var.branch_require_last_push_approval
   enforce_admins                  = var.branch_enforce_admins
   required_status_checks_strict   = var.branch_required_status_checks_strict
-  required_status_checks_contexts = var.branch_required_status_checks_contexts
+  required_status_checks_contexts = each.value.status_contexts
   # Secret scanning / push protection are free for PUBLIC repos. On PRIVATE repos
   # they require Advanced Security (Enterprise), so they are gated by visibility
   # to avoid an apply-time API error on the Free plan.
-  enable_secret_scanning             = each.value.visibility == "public" ? local.effective_controls.secret_scanning_public : local.effective_controls.advanced_security_private
-  enable_push_protection             = each.value.visibility == "public" ? local.effective_controls.push_protection_public : local.effective_controls.advanced_security_private
-  enable_advanced_security           = local.effective_controls.advanced_security_private
-  enable_dependabot_alerts           = local.effective_controls.dependabot_alerts
-  enable_dependabot_security_updates = local.effective_controls.dependabot_security_updates
+  enable_secret_scanning   = each.value.visibility == "public" ? local.effective_controls.secret_scanning_public : local.effective_controls.advanced_security_private
+  enable_push_protection   = each.value.visibility == "public" ? local.effective_controls.push_protection_public : local.effective_controls.advanced_security_private
+  enable_advanced_security = local.effective_controls.advanced_security_private
+  # Dependabot alerts/updates are free on PUBLIC repos only; on PRIVATE repos they
+  # require Team/Enterprise, so creating them on the Free plan aborts the apply
+  # partway (verified: 5 of 30 planned resources targeted private repos).
+  enable_dependabot_alerts           = each.value.visibility == "public" ? local.effective_controls.dependabot_alerts : local.effective_controls.dependabot_alerts_private
+  enable_dependabot_security_updates = each.value.visibility == "public" ? local.effective_controls.dependabot_security_updates : local.effective_controls.dependabot_updates_private
 
   # Secret scanning compensating controls (pre-commit + gitleaks CI).
   gitleaks_version         = var.gitleaks_version

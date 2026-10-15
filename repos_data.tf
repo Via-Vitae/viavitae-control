@@ -31,6 +31,8 @@ locals {
       tier                  = "meta"
       manage_files          = false
       default_branch_exists = true
+      # Measured live 2026-10-15: only the `CI status` job is required here.
+      required_status_checks_contexts = ["CI status"]
     }
 
     # ------------------------------------------------------------- control ----
@@ -150,6 +152,11 @@ locals {
       tier                  = "platform"
       manage_files          = false
       default_branch_exists = true
+      # `CI status` is deliberately absent: viavitae-qa's ci.yml has no aggregate
+      # ci-status job (unlike viavitae-template, which it was generated from), so
+      # requiring it makes every PR unmergeable — that is how P1-11 froze this repo.
+      # Restore the job upstream, then add "CI status" back here.
+      required_status_checks_contexts = ["Compliance status"]
     }
 
     # ----------------------------------------------------------------- app ----
@@ -174,6 +181,14 @@ locals {
       manage_files          = false
       default_branch_exists = true
       codeowners_teams      = ["architects", "platform"]
+      # Measured live 2026-10-15, in stored order (reordering shows as plan drift).
+      required_status_checks_contexts = [
+        "Analyze (javascript-typescript)",
+        "Action SHA pinning",
+        "Governance files",
+        "CI status",
+        "Compliance status",
+      ]
     }
     "viavitae-brand" = {
       description           = ""
@@ -188,6 +203,16 @@ locals {
       tier                  = "app"
       manage_files          = false
       default_branch_exists = true
+      # Measured live 2026-10-15 after P1-13 repair: the kebab-case names it required
+      # (`compliance-status`, `action-pinning`, `governance`) are not the names the
+      # jobs emit, so four of five contexts could never report and every PR froze.
+      required_status_checks_contexts = [
+        "CI status",
+        "Compliance status",
+        "Action SHA pinning",
+        "Governance files",
+        "Analyze (javascript-typescript)",
+      ]
     }
     "viavitae-hermes-agents" = {
       description  = "Via-Vitae Hermes agents - autonomous agent services and orchestration (Python)."
@@ -207,6 +232,10 @@ locals {
       # is active. create_new stays true: the repo is terraform-created (already
       # in state) and must NOT be adopted via an import block.
       default_branch_exists = true
+      # No required status checks: this repo's workflows emit neither `CI status` nor
+      # `Compliance status`, so the org default would freeze its merges. Matches the
+      # value already recorded in state (contexts empty, strict true).
+      required_status_checks_contexts = []
     }
 
     # ---------------------------------------------------------------- site ----

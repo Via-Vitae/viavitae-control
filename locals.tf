@@ -28,6 +28,13 @@ locals {
 
       # Per-repo control gating, resolved against the org plan tier below.
       enable_branch_protection = lookup(r, "enable_branch_protection", true)
+
+      # Required status checks. Defaults to the measured org baseline in
+      # var.branch_required_status_checks_contexts; repos_data.tf overrides this per
+      # repo, because a required context that no workflow reports freezes every merge.
+      # Order matters: the API stores the list as given, so a reordered declaration
+      # shows up as drift on every plan.
+      status_contexts = lookup(r, "required_status_checks_contexts", var.branch_required_status_checks_contexts)
     }
   }
 
@@ -39,14 +46,19 @@ locals {
   effective_controls = {
     secret_scanning_public      = var.enable_secret_scanning             # free for public repos
     push_protection_public      = var.enable_push_protection             # free for public repos
-    dependabot_alerts           = var.enable_dependabot_alerts           # free
-    dependabot_security_updates = var.enable_dependabot_security_updates # free
-    branch_protection_public    = var.enable_branch_protection           # free for public repos
-    advanced_security_private   = var.enable_advanced_security && local.is_enterprise
-    branch_protection_private   = var.enable_private_branch_protection && local.is_team
-    sso_saml                    = var.enable_sso && local.is_enterprise
-    allowed_actions_policy      = var.actions_allowed_mode != "all"
-    code_owner_review_enforced  = var.branch_require_code_owner_reviews && var.branch_required_approving_review_count >= 1
+    dependabot_alerts           = var.enable_dependabot_alerts           # free for PUBLIC repos
+    dependabot_security_updates = var.enable_dependabot_security_updates # free for PUBLIC repos
+    # Dependabot alerts/updates on PRIVATE repos require GitHub Team or Enterprise.
+    # Without this gate the provider creates the resources for the 5 private repos and
+    # `terraform apply` aborts partway with a plan-tier error, leaving partial state.
+    dependabot_alerts_private  = var.enable_dependabot_alerts && local.is_team
+    dependabot_updates_private = var.enable_dependabot_security_updates && local.is_team
+    branch_protection_public   = var.enable_branch_protection # free for public repos
+    advanced_security_private  = var.enable_advanced_security && local.is_enterprise
+    branch_protection_private  = var.enable_private_branch_protection && local.is_team
+    sso_saml                   = var.enable_sso && local.is_enterprise
+    allowed_actions_policy     = var.actions_allowed_mode != "all"
+    code_owner_review_enforced = var.branch_require_code_owner_reviews && var.branch_required_approving_review_count >= 1
   }
 
   # Gap register: controls requested but not enforceable on the current tier or
@@ -56,6 +68,7 @@ locals {
     var.enable_private_branch_protection && !local.is_team ? "branch_protection_private requires GitHub Team or Enterprise (current tier: ${var.github_plan_tier})" : "",
     var.enable_sso && !local.is_enterprise ? "sso_saml requires GitHub Enterprise + policies/enforce_sso.sh (current tier: ${var.github_plan_tier})" : "",
     !local.is_enterprise ? "secret_scanning/push_protection on PRIVATE repos requires GitHub Enterprise" : "",
+    var.enable_dependabot_alerts && !local.is_team ? "dependabot alerts/updates on the 5 PRIVATE repos require GitHub Team (current tier: ${var.github_plan_tier}); they are skipped by the visibility gate, not forgotten" : "",
     var.repos_have_default_branch ? "" : "branch protection DEFERRED for empty repos (no default branch). Set repos_have_default_branch=true or per-repo default_branch_exists once repos have content.",
     var.branch_required_approving_review_count == 0 ? "peer-review requirement is 0 (single-member org). Raise branch_required_approving_review_count to >=1 once a second member/team exists." : "",
     !var.branch_require_code_owner_reviews ? "CODEOWNERS review not enforced (branch_require_code_owner_reviews=false); enable once >=2 reviewers exist." : "",
