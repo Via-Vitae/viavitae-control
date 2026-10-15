@@ -130,15 +130,20 @@ variable "branch_required_status_checks_strict" {
   default     = true
 }
 
-# Declared as empty so this change cannot silently rewrite 20 live protections.
-# The measured live reality is NOT empty and is partly unsatisfiable — see
-# docs/COMPLIANCE.md P1-13 for the per-repo baseline to adopt once state is
-# restored (P1-12). A required context that no workflow reports freezes every PR
-# in that repo, so the names must be copied from the job names exactly.
+# Measured org baseline (2026-10-15, `gh api repos/Via-Vitae/<r>/branches/main/protection
+#/required_status_checks`): 15 of the 20 protected public repos require exactly these two
+# contexts, and every workflow in those repos reports a job named `CI status` and
+# `Compliance status` — the two names must match a produced check byte-for-byte, or the
+# requirement can never be satisfied and all merges freeze (see P1-13).
+# An empty list gates NOTHING: strict=true with contexts=[] is decorative. Declared here so
+# `terraform apply` cannot overwrite live required checks with an empty list — which is what
+# the plan did before this variable existed (module hard-coded contexts = []).
+# Per-repo exceptions are set in repos_data.tf (.github, viavitae-web, viavitae-demos,
+# viavitae-qa, viavitae-hermes-agents).
 variable "branch_required_status_checks_contexts" {
-  description = "Default required status-check context names for managed repos (empty gates nothing)."
+  description = "Default required status-check context names for managed repos. Must match check names the repo's workflows actually produce (case-sensitive); [] gates nothing."
   type        = list(string)
-  default     = []
+  default     = ["CI status", "Compliance status"]
 }
 
 variable "enable_dependabot_alerts" {

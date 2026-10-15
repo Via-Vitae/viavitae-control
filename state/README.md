@@ -15,6 +15,27 @@ Protect local state:
 - Treat the state file as a secret: it may embed repository metadata and tokens'
   side-effects. Restrict filesystem permissions (`chmod 600 terraform.tfstate`).
 
+## Restoring an encrypted backup (do this before any plan/apply)
+
+`age --decrypt` creates the output file with the **process umask**, which on this host is
+`0002` — so a naive restore writes live state **group-readable (0664)** and defeats the very
+control this file documents. Set the mask first, then verify the mode; do not trust the
+command to have finished because a pipeline hid its exit status (`echo ${PIPESTATUS[0]}`).
+
+```bash
+umask 077
+ls /opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.*.age   # newest = authoritative
+age -d -i ~/.config/age/state-backup-key.txt \
+    /opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.<newest>.age \
+    > terraform.tfstate
+stat -c '%a %n' terraform.tfstate          # must print 600
+terraform init && terraform plan           # GITHUB_TOKEN + TF_VAR_billing_email exported
+```
+
+Confirm the restored identity before trusting it: `terraform.tfstate` carries a `lineage`
+and `serial`; this plane's baseline is lineage `eff08856`, serial 13, 9 managed resources.
+A different lineage means you restored another plane's state — stop.
+
 ## Target mode: S3 backend (Via-Vitae bootstrap bucket)
 
 Copy `backend_s3.tf.example` to `backend_s3.tf` in the repo root, fill in the

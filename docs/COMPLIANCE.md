@@ -169,24 +169,22 @@ repo visibility or rotate credentials automatically. The following need explicit
   `viavitae-qa`: `Lint`, `Typecheck`, `Playwright @smoke`, `axe accessibility scan`,
   `Dependency scan (Trivy)`. Treat as P1-17 follow-up work; do not silence them by removing
   required contexts.
-- **P1-12 — The control plane has NO state on this host; IaC reconciliation is currently
-  impossible.** Verified 2026-10-15: no `terraform.tfstate`, no `.terraform/`, no
-  `backend.tf`, and no `backend` block in any committed `*.tf` (the only occurrence is in
-  the ignored `state/backend_s3.tf.example`) — yet §Status below claims "Terraform state
-  contains 5 of 30 repositories". That state is **not here**. Recoverable: age-encrypted
-  backups exist at `/opt/jol/backup/tfstate/viavitae-control-terraform.tfstate.20261013T190752Z.age`
-  and `…T191400Z.age` (27,738 bytes, mode 600, X25519 recipient), key at
-  `~/.config/age/state-backup-key.txt`; both predate every 2026-10-15 change.
-  Rules while this holds:
-  - `terraform plan` here would build state from scratch and propose **creating** ~30 repos
-    plus their protections and org settings. Such a plan is invalid evidence — never apply it.
-  - Consequently the P1-10 fallback (reconciling `required_approving_review_count` to the
-    declared `0`) cannot be done through Terraform, and doing it out-of-band would add more
-    unmanaged drift.
-  - Restore first, then plan:
-    `age -d -i ~/.config/age/state-backup-key.txt <newest>.age > terraform.tfstate && terraform init`
-  - Do not run `terraform init -force`; do not import into a new backend as part of this
-    remediation.
+- **P1-12 — State restored 2026-10-15; the register's earlier claim was stale in both
+  directions.** This working copy had no `terraform.tfstate`, no `.terraform/`, no
+  `backend.tf`, yet §Status claimed "state contains 5 of 30 repositories". Restored from
+  `age` backup per `state/README.md` and verified by identity, not hope: lineage `eff08856`,
+  serial 13, **9 managed resources** (6 repos, 1 org actions permission, 1 branch protection
+  on `viavitae-hermes-agents`, 1 Dependabot updates) — i.e. the claim of 5 repos in state was
+  wrong; 6 are, and `github_organization_settings` was never in state at all.
+  Two defects found while doing it, both now documented in `state/README.md`:
+  - `age --decrypt` inherits the process **umask (`0002` on this host)**, so the restored
+    live state landed **group-readable**; it was `chmod 600`-ed afterwards, and the
+    procedure now sets `umask 077` first and verifies with `stat`.
+  - `terraform plan` requires `TF_VAR_billing_email` (no default by design, GDPR
+    minimisation) and `GITHUB_TOKEN`; without them it aborts on the required variable, and
+    passing the address on argv would expose it in `ps` — use the env var.
+  Still open: no locking (C13c), no off-host copy that survives the host, and the local
+  S3-backend migration (P1-4) is blocked by the account's SCP — see `state/README.md`.
 - **P1-13 — Required status checks were not declarable, and two repos required contexts no
   job could produce.** `modules/repo/branch_protection.tf` hard-coded `contexts = []` inside
   `required_status_checks`, so every live required-context list in the org was out-of-band
@@ -204,9 +202,14 @@ repo visibility or rotate credentials automatically. The following need explicit
     correct repair is to restore the `ci-status` aggregation job in `viavitae-qa/ci.yml` and
     then re-add the context — do it together with P1-17, because the job will then report the
     failures that already exist.
-  In-repo change: `required_status_checks_contexts` is now a real variable (module + root,
-  default `[]` so no live protection was rewritten by this commit) and `terraform.tfvars.example`
-  records the measured per-repo baseline to adopt once P1-12 is cleared.
+  In-repo change: `required_status_checks_contexts` is now a real variable (module + root)
+  and `repos_data.tf` declares the measured per-repo baseline, so `terraform apply` can no
+  longer overwrite live required checks with an empty list. **Verified 2026-10-15:** every
+  one of the 20 planned `github_branch_protection` resources now matches live exactly
+  (`protection contexts: match=20 mismatch=0 fetch_errors=0`). Note the measurement trap:
+  the first comparison reported 20 mismatches with `live=[]` for every repo — that was the
+  GitHub rate limit being read as absence of configuration, not drift. Retry with the exit
+  status and stderr surfaced, and treat an empty result as unproven.
 - **P1-14 — Two `viavitae-clients` gates could never pass, and never had.** `lint.yml`
   triggers on `pull_request` only, so these had never run against `main` and nobody had seen
   them: `Content parity (LT/EN/RU)` died on `ModuleNotFoundError: No module named 'yaml'`
@@ -239,6 +242,24 @@ repo visibility or rotate credentials automatically. The following need explicit
   updates are not landing, so either the flag is not effective on the Free plan for these
   repos or lockfiles need a human bump. Review at
   https://github.com/Via-Vitae/viavitae-web/security/dependabot
+- **P1-18 — `terraform apply` would have aborted partway, and an inspection caught it
+  before it happened.** The restored plan created `github_repository_dependabot_security_updates`
+  for **all 30** repos including the 5 private ones, where Dependabot needs GitHub Team; on
+  the Free plan that is a mid-apply error with partial state written. Fixed by gating
+  alerts/updates on visibility (`locals.tf` adds `dependabot_alerts_private` /
+  `dependabot_updates_private` behind `local.is_team`, `repos.tf` selects by
+  `visibility`, and `control_gaps` now says so out loud). Re-planned: creates 30 → **25**,
+  `destroys: 0`.
+  Two related clearance results, recorded so nobody re-litigates them:
+  - `github_organization_settings` is not in state, but **creating it cannot disable org
+    2FA** — verified against the provider schema: `two_factor_requirement_enabled` is not an
+    attribute of that resource in `integrations/github` 6.13.
+  - The remaining real effect of an apply is a **tightening**: `required_linear_history`
+    false→true on 13 repos (the module declares `true`), plus `has_wiki`/`has_projects` off
+    and `delete_branch_on_merge` on for 25 repos, and `provenance` becoming a **required**
+    status check on the `protect-main` ruleset. Reviews, code-owner, `enforce_admins` and
+    required contexts all match live after P1-10/P1-13.
+  **No apply was run.** The plan was saved to a `0600` file and read only.
 - **P1-17 — Real, previously invisible test failures in `viavitae-web` and `viavitae-qa`.**
   Now that CI actually starts: `viavitae-web` fails `Lint` and `Unit + contract tests`;
   `viavitae-qa` fails `Lint`, `Typecheck`, `Playwright @smoke`, `axe accessibility scan` and

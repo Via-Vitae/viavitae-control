@@ -145,9 +145,21 @@ Set `github_plan_tier` (`free` | `team` | `enterprise`) in `terraform.tfvars`.
 
 ## Status
 
-Pushed to `main` and partially applied. Terraform state contains 5 of 30
-repositories (the 5 privatized compliance-sensitive repos). The `protect-main`
-ruleset on `viavitae-control` is live but not yet in state; a full `terraform
-apply` will adopt it via the existing import block. See the design spec in
-[`docs/superpowers/specs/`](docs/superpowers/specs/) and the findings register
-in [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
+Re-measured 2026-10-15 (this paragraph was stale — see `docs/COMPLIANCE.md` P1-12):
+
+- Org: **31 repositories** — 26 public, 5 private (`viavitae-policies`,
+  `viavitae-compliance`, `viavitae-data-governance`, `viavitae-threat-model`,
+  `viavitae-vendor-register`); **9 still empty**, 21 populated, and 20 of those carry
+  classic branch protection (`viavitae-control` uses the `protect-main` ruleset instead).
+- Terraform state is **local and restored from the `age` backup** (lineage `eff08856`,
+  serial 13, 9 managed resources: 6 repositories, the org Actions permission, one branch
+  protection, one Dependabot-updates resource). It is **not** in an S3 backend, and there is
+  no locking — see `state/README.md` and P1-4/P1-12/C13c.
+- `terraform apply` has **not** been run in this work. The current plan is readable and
+  contains **0 destroys**; its remaining effect is a tightening (required linear history on
+  13 repos, `provenance` as a required check on this repo's ruleset) — see P1-18.
+- Published contact channels are all plus-addressed streams now (P1-7 closed, P1-8 closed:
+  private vulnerability reporting on 26/26 public repos).
+- Peer review is currently **0 approvals** on every repo, because the org has one member and
+  the second account cannot join without 2FA (P1-10). Separation of duties is a documented
+  gap, not a control, until that changes.
