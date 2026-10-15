@@ -75,6 +75,31 @@ repo visibility or rotate credentials automatically. The following need explicit
   Deferred repos are listed in the `branch_protection_deferred` output. Once repos have
   content, set `repos_have_default_branch = true` (or per-repo `default_branch_exists`)
   and re-apply to activate protection.
+- **P1-7 — Published contact channels were undeliverable.** `SECURITY.md`,
+  `SUPPORT.md`, `LICENSE`, `CODE_OF_CONDUCT.md`, the DPIA templates and
+  `viavitae-web/lib/constants.ts` published `security@viavitae.com`,
+  `dpo@viavitae.com` and `legal@viavitae.com`. Measured 2026-10-15: `viavitae.com`
+  has **no NS delegation** (resolver `SERVFAIL`), `viavitae.site` has NS/A but
+  **no MX**, `viavitae.eu` has `MX 0 localhost.`. A vulnerability report or a
+  GDPR Art. 15/17 request sent to any of them is lost, and the published 24-hour
+  acknowledgement SLA cannot start. Remediation: repoint to the plus-addressed
+  streams via `scripts/update_contact_emails.sh` (clean-clone dry-run: 20 populated
+  repos / 134 files, 9 repos skipped as empty); Phase 2 (`viavitae.site` MX) is tracked in
+  `viavitae-infra` ADR-000 action items.
+- **P1-8 — `SECURITY.md` asserted controls that were not enabled.** It claimed
+  "private vulnerability reporting is enabled on repositories in the `Via-Vitae`
+  organisation" and that a PGP key was published on the key servers. Measured:
+  PVR `enabled=true` on 10 repos, `false` on **12 populated repos** (the 10
+  `viavitae-landing-*` repos plus `viavitae-control` and `viavitae-hermes-agents`),
+  `false` on 4 empty repos, and `404` on the 5 empty private repos (Free plan).
+  No PGP key exists for any current contact address. Enable PVR on the populated
+  repos and drop the PGP claim until a key with a published fingerprint exists.
+- **P1-9 — Email-segmentation policy is not yet on `main`.** `policies/EMAIL_POLICY.md`,
+  `policies/viavitae-gmail-filters.xml`, the README address table and the
+  `terraform.tfvars.example` note are **untracked/modified locally only**
+  (`git status --porcelain`), verified against `git ls-tree HEAD policies/` which
+  lists no `EMAIL_POLICY.md`. Until this lands, the org has no published role-address
+  mapping and the Gmail filters that make plus-addressing operational do not exist.
 
 ## 3. Staged remediation roadmap
 
@@ -82,7 +107,9 @@ repo visibility or rotate credentials automatically. The following need explicit
    Dependabot on all public repos; apply the allowed-actions list; begin privatizing
    the compliance-sensitive repos (P0-1) — note private-repo branch protection needs Team;
    activate `manage_files` per repo to deploy gitleaks CI workflow + pre-commit config;
-   install pre-commit hooks on developer machines (`pip install pre-commit && pre-commit install`).
+   install pre-commit hooks on developer machines (`pip install pre-commit && pre-commit install`);
+   repoint the undeliverable contact addresses (P1-7) and enable PVR on the populated
+   repos (P1-8).
 2. **Stage 1 (Team upgrade):** finish flipping sensitive repos private; private-repo
    branch protection activates automatically via the feature flag.
 3. **Stage 2 (grow the team):** add a second member/reviewer; raise review count to 1

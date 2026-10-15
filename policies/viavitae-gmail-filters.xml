@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mai:MailArchive xmlns:mai="http://schemas.google.com/gmail/mai" mai:creator="viavitae-control" mai:version="1.0" mai:email="journey4oflife@gmail.com">
+
+  <!-- GitHub org notifications -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="to" includeSubject="false" case="insensitive">journey4oflife+viavitae.github@gmail.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/github"/>
+      </labelAdd>
+      <markImportant>true</markImportant>
+    </mai:Action>
+  </mai:Filter>
+
+  <!-- Security reports / vulnerability disclosures -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="to" includeSubject="false" case="insensitive">journey4oflife+viavitae.security@gmail.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/security"/>
+      </labelAdd>
+      <markImportant>true</markImportant>
+    </mai:Action>
+  </mai:Filter>
+
+  <!-- Privacy / DPO / GDPR data requests -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="to" includeSubject="false" case="insensitive">journey4oflife+viavitae.privacy@gmail.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/privacy"/>
+      </labelAdd>
+    </mai:Action>
+  </mai:Filter>
+
+  <!-- Billing / invoices -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="to" includeSubject="false" case="insensitive">journey4oflife+viavitae.billing@gmail.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/billing"/>
+      </labelAdd>
+    </mai:Action>
+  </mai:Filter>
+
+  <!-- General dev / project correspondence -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="to" includeSubject="false" case="insensitive">journey4oflife+viavitae.dev@gmail.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/dev"/>
+      </labelAdd>
+    </mai:Action>
+  </mai:Filter>
+
+  <!-- Bonus: catch any GitHub noreply mail regardless of the To address -->
+  <mai:Filter>
+    <mai:Criteria>
+      <negated>false</negated>
+      <criterion name="from" includeSubject="false" case="insensitive">noreply@github.com</criterion>
+    </mai:Criteria>
+    <mai:Action>
+      <labelAdd>
+        <label name="viavitae/github"/>
+      </labelAdd>
+    </mai:Action>
+  </mai:Filter>
+
+</mai:MailArchive>

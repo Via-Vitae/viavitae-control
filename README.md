@@ -75,6 +75,40 @@ Only run `terraform apply` after reviewing the plan and the staged rollout in
    `manage_files = true`; the module creates it fully hardened.
 4. **Detect shadow repos:** `scripts/detect_drift.sh` (wire into CI).
 5. **Refresh inventory:** `scripts/generate_inventory.sh` (merge the diff by PR).
+6. **Re-point published contact addresses:** `scripts/update_contact_emails.sh`
+   (dry-run by default; `--diff` to preview, `--apply` to open one PR per repo).
+
+## Communication addresses
+
+The Via-Vitae org uses **plus-addressed Gmail streams** to segregate
+role-based inbound email (all delivered to one inbox, routed by filters):
+
+| Role | Address |
+|---|---|
+| GitHub org / billing | `journey4oflife+viavitae.github@gmail.com` |
+| Security reports | `journey4oflife+viavitae.security@gmail.com` |
+| Privacy / DPO | `journey4oflife+viavitae.privacy@gmail.com` |
+| Billing | `journey4oflife+viavitae.billing@gmail.com` |
+| General / dev | `journey4oflife+viavitae.dev@gmail.com` |
+
+> These are the addresses the org **publishes** as contact channels — they appear
+> in `SECURITY.md`, `SUPPORT.md`, `LICENSE`, the DPIA templates and the website
+> across the org. They are receiving addresses, not secrets, and are listed
+> publicly on purpose (GDPR Art. 38 requires a reachable DPO contact). What is
+> forbidden is putting them in Terraform variables/defaults or letting them reach
+> `terraform.tfstate`; the real `billing_email` lives only in gitignored
+> `terraform.tfvars`.
+> See [policies/EMAIL_POLICY.md](policies/EMAIL_POLICY.md) for the role→artifact
+> mapping and [policies/README.md](policies/README.md) for the policy rationale.
+>
+> **Why not `security@viavitae.com`?** Because it cannot receive mail: `viavitae.com`
+> has no nameserver delegation and `viavitae.site` has no `MX` record, so the
+> previously published domain addresses were a dead channel. They are retired.
+>
+> **Migration target (Phase 2):** once `viavitae.site` MX is configured and a test
+> message is delivered, the public-facing roles (`security@`, `privacy@`,
+> `billing@`) move to custom-domain aliases and the personal handle disappears
+> from public artifacts again.
 
 ## Single-member org caveat
 
