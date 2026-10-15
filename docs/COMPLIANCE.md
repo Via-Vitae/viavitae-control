@@ -338,10 +338,11 @@ repo visibility or rotate credentials automatically. The following need explicit
   `GATE_BAD: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}`;
   the `toJSON(needs)` line survives only as a log line, not as the decision. A re-scan of every
   populated repo reports **0** files containing the fragile matcher.
-  Honest limit: the new verdict has been observed to pass over a green run, not yet observed to
-  *fail* over a red one, because nothing in the org is currently red. Its behaviour is the
-  documented `contains()` semantics plus the patcher's refusal checks, and P1-15's test suite
-  covers the matcher replacement.
+  Honest limit, **since resolved**: at the time of writing the new verdict had only been
+  observed passing over green runs, never failing over a red one. It has now been observed to
+  react twice: `viavitae-qa`'s ported aggregate reports `CI status=failure` on `main` and names
+  `dependency-scan: failure` in its own log, and `viavitae-web` PR #31 (tooling group, 10 bumps)
+  went `Lint` + `Contract check` = fail instead of landing green over them.
 - **P1-17 — Red legs on `main`, now attributed and mostly repaired.** These were invisible only
   because CI had not started since the allow-list broke it (P1-11/P1-3), and because in both
   repos the failing legs are not required contexts.
@@ -402,6 +403,14 @@ repo visibility or rotate credentials automatically. The following need explicit
   bump PR carries `vitest`+`@vitest/*`+`vite` (and `playwright`+`@playwright/test`) together
   instead of resolving one half of a contract. Neither was changed here: dependabot config
   edits alter what lands in production unattended.
+  **Progress 2026-10-16:** the first half is done for `viavitae-qa` — `ci-status` (ported from
+  `viavitae-template`, needing every job in the file, verdict from `contains(needs.*.result,
+  ...)`) now exists on its `main` (PR #20), and it is honestly red because `Dependency scan
+  (Trivy)` fails. It is **not yet a required context**: adding it while Trivy is red would
+  freeze merges in that repo as a side effect of the gate rather than by decision. The flip is
+  one line — `required_status_checks_contexts = ["Compliance status", "CI status"]` for
+  `viavitae-qa` in `repos_data.tf` — after the advisories are cleared. The second half (peer
+  grouping in each repo's `dependabot.yml`) is still untouched.
 - **P1-22 — `viavitae-qa`'s browser and load gates cannot run: the environment is configured
   but has no variables.** `GET /repos/Via-Vitae/viavitae-qa/actions/variables` returns
   `total_count: 0` while a `staging` environment exists, so every `${{ vars.STAGING_* }}` and
@@ -431,25 +440,35 @@ repo visibility or rotate credentials automatically. The following need explicit
   `viavitae-data-governance`, `viavitae-threat-model`, `viavitae-vendor-register` — plus
   `Post "https://api.github.com/graphql": context deadline exceeded`. The plan itself is fine:
   in CI (empty state) it reports `26 to import, 3 to add, 26 to change, 0 to destroy`.
-  Cause, corrected mid-investigation: `TF_GITHUB_TOKEN` **is** configured (updated
-  2026-10-04T20:20:37Z) — my first reading, "the secret is missing", was wrong. What the token
-  lacks is **access to the private repositories**: every public object imports cleanly and only
-  the private five resolve as non-existent. GitHub returns 404 rather than 403 for a
-  token-scoped miss, and Terraform reports 404 as "non-existent remote object", which is why the
-  message misleads.
+  Cause, **corrected twice**: the first reading was "the secret is missing"; the second,
+  "`TF_GITHUB_TOKEN` is configured but cannot read the private repos"; PR #12's pre-flight gate
+  settled it on its first run — the credential arrives **empty**. `Check CI credential`
+  exited 2 with `GH_TOKEN is empty; the CI plan credential is not wired to this step` and
+  `Terraform plan` was then **skipped**. Anonymous access explains every symptom: public repos
+  read fine, the five private ones resolve as non-existent, and the GraphQL call times out under
+  the 60-requests/hour anonymous limit. A secret named `TF_GITHUB_TOKEN` does exist (updated
+  2026-10-04T20:20:37Z), so either its value is blank or it was never written correctly — the
+  API does not expose secret values, so the distinction cannot be made from outside, and the fix
+  is the same either way: write a real credential into it.
   Second consequence, quieter but worse: `ORG_READ_TOKEN` is **not** configured (the repo has
   exactly one secret), so `Detect drift (requires ORG_READ_TOKEN)` is skipped on every run, and
-  the `Fail loudly if ORG_READ_TOKEN is absent` step never executes because the job already
-  failed at plan. Day-2 §7 of this document claims "`detect_drift.sh` in CI" as a continuous
+  the `Fail loudly if ORG_READ_TOKEN is absent` step never executed because the job died at plan
+  upstream of it. Day-2 §7 of this document claims "`detect_drift.sh` in CI" as a continuous
   control — **it has never run**. Until it does, drift is detected only when a human runs the
   script, as in this session.
-  Owner actions, in order: (1) re-issue or re-scope `TF_GITHUB_TOKEN` so it can read the five
-  private repos (and the org), then (2) create `ORG_READ_TOKEN`, after which the plan step and
-  the drift step both become meaningful. Deliberately *not* done here: marking the plan step
-  `continue-on-error`, or giving the loud-failure step `if: always()`. The first would turn a red
-  evidence job into a green lie — the exact defect P1-15 was about; the second would add a
-  permanently red leg that blocks nothing and trains people to ignore it, the P1-19 defect. The
-  fix is a credential, not a workflow edit.
+  What #12 changed in shape, not in truth: the credential gate now runs **before** plan, so the
+  job fails in ~25 seconds with a named cause instead of after ~20 minutes with an opaque import
+  error, and the four outcomes are distinguishable — `2` empty/unwired, `1` write-capable scope
+  set, `1` lists the repositories the credential cannot see, `0` correct.
+  Owner actions: (1) `gh secret set TF_GITHUB_TOKEN --repo Via-Vitae/viavitae-control` with a
+  fine-grained PAT per the contract in `provider.tf` (All repositories including the five
+  private; Metadata + Administration read-only; Organization administration read-only while
+  `org_data.tf` reads the org; no Contents/Workflows/Secrets; expiring), (2) the same for
+  `ORG_READ_TOKEN`. Deliberately *not* done here: marking the plan step `continue-on-error`, or
+  giving the loud-failure step `if: always()`. The first would turn a red evidence job into a
+  green lie — the exact defect P1-15 was about; the second would add a permanently red leg that
+  blocks nothing and trains people to ignore it, the P1-19 defect. The fix is a credential, not
+  a workflow edit.
 
 ## 3. Staged remediation roadmap
 
@@ -472,13 +491,14 @@ repo visibility or rotate credentials automatically. The following need explicit
 3. **Day 0b: make the gates honest again. — DONE for the verdicts; three items remain.**
    `scripts/patch_aggregate_gate.py` is applied in all 17 repos and no fragile matcher survives.
    Still open, in dependency order:
-   a. give `viavitae-qa` an aggregate job and require it (P1-17) — until then nothing in that
-      repo's CI can block a merge;
+   a. ~~give `viavitae-qa` an aggregate job~~ — done 2026-10-16 (`viavitae-qa#20`, red on purpose
+      over Trivy); **require** `CI status` there once the advisories are cleared (P1-21);
    b. decide which required contexts to declare where a gate is honest but optional, and group
       peer-coupled dependencies so majors land complete (P1-21);
-   c. clear the 59 Dependabot alerts by merging the 17 open bump PRs, patch-level security
-      fixes first (P1-16), and provision `viavitae-qa` staging so its browser/load gates run
-      instead of failing or silently skipping (P1-22).
+   c. clear the Dependabot backlog by merging the open bump PRs, patch-level security fixes
+      first: 59 alerts measured 2026-10-15, **web 38 → 35** after merging `next` 15.5.25→15.5.27
+      (P1-16), and provision `viavitae-qa` staging so its browser/load gates run instead of
+      failing or silently skipping (P1-22).
 4. **Stage 1 (Team upgrade):** finish flipping sensitive repos private; private-repo
    branch protection activates automatically via the feature flag.
 5. **Stage 2 (grow the team):** enroll 2FA on `IterVitae`, accept the invitation as
@@ -487,8 +507,8 @@ repo visibility or rotate credentials automatically. The following need explicit
 6. **Stage 3 (Enterprise):** set `github_plan_tier = "enterprise"`,
    `enable_advanced_security = true`, `enable_sso = true`; configure IdP SAML/SCIM.
 7. **Continuous:** `detect_drift.sh` in CI — **not yet true, see P1-23**: the step is skipped on
-   every run because `ORG_READ_TOKEN` is unset, and the job fails earlier at `Terraform plan`
-   because `TF_GITHUB_TOKEN` cannot read the five private repos. Quarterly access review;
+   every run because `ORG_READ_TOKEN` is unset, and `TF_GITHUB_TOKEN` reaches CI **empty**, so
+   the plan ran anonymously and could not import the five private repos. Quarterly access review;
    state in S3.
 
 ## 4. Assurance notes
