@@ -34,4 +34,11 @@ resource "github_organization_settings" "this" {
   dependabot_alerts_enabled_for_new_repositories           = var.enable_dependabot_alerts
   dependabot_security_updates_enabled_for_new_repositories = var.enable_dependabot_security_updates
   dependency_graph_enabled_for_new_repositories            = true
+
+  # The org profile `email` and `name` are set out-of-band (P1-7 / gh api) and are
+  # intentionally NOT declared here. Without ignore_changes a full plan proposes to
+  # null them, which on apply would wipe the public contact address and display name.
+  lifecycle {
+    ignore_changes = [email, name]
+  }
 }
