@@ -546,3 +546,79 @@ repo visibility or rotate credentials automatically. The following need explicit
   for 16 repos; P1-11's CI had not run at all in three. Where a control is asserted in a
   published document, this repo now cites the measurement, and `scripts/` carries the probe
   that produced it.
+
+## 5. Judgement review (2026-10-17) — are we doing this right?
+
+Written on request, measured first. Method: read the register and the CI wiring, count the
+artifacts, and check each claim against a live observation rather than against the document
+that makes it.
+
+**The method is right.** Four things are being done correctly and should not be changed:
+
+1. **Claims carry their evidence.** The vocabulary in §1.1 forbids `enforced-verified` without
+   a cited live observation, and the table honours it — not one of C1-C18 is marked verified,
+   because state holds 9 resources and everything else is genuinely `declared-not-applied`.
+   The table therefore *understates* what works live today (Dependabot auto-updates are
+   verified `enabled: true`, PVR on 26/26, allow-list patterns 11) rather than overstate it.
+   That is the failure direction you want.
+2. **Corrections are recorded, not silent.** Six places in this register retract an earlier
+   claim (P1-1's `false`, P1-3's "not restricted", P1-11's "cause not determined", P1-12's
+   "5 of 30 in state", P1-16's partial alert count, P1-22's "nightly passes"). A control plane
+   whose audit record cannot be wrong is not an audit record.
+3. **Gates are tested by planting failures.** T3/T8/T9b in the gate suite, the patchers'
+   refusal checks, the self-citation probe asserting `1` to see it report `recomputed 9`, and
+   qa's aggregate observed going red over Trivy. Green is not accepted as evidence here.
+4. **Nothing destructive happened without a readable diff.** No `--admin` merge, no apply,
+   no visibility flip, no credential touched — and the two candidate shortcuts (per-repo
+   collaborator invitations, silencing `pr-smoke`) were reverted or refused and written up.
+
+**Six things are wrong or unfinished, in severity order:**
+
+1. **Two of the three enforcement layers are not active, and the docs are only slightly short
+   of saying so.** Measured today: `.git/hooks/commit-msg` and `.git/hooks/pre-commit` are
+   **not installed**, and the live `protect-main` ruleset reports **no required status checks
+   at all** (`required_check` context list empty) — the `provenance` requirement is declared in
+   `repo_rulesets.tf` and lands only on the apply. So commit provenance is currently
+   *reported* by CI but *blocks nothing*, and the local hook gives no feedback either. Not a
+   lie, but close: §5.4 of AI_WORKFLOW_POLICY called the CI check "the unbypassable control"
+   while nothing was bypassing it.
+2. **Guards outnumber their tests 12 to 1.** Only `update_contact_emails.sh` has a suite
+   (`test_contact_email_gates.sh`, 14 cases). `assert_live_controls.sh`,
+   `check_ci_credential.sh` and `check_plan_selfcite.sh` — three gates that now decide whether
+   CI passes — have none, and each shipped a defect that only manual probing found: #9's parser
+   silently dropped two repositories, #11 reported `OK` while asserting nothing. A tool that
+   gates merges deserves the planted-failure test the sweep got.
+3. **The strongest new guard has the weakest coverage.** `assert_live_controls.sh` prints
+   `asserting 5 of 31 inventory repositories`: it only sees repos that override
+   `required_status_checks_contexts`. The 13-repo `required_linear_history` gap it ought to
+   catch sits in the inherit-the-default set, so today it caught it only in the two repos
+   (web, demos) that happen to override. Coverage must include the default or the headline
+   should say so.
+4. **The un-applied delta has become a control problem in its own right.** C1-C11, C17 and C18
+   all read `declared-not-applied`, which means the org's real protections are still the
+   hand-made history plus three scripted reconciliations, and Terraform is currently a
+   *descriptive* layer, not a prescriptive one. "Single source of truth" is not yet true —
+   26 imports, 46 creates and 27 updates sit pending, verified to contain 0 destroys and no
+   loosening. This is the cheapest large step left.
+5. **The register is outgrowing its shape.** 549 lines for 25 findings; COMPLIANCE.md was
+   touched 10 times in the last three days against 2 for `variables.tf` and 2 for `repos.tf`.
+   Narrative is the right place for *why*, but it rots faster than tables (six retractions is
+   evidence of that) and an auditor cannot action 500 lines quickly. Findings should be one
+   table row plus a pointer to the evidence; the argument belongs in `docs/superpowers/plans/`.
+6. **One 5-minute owner task is blocking four findings.** `TF_GITHUB_TOKEN` reaches CI empty
+   and `ORG_READ_TOKEN` does not exist (P1-23), so `detect_drift.sh` and
+   `assert_live_controls.sh` are skipped on every run and the audit job cannot go green. Two
+   sessions of building guards have not moved that dependency.
+
+**Not wrong, and worth naming, because they look like gaps:** the single-member org means
+separation of duties, code-owner review and any approving-review requirement are nominal by
+construction (P1-2/P1-10) — no tooling fixes that, only a second 2FA-enrolled account.
+`viavitae-qa`'s permanently red `Playwright @smoke`/`axe` legs are the correct state while
+staging is placeholders only in `viavitae-infra`; making them skip would have traded a loud
+absence of evidence for a quiet one. And `terraform.tfstate` at `0600` with no locking and no
+off-host copy (P1-4/C13) is still the weakest link in the whole plane — one disk failure and
+every conclusion in this file has to be re-derived by hand, as it was in P1-12.
+
+**Bottom line.** The process is sound and unusually self-critical; the wiring is incomplete.
+The three highest-value next acts are not analytical: run the apply, install the hooks, write
+the guards' tests. Each turns a documented intention into an observed control.
