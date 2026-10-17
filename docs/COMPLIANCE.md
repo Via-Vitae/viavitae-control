@@ -488,6 +488,23 @@ repo visibility or rotate credentials automatically. The following need explicit
   green lie — the exact defect P1-15 was about; the second would add a permanently red leg that
   blocks nothing and trains people to ignore it, the P1-19 defect. The fix is a credential, not
   a workflow edit.
+  **Verified 2026-10-17 (run `39030902515`, attempt 7): the credential is wired and correct, and
+  it is no longer the blocker.** Two fine-grained PATs were minted per the contract —
+  `viavitae-control-ci-plan` (Organization **Administration** + **Members** read-only, Repository
+  **Administration** + **Metadata** read-only, All repositories) in `TF_GITHUB_TOKEN`, and
+  `viavitae-control-drift` (Repository Administration + Metadata read-only, **no** organization
+  permission — it only lists repos and reads branch protection) in `ORG_READ_TOKEN`.
+  `Check CI credential` and `Detect drift` now report **success**. The path took five reruns and is
+  recorded so nobody re-litigates it: attempts 2–3 failed `total_private_repos` null (the org
+  permission was absent on the plan token), attempt 4 failed **HTTP 401** (the secret had been
+  re-pasted from `read -rs "t?…"` — zsh syntax that silently leaves `$t` unset in bash, writing an
+  empty value). Reading the step log and separating *401* from *null* is what distinguished a bad
+  paste from a missing scope. **`Assert live controls` is now the red step, legitimately:** it
+  reports `viavitae-qa` contexts live=`[Compliance status]` declared=`[CI status, Compliance
+  status]`, and `viavitae-web`/`viavitae-demos` `required_linear_history=false` against declared
+  `true` — all three are the pending-apply delta (P1-18/P1-21), not a credential fault. Because that
+  step sits **before** `Terraform plan` in `audit.yml`, a red assert now **skips** the plan, so CI
+  cannot show a green plan until the apply lands or the two steps are reordered.
 
 ## 3. Staged remediation roadmap
 
@@ -524,10 +541,10 @@ repo visibility or rotate credentials automatically. The following need explicit
    code-owner review (revert P1-10), declared and live together.
 6. **Stage 3 (Enterprise):** set `github_plan_tier = "enterprise"`,
    `enable_advanced_security = true`, `enable_sso = true`; configure IdP SAML/SCIM.
-7. **Continuous:** `detect_drift.sh` in CI — **not yet true, see P1-23**: the step is skipped on
-   every run because `ORG_READ_TOKEN` is unset, and `TF_GITHUB_TOKEN` reaches CI **empty**, so
-   the plan ran anonymously and could not import the five private repos. Quarterly access review;
-   state in S3.
+7. **Continuous:** `detect_drift.sh` in CI — **true as of 2026-10-17**: both CI PATs are set and
+   `Check CI credential` + `Detect drift` are green (P1-23). `assert_live_controls.sh` now runs too
+   and is the red step on the apply-pending divergences, which also **skips `Terraform plan`** until
+   the apply lands or the steps are reordered. Quarterly access review; state in S3.
 
 ## 4. Assurance notes
 
@@ -576,24 +593,34 @@ that makes it.
 
 1. **Two of the three enforcement layers are not active, and the docs are only slightly short
    of saying so.** Measured today: `.git/hooks/commit-msg` and `.git/hooks/pre-commit` are
-   **not installed**, and the live `protect-main` ruleset reports **no required status checks
-   at all** (`required_check` context list empty) — the `provenance` requirement is declared in
+   **installed** (corrected 2026-10-17 — they were absent when this line was first written), but
+   the live `protect-main` ruleset still reports **no required status checks at all**
+   (`required_check` context list empty) — the `provenance` requirement is declared in
    `repo_rulesets.tf` and lands only on the apply. So commit provenance is currently
-   *reported* by CI but *blocks nothing*, and the local hook gives no feedback either. Not a
-   lie, but close: §5.4 of AI_WORKFLOW_POLICY called the CI check "the unbypassable control"
-   while nothing was bypassing it.
+   *reported* by CI but *blocks nothing* at the ruleset layer; the local hook now gives early
+   feedback, though it stays bypassable via `--no-verify`. Not a lie, but close: §5.4 of
+   AI_WORKFLOW_POLICY called the CI check "the unbypassable control" while nothing was bypassing it.
 2. **Guards outnumber their tests 12 to 1.** Only `update_contact_emails.sh` has a suite
    (`test_contact_email_gates.sh`, 14 cases). `assert_live_controls.sh`,
    `check_ci_credential.sh` and `check_plan_selfcite.sh` — three gates that now decide whether
    CI passes — have none, and each shipped a defect that only manual probing found: #9's parser
    silently dropped two repositories, #11 reported `OK` while asserting nothing. A tool that
-   gates merges deserves the planted-failure test the sweep got.
+   gates merges deserves the planted-failure test the sweep got. **Addressed 2026-10-17:**
+   `scripts/test_control_guards.sh` adds 16 offline cases across all three guards, each proven
+   to go RED on a planted fault (bad self-citation, fabricated sign-off, context/linear-history
+   drift, missing protection, write-capable scope, 401, null org detail, invisible repo).
+   Dev-time like the sweep's suite; not wired into `audit.yml`.
 3. **The strongest new guard has the weakest coverage.** `assert_live_controls.sh` prints
    `asserting 5 of 31 inventory repositories`: it only sees repos that override
    `required_status_checks_contexts`. The 13-repo `required_linear_history` gap it ought to
    catch sits in the inherit-the-default set, so today it caught it only in the two repos
    (web, demos) that happen to override. Coverage must include the default or the headline
-   should say so.
+   should say so. **Addressed 2026-10-17:** the guard now resolves the inherited default
+   (per-repo override else `var.branch_required_status_checks_contexts`, read from
+   `variables.tf`) for every protected repo - coverage is **21 of 31**, not 5. Empty (no default
+   branch) and ruleset-governed repos are excluded and the notice states the count. Consequence:
+   the next CI run asserts 16 more repos and will surface the known 13-repo
+   `required_linear_history` gap (P1-18) as `DIVERGED` until the apply lands.
 4. **The un-applied delta has become a control problem in its own right.** C1-C11, C17 and C18
    all read `declared-not-applied`, which means the org's real protections are still the
    hand-made history plus three scripted reconciliations, and Terraform is currently a
@@ -605,10 +632,11 @@ that makes it.
    Narrative is the right place for *why*, but it rots faster than tables (six retractions is
    evidence of that) and an auditor cannot action 500 lines quickly. Findings should be one
    table row plus a pointer to the evidence; the argument belongs in `docs/superpowers/plans/`.
-6. **One 5-minute owner task is blocking four findings.** `TF_GITHUB_TOKEN` reaches CI empty
-   and `ORG_READ_TOKEN` does not exist (P1-23), so `detect_drift.sh` and
-   `assert_live_controls.sh` are skipped on every run and the audit job cannot go green. Two
-   sessions of building guards have not moved that dependency.
+6. **One 5-minute owner task is blocking four findings. — RESOLVED 2026-10-17.** Both CI PATs are
+   written and `Check CI credential` + `Detect drift` are green; `assert_live_controls.sh` now runs
+   (red on the apply-pending divergences, not the credential). The dependency moved; what remains
+   is the apply itself (§5.4) and reordering `Assert live controls` vs `Terraform plan` so a red
+   reality-gate stops hiding the plan.
 
 **Not wrong, and worth naming, because they look like gaps:** the single-member org means
 separation of duties, code-owner review and any approving-review requirement are nominal by
