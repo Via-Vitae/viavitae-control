@@ -238,24 +238,24 @@ repo visibility or rotate credentials automatically. The following need explicit
   Tooling: `scripts/patch_aggregate_gate.py <clone-dir> [--write]`, one PR per repo via
   `scripts/rollout_aggregate_gate.sh`. Applying it did make some repos go red on their first
   honest run; those were pre-existing failures, recorded as P1-17, not regressions.
-- **P1-16 — 59 open Dependabot alerts on default branches (re-measured 2026-10-15).**
-  Counted with `GET /repos/{org}/{repo}/dependabot/alerts?state=open` over all 31 repos:
-  `viavitae-web` 38 (5 critical, 10 high, 21 moderate, 2 low), `viavitae-qa` 11 (4 high,
-  5 moderate, 2 low), `viavitae-docs` 9 (2 critical, 1 high, 5 moderate, 1 low),
-  `viavitae-api` 1 moderate; every other repo reports none. The earlier "31 / web 20" figures
-  were a partial read and are superseded by these numbers.
+- **P1-16 — open Dependabot alerts on default branches (the count moves; only ever trust a fresh
+  measurement).** Counted with `GET /repos/{org}/{repo}/dependabot/alerts?state=open` over all
+  repos: 2026-10-15 — web 38 (5 critical, 10 high, 21 moderate, 2 low), qa 11, docs 9, api 1
+  (59 total). 2026-10-17 — qa had **risen to 20** on its own (new advisories published against
+  versions already merged, not a regression here), which is why a stale figure is worse than no
+  figure. After merging qa PR #17 (playwright 1.63→1.64) qa is **13**; web stays **35** after
+  #34 (`next` 15.5.25→15.5.27) and #30 (actions group).
   Two explanations that were *assumed and are now refuted*: the flag is not the problem —
   `GET /repos/{o}/{r}/automated-security-fixes` already returns `enabled: true` on every repo
   sampled, so the 25 `github_repository_dependabot_security_updates` creates in the plan merely
-  re-assert the live value; and coverage is not missing either — 17 open Dependabot pull
-  requests exist (`viavitae-web` 8, `viavitae-qa` 5, `viavitae-docs` 3, `viavitae-api` 1).
-  The backlog is therefore purely an unmerged-queue: a human has to accept each bump.
-  Not merged in this session on purpose. A dependency bump changes what runs in production,
-  which `policies/AI_WORKFLOW_POLICY.md` treats as an owner decision ("plan-only authority"),
-  and this repo has just seen three majors land unreviewed (P1-21). Suggested order once the
-  owner takes it up: patch-level security bumps first (`viavitae-web` #34, `next` 15.5.25→
-  15.5.27), then grouped minors now that the verdicts are honest, then majors (`next-intl`
-  3→4) with the release notes read.
+  re-assert the live value; and coverage is not missing either — open Dependabot pull requests
+  exist for most of it (`viavitae-web` 6 now, `viavitae-qa` 3, `viavitae-docs` 3, `viavitae-api` 1).
+  The backlog is therefore an unmerged-queue: a human has to accept each bump.
+  Merging is no longer a coin flip: with the verdict repaired, a bad bump now shows up red instead
+  of landing — web PR #31's tooling group fails `Lint` and `Contract check` and stays held.
+  Remaining owner judgement: patch/minor security bumps (like #17, #34) are being merged as they
+  verify green; majors (#25 jsdom 25→30, #26/#20 next-intl 3→4, #27/#36 next-react) need the
+  release notes read.
 - **P1-18 — `terraform apply` would have aborted partway, and an inspection caught it
   before it happened.** The restored plan created `github_repository_dependabot_security_updates`
   for **all 30** repos including the 5 private ones, where Dependabot needs GitHub Team; on
@@ -413,6 +413,15 @@ repo visibility or rotate credentials automatically. The following need explicit
   one line — `required_status_checks_contexts = ["Compliance status", "CI status"]` for
   `viavitae-qa` in `repos_data.tf` — after the advisories are cleared. The second half (peer
   grouping in each repo's `dependabot.yml`) is still untouched.
+  **Done 2026-10-17:** that flip is now declared. qa's Trivy leg was cleared by PR #17
+  (playwright 1.63→1.64, alerts 20→13, `Dependency scan` and `CI status` both green on `main`),
+  and `CI status` was then added to `viavitae-qa`'s required contexts. Sequencing was the point:
+  requiring the aggregate while Trivy was red for an unrelated reason would have frozen merges
+  as a side effect of the gate, and requiring a context no job emits is what froze this repo
+  twice already (P1-11/P1-13). `scripts/assert_live_controls.sh` confirms both halves of that
+  judgement — it reports `viavitae-qa DIVERGED contexts live=[Compliance status]
+  declared=[CI status,Compliance status]`, i.e. declared-but-not-yet-applied, which resolves on
+  the apply this register still records as unrun.
   A third control now exists for the class of problem behind P1-13/P1-18:
   `scripts/assert_live_controls.sh` (PR #9, merged 2026-10-16) asks the live API every CI run
   whether the *declared* merge controls are the ones in force, rather than trusting a stored
@@ -498,17 +507,16 @@ repo visibility or rotate credentials automatically. The following need explicit
    is reconcilable while `terraform.tfstate` is absent; decrypt the newest age backup, then
    `terraform init` and read a real plan before touching protection, contexts or the review
    count from here.
-3. **Day 0b: make the gates honest again. — DONE for the verdicts; three items remain.**
+3. **Day 0b: make the gates honest again. — DONE for the verdicts; two items remain.**
    `scripts/patch_aggregate_gate.py` is applied in all 17 repos and no fragile matcher survives.
    Still open, in dependency order:
-   a. ~~give `viavitae-qa` an aggregate job~~ — done 2026-10-16 (`viavitae-qa#20`, red on purpose
-      over Trivy); **require** `CI status` there once the advisories are cleared (P1-21);
+   a. ~~give `viavitae-qa` an aggregate job and require it~~ — done 2026-10-16/17 (`#20` ported
+      the job, `#17` cleared Trivy, contexts now declared here); it takes effect on the apply;
    b. decide which required contexts to declare where a gate is honest but optional, and group
       peer-coupled dependencies so majors land complete (P1-21);
    c. clear the Dependabot backlog by merging the open bump PRs, patch-level security fixes
-      first: 59 alerts measured 2026-10-15, **web 38 → 35** after merging `next` 15.5.25→15.5.27
-      (P1-16), and provision `viavitae-qa` staging so its browser/load gates run instead of
-      failing or silently skipping (P1-22).
+      first: web 38 → 35 (P1-16), qa 20 → 13; and provision `viavitae-qa` staging so its
+      browser/load gates run instead of failing or silently skipping (P1-22).
 4. **Stage 1 (Team upgrade):** finish flipping sensitive repos private; private-repo
    branch protection activates automatically via the feature flag.
 5. **Stage 2 (grow the team):** enroll 2FA on `IterVitae`, accept the invitation as

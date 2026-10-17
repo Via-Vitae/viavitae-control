@@ -152,11 +152,15 @@ locals {
       tier                  = "platform"
       manage_files          = false
       default_branch_exists = true
-      # `CI status` is deliberately absent: viavitae-qa's ci.yml has no aggregate
-      # ci-status job (unlike viavitae-template, which it was generated from), so
-      # requiring it makes every PR unmergeable — that is how P1-11 froze this repo.
-      # Restore the job upstream, then add "CI status" back here.
-      required_status_checks_contexts = ["Compliance status"]
+      # Restored 2026-10-16: `viavitae-qa` PR #20 ported the aggregate `ci-status` job from
+      # viavitae-template (needs every job in ci.yml, verdict from contains(needs.*.result)),
+      # so the context now exists and can be required. This is the repair P1-13 asked for: the
+      # repo had been gated on a context no job emitted, then left with no aggregate at all,
+      # which is how Lint/Typecheck stayed red on main unnoticed.
+      # Not required before that: requiring a context nobody emits is what froze this repo once
+      # already (P1-11), and requiring a job that fails for an unrelated reason (Trivy, cleared
+      # by PR #17) freezes merges as a side effect of adding a gate rather than by decision.
+      required_status_checks_contexts = ["Compliance status", "CI status"]
     }
 
     # ----------------------------------------------------------------- app ----
