@@ -565,6 +565,12 @@ Errors made in this step, recorded in the same spirit as the ones above:
 
 ## Review checklist (required — policy §5)
 
+<!-- Self-citations, enforced by scripts/check_plan_selfcite.sh in the Audit job.
+     These numbers describe THIS document; amend the document, then amend the number.
+     selfcite:stop_clauses=9 selfcite:halt_clauses=5 selfcite:rationale_rows=6
+     selfcite:file_rows=9 selfcite:tier_rows=6 selfcite:tasks_open=25
+     selfcite:tasks_done=17 -->
+
 ### Pre-commit checklist
 
 - [x] **Plan exists and is committed** — path: `docs/superpowers/plans/2026-10-15-viavitae-control-github-contact-email-remediation.md`

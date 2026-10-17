@@ -41,6 +41,15 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      # Placed ahead of every credential-dependent step on purpose: a step after a
+      # failure is skipped, and a skipped docs gate is indistinguishable from a
+      # passing one in the check list. This needs no secrets, no network and no
+      # Terraform, so it can and must fail on its own merits.
+      - name: Check plan self-citations
+        run: |
+          chmod +x scripts/check_plan_selfcite.sh
+          ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
+
       # Credential gates run BEFORE `Terraform plan` on purpose: a plan failure
       # skips every later step, so a gate parked downstream can never report a
       # verdict. The gate's exit 2 means "could not run" (surfaced as a warning),
