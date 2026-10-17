@@ -14,12 +14,12 @@ companion to the effective-control matrix emitted by `terraform output`.
 
 | # | Control | SOC 2 | ISO 27001 | GDPR | Implemented by | Free status |
 |---|---|---|---|---|---|---|
-| C1 | Repositories declared as code (single source of truth) | CC8.1 | A.14.2 | Art. 25 | `repos_data.tf`, `repos.tf` | `declared-not-applied` |
-| C2 | No shadow repos (drift detection) | CC8.1 | A.12.4 | Art. 32 | `scripts/detect_drift.sh` | `declared-not-applied` |
+| C1 | Repositories declared as code (single source of truth) | CC8.1 | A.14.2 | Art. 25 | `repos_data.tf`, `repos.tf` | `enforced-verified` |
+| C2 | No shadow repos (drift detection) | CC8.1 | A.12.4 | Art. 32 | `scripts/detect_drift.sh` | `enforced-verified` |
 | C3 | Secret scanning (public repos) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | `declared-not-applied` |
 | C4 | Secret-scanning push protection (public) | CC7.1 | A.12.6 | Art. 32 | `modules/repo` security_and_analysis | `declared-not-applied` |
 | C5 | Dependabot security updates | CC7.1 | A.12.6 | Art. 32 | `github_repository_dependabot_security_updates` | `declared-not-applied` |
-| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | `declared-not-applied` |
+| C6 | Branch protection (public repos): PR workflow, no force-push/delete, strict checks, admins enforced | CC8.1 | A.14.2 | Art. 32 | `modules/repo/branch_protection.tf` | `enforced-verified` |
 | C7 | CODEOWNERS (accountable reviewers) | CC1.4, CC8.1 | A.6.1 | Art. 24 | `modules/repo/files.tf` | `declared-not-applied` |
 | C8 | Baseline security workflow (CodeQL) | CC7.1 | A.14.2 | Art. 32 | `modules/repo/files.tf` | `declared-not-applied` |
 | C9 | Allowed-actions allow-list (supply chain) | CC6.6, CC7.1 | A.15.1 | Art. 28 | `org_actions_policy.tf` | `declared-not-applied` |
@@ -45,6 +45,12 @@ companion to the effective-control matrix emitted by `terraform output`.
 
 A control may not be marked `enforced-verified` without a cited live observation.
 This single rule would have prevented F2, F5, F6 and F11.
+
+> C1, C2 and C6 were flipped to `enforced-verified` on **2026-10-17** with a cited live
+> observation: `detect_drift.sh` green (live inventory == declared) and
+> `assert_live_controls.sh` reporting **21 of 31, 0 diverged**, both in `Audit` run
+> `39060230877` (PR #28). Every other row stays `declared-not-applied` until it is re-observed
+> against the live API - see P1-24 for what the apply actually landed.
 
 ## 2. P0 / P1 findings (require human action — not auto-remediated)
 
@@ -311,6 +317,13 @@ repo visibility or rotate credentials automatically. The following need explicit
     it. Any future drift comparison must read `.enabled`, never the container.
   **No apply was run.** The plan was saved to a `0600` file and read only; `terraform apply`
   still needs an explicit owner statement (AI_WORKFLOW_POLICY §"plan-only authority").
+  **Superseded 2026-10-17: the apply DID run** (owner-authorized) - see P1-24. Two claims in this
+  entry were wrong: (a) "the 20 classic protections are creates" - they are NOT creatable, they
+  already exist live and must be `terraform import`ed (a create 409s "Name already protected:
+  main"); and (b) "the provider does not send email/name so the org profile survives the apply" -
+  that held only for a *create*; as an in-place update it proposed `email -> null` /
+  `name -> null` and needed `ignore_changes` (PR #27) to avoid wiping the org contact address and
+  display name.
 - **P1-19 — CodeQL's `Analyze (javascript-typescript)` leg failed on `main` in all ten
   `viavitae-landing-*` repos, invisibly. CLOSED.** Measured 2026-10-15 before the fix: the JS/TS
   leg concluded `failure` while `CI status`/`Compliance status` were `success`, because that leg
@@ -505,6 +518,29 @@ repo visibility or rotate credentials automatically. The following need explicit
   `true` — all three are the pending-apply delta (P1-18/P1-21), not a credential fault. Because that
   step sits **before** `Terraform plan` in `audit.yml`, a red assert now **skips** the plan, so CI
   cannot show a green plan until the apply lands or the two steps are reordered.
+- **P1-24 — 2026-10-17: the apply landed and the merge controls are now prescriptive.** Owner
+  authorized `terraform apply`. What happened, recorded so the earlier analysis is not re-trusted:
+  - The plan's 20 classic protections were **not creatable**. They already exist live (the
+    hand-made history of P1-10/P1-13) but were absent from state, so `apply` failed all 20 with
+    **HTTP 409 "Name already protected: main"** - a create cannot overwrite an existing rule. The
+    fix was `terraform import` with id **`<repo>:main`** (the `BPR_*` node id is NOT the import
+    id); the plan then became **14 in-place updates, 0 add, 0 destroy** and applied cleanly: 13
+    repos `required_linear_history` false→true, `viavitae-qa` `dismiss_stale_reviews` + adds
+    `CI status`, `viavitae-web`/`viavitae-demos` drop `/JourneyOfLife` from
+    `pull_request_bypassers`. All tightening; nothing loosened; 0 destroyed.
+  - **Apply footgun the create-analysis missed:** `github_organization_settings` is in state with
+    `email`/`name` set out-of-band (P1-7) but not declared in `org_settings.tf`, so a full plan
+    proposed `email -> null` / `name -> null` - wiping the org contact + display name. Fixed with
+    `lifecycle { ignore_changes = [email, name] }` (PR #27); org profile verified intact after.
+  - The register's P1-12 "9 resources / no apply run" was **already stale**: state held 62
+    resources (31 repos, 26 dependabot, ruleset, org settings, 1 protection) before this session,
+    and the `provenance` ruleset check is live (`["provenance"]`).
+  Post-apply evidence: `assert_live_controls.sh` → 21 of 31, **0 diverged**; `Audit` **green
+  end-to-end** (run 39060230877); adoption made reproducible via an `imports.tf` branch-protection
+  import block (PR #28); state backed up (`viavitae-control-terraform.tfstate.20261017T192042Z.age`,
+  serial 143, decrypt round-trip verified). Still open: C7/C8/C17/C18 (file deploy needs
+  `manage_files`), C3/C4/C5/C9/C10/C11 not re-observed live this session, no state locking
+  (C13c), and the backup is on the same disk (no off-host copy).
 
 ## 3. Staged remediation roadmap
 
@@ -593,13 +629,12 @@ that makes it.
 
 1. **Two of the three enforcement layers are not active, and the docs are only slightly short
    of saying so.** Measured today: `.git/hooks/commit-msg` and `.git/hooks/pre-commit` are
-   **installed** (corrected 2026-10-17 — they were absent when this line was first written), but
-   the live `protect-main` ruleset still reports **no required status checks at all**
-   (`required_check` context list empty) — the `provenance` requirement is declared in
-   `repo_rulesets.tf` and lands only on the apply. So commit provenance is currently
-   *reported* by CI but *blocks nothing* at the ruleset layer; the local hook now gives early
-   feedback, though it stays bypassable via `--no-verify`. Not a lie, but close: §5.4 of
-   AI_WORKFLOW_POLICY called the CI check "the unbypassable control" while nothing was bypassing it.
+   **installed** (corrected 2026-10-17 — they were absent when this line was first written), and
+   the live `protect-main` ruleset now **does** report `provenance` as a required status check
+   (`gh api .../rulesets/23943250` → `["provenance"]`, verified 2026-10-17). So commit provenance
+   is enforced at the local hook (early feedback, still `--no-verify`-bypassable) AND by the
+   unbypassable CI gate. The earlier "ruleset reports no required checks" reading was overtaken by
+   the apply (P1-24); this line is now accurate.
 2. **Guards outnumber their tests 12 to 1.** Only `update_contact_emails.sh` has a suite
    (`test_contact_email_gates.sh`, 14 cases). `assert_live_controls.sh`,
    `check_ci_credential.sh` and `check_plan_selfcite.sh` — three gates that now decide whether
@@ -621,12 +656,12 @@ that makes it.
    branch) and ruleset-governed repos are excluded and the notice states the count. Consequence:
    the next CI run asserts 16 more repos and will surface the known 13-repo
    `required_linear_history` gap (P1-18) as `DIVERGED` until the apply lands.
-4. **The un-applied delta has become a control problem in its own right.** C1-C11, C17 and C18
-   all read `declared-not-applied`, which means the org's real protections are still the
-   hand-made history plus three scripted reconciliations, and Terraform is currently a
-   *descriptive* layer, not a prescriptive one. "Single source of truth" is not yet true —
-   26 imports, 46 creates and 27 updates sit pending, verified to contain 0 destroys and no
-   loosening. This is the cheapest large step left.
+4. **The un-applied delta — LARGELY CLOSED 2026-10-17.** The apply landed (P1-24): the merge
+   controls are in state and match live (`assert_live_controls.sh` 21/31, 0 diverged), so for
+   C1/C2/C6 Terraform is now prescriptive, not descriptive. What remains `declared-not-applied` is
+   the file-deploy set (C7 CODEOWNERS, C8 CodeQL, C17/C18 gitleaks - all gated on `manage_files`,
+   still false) plus rows not re-observed live this session (C3/C4/C5/C9/C10/C11). 0 destroys, 0
+   loosening.
 5. **The register is outgrowing its shape.** 549 lines for 25 findings; COMPLIANCE.md was
    touched 10 times in the last three days against 2 for `variables.tf` and 2 for `repos.tf`.
    Narrative is the right place for *why*, but it rots faster than tables (six retractions is
