@@ -139,6 +139,16 @@ ai:[tier]"
 
 ## Review checklist (required — policy §5)
 
+<!-- Self-citations (copy this line and fill in the numbers once the sections exist).
+     scripts/check_plan_selfcite.sh compares each value against the recomputed
+     structure of THIS document and fails the Audit job on a mismatch. `<n>` is a
+     placeholder, not an assertion, so a fresh template proves nothing by passing.
+     Metrics: stop_clauses, halt_clauses, evidence_bullets, rationale_rows,
+     file_rows, tier_rows, tasks_open, tasks_done.
+     selfcite:stop_clauses=<n> selfcite:halt_clauses=<n> selfcite:rationale_rows=<n>
+     selfcite:file_rows=<n> selfcite:tier_rows=<n> selfcite:tasks_open=<n>
+     selfcite:tasks_done=<n> -->
+
 <!-- The reviewer (top tier or human) completes this BEFORE commit and BEFORE merge. This is the compliance control. Copy the evidence into each line — a bare [x] with no citation is not a sign-off. -->
 
 ### Pre-commit checklist

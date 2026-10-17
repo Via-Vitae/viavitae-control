@@ -48,6 +48,7 @@ non-2xx is reported per repo and the script exits non-zero.
 | `scripts/detect_drift.sh` | Compare live org against `repos_data.tf` inventory | read-only (`gh` GET) |
 | `scripts/assert_live_controls.sh` | Assert the **declared merge controls** (contexts, strict, enforce_admins, linear history, force-push/deletion) against the live API — the gap `detect_drift.sh` cannot see, because inventory equality says nothing about enforcement | read-only; exit 0 match, 1 divergence, 2 could not run; prints its own coverage (`N of M` repositories) |
 | `scripts/check_ci_credential.sh` | Pre-flight the CI plan credential: reject anything write-capable and prove every read the **current configuration** requires, before `terraform plan` runs | read-only GETs; exit 0 correct, 1 wrong class or blind spot (names the repos), 2 could not run; never prints the token |
+| `scripts/check_plan_selfcite.sh` | Fail when a plan document asserts a number about itself that no longer holds after an amendment (`selfcite:<metric>=<n>`) | read-only; exit 0 match, 1 stale/fabricated assertion, 2 usage error; a file with 0 assertions is reported as **not** evidence of conformance |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 
 ## Audit prompt
