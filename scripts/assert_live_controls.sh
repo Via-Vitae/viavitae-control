@@ -11,8 +11,14 @@
 # asks the live API every run, so a control that silently stops being enforced
 # turns CI red instead of turning into documentation.
 #
-# WHAT IT ASSERTS, for every repo that declares required_status_checks_contexts
-# in repos_data.tf (declaring an empty list is a valid assertion: "no check is
+# WHAT IT ASSERTS, for every repository that carries classic branch protection on
+# a real default branch - i.e. `default_branch_exists` resolves true AND
+# `enable_branch_protection` is not false. The required-context list is the repo's
+# own `required_status_checks_contexts` if it declares one, otherwise the org default
+# `var.branch_required_status_checks_contexts` (read from variables.tf, the same
+# source locals.tf resolves against). Asserting the inherited default is the point:
+# without it the guard only sees the handful of repos that override. For each such
+# repo it checks (declaring an empty list is a valid assertion: "no check is
 # required"):
 #   1. the default branch has classic branch protection at all (404 = DIVERGED)
 #   2. required status check contexts == declared list, exactly (set equality)
@@ -60,77 +66,115 @@ if [[ -z "${GITHUB_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1; then
   exit 2
 fi
 
-# Declared opt-ins: "<repo>\t<[bracketed,list]>" for blocks carrying the field.
-# Parsed with python rather than awk because repos_data.tf writes some of these
-# lists on one line and some across several (the per-repo baselines added in PR
-# #19). A line-oriented awk parse reads the opening `[` as the whole value and
-# reports "not a valid array" - which is an ERROR, not a pass, but still silently
-# drops those repositories from the assertion. Bracket counting handles both
-# shapes, and the coverage notice below states how much of the inventory was
-# actually asserted.
+# Declared opt-ins: "<repo>\t<[json list]>" for every PROTECTED repo. A repo is
+# asserted when default_branch_exists resolves true AND enable_branch_protection is
+# not false; its context list is the per-repo required_status_checks_contexts if
+# declared, else the org default read from variables.tf. Parsed with python rather
+# than awk because repos_data.tf writes some lists on one line and some across
+# several; bracket counting handles both, and per-block bools are captured so the
+# inherited default is asserted too (the point of this guard's coverage).
 mapfile -t DECL < <(
-  python3 - "${INVENTORY}" <<'PY'
+  python3 - "${INVENTORY}" "${ROOT}/variables.tf" <<'PY'
 import re, sys, pathlib
 
-text = pathlib.Path(sys.argv[1]).read_text().splitlines()
+inv = pathlib.Path(sys.argv[1]).read_text().splitlines()
+try:
+    var = pathlib.Path(sys.argv[2]).read_text()
+except OSError:
+    var = ""
 
 
-def emit(name, value):
-    # HCL allows a trailing comma inside a list; JSON does not. Drop it so the
-    # value below can be parsed by jq instead of being reported as invalid.
-    value = re.sub(r",\s*\]", "]", value.strip())
-    print(f"{name}\t{value}")
+def norm(v):
+    # HCL allows a trailing comma inside a list; JSON does not.
+    return re.sub(r",\s*\]", "]", v.strip())
+
+
+def default_list(name):
+    m = re.search(r'variable\s+"' + re.escape(name) + r'"\s*\{.*?\bdefault\s*=\s*(\[[^\]]*\])',
+                  var, re.DOTALL)
+    return norm(m.group(1)) if m else "[]"
+
+
+def default_bool(name):
+    m = re.search(r'variable\s+"' + re.escape(name) + r'"\s*\{.*?\bdefault\s*=\s*(true|false)',
+                  var, re.DOTALL)
+    return (m.group(1) == "true") if m else False
+
+
+DEFAULT_CTX = default_list("branch_required_status_checks_contexts")
+GLOBAL_HAS_BRANCH = "true" if default_bool("repos_have_default_branch") else "false"
+
+
+def finalize(name, f):
+    dbe = f.get("default_branch_exists", GLOBAL_HAS_BRANCH)
+    ebp = f.get("enable_branch_protection", "true")
+    if dbe != "true" or ebp == "false":
+        return
+    print(f"{name}\t{f.get('required_status_checks_contexts', DEFAULT_CTX)}")
 
 
 repo = None
+f = {}
 field = None
 buf = ""
 depth = 0
-for raw in text:
+for raw in inv:
     line = raw.rstrip()
-    if re.match(r'^    "[^"]+"\s*=\s*\{\s*$', line):
-        repo = line.split('"')[1]
-        field = None
-        buf = ""
+    m = re.match(r'^    "([^"]+)"\s*=\s*\{\s*$', line)
+    if m:
+        if repo is not None:
+            finalize(repo, f)
+        repo, f, field, buf, depth = m.group(1), {}, None, "", 0
         continue
     if repo is None:
         continue
     if re.match(r'^    \},?\s*$', line):
-        repo = None
+        finalize(repo, f)
+        repo, f, field, buf, depth = None, {}, None, "", 0
         continue
-    if field is None:
-        m = re.match(r'^\s*required_status_checks_contexts\s*=\s*(.*)$', line)
-        if m:
-            buf, field = m.group(1), True
-            depth = buf.count("[") - buf.count("]")
-            if depth <= 0:
-                emit(repo, buf)
-                field, buf = None, ""
-            continue
+    if field is not None:
+        buf += " " + line.strip()
+        depth += line.count("[") - line.count("]")
+        if depth <= 0:
+            f[field] = norm(buf)
+            field, buf = None, ""
         continue
-    # inside a multi-line list
-    buf += " " + line.strip()
-    depth += line.count("[") - line.count("]")
-    if depth <= 0:
-        emit(repo, buf)
-        field, buf = None, ""
+    mb = re.match(r'^\s*(default_branch_exists|enable_branch_protection)\s*=\s*(true|false)\s*$', line)
+    if mb:
+        f[mb.group(1)] = mb.group(2)
+        continue
+    ml = re.match(r'^\s*required_status_checks_contexts\s*=\s*(.*)$', line)
+    if ml:
+        buf = ml.group(1)
+        depth = buf.count("[") - buf.count("]")
+        if depth <= 0:
+            f["required_status_checks_contexts"] = norm(buf)
+            buf = ""
+        else:
+            field = "required_status_checks_contexts"
+        continue
+if repo is not None:
+    finalize(repo, f)
 PY
 )
 
-# Coverage, printed rather than assumed: this guard only asserts repositories that
-# declare the field explicitly. Everything else inherits
-# var.branch_required_status_checks_contexts and is NOT checked here.
+# Coverage, printed rather than assumed: this guard asserts every PROTECTED repo -
+# default_branch_exists resolves true AND enable_branch_protection is not false -
+# using each repo's own override or the org default contexts. Empty (no default
+# branch) and ruleset-governed repos are excluded, and the notice states how many
+# of the inventory were actually asserted.
 total_inventory="$(grep -cE '^    "[^"]+"[[:space:]]*=[[:space:]]*\{' "${INVENTORY}" || echo 0)"
 
 if [[ "${#DECL[@]}" -eq 0 ]]; then
-  echo "NOTICE: no repo declares required_status_checks_contexts - nothing asserted."
+  echo "NOTICE: no protected repo found (default_branch_exists true and"
+  echo "        enable_branch_protection not false) - nothing asserted."
   echo "        Controls are unverified, not verified. See repos_data.tf."
   exit 0
 fi
 
 fails=0
 checked=0
-printf 'NOTICE asserting %s of %s inventory repositories (the rest inherit var.branch_required_status_checks_contexts and are not covered here).\n' "${#DECL[@]}" "${total_inventory}" >&2
+printf 'NOTICE asserting %s of %s inventory repositories (protected repos; each uses its override or the org default contexts. Empty/ruleset repos are excluded).\n' "${#DECL[@]}" "${total_inventory}" >&2
 
 for entry in "${DECL[@]}"; do
   repo="${entry%%$'\t'*}"
