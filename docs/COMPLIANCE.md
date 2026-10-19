@@ -72,6 +72,13 @@ repo visibility or rotate credentials automatically. The following need explicit
   `403 "The Via Vitae organization requires all members to have two-factor authentication
   enabled."` See P1-10.
   `policies/enforce_sso.sh --apply` remains the IaC-less path for re-asserting it.
+  **Detection moved out of the CI plan** once `var.manage_org_data` defaulted to `false`:
+  `terraform plan` then reads no organization full-detail field and cannot assert this at
+  all (it still issues the provider's configure-time `GET /orgs/{org}`, which needs only org
+  visibility, not administration read). Verify with `scripts/assert_org_2fa.sh` (read-only,
+  operator credential, three-way exit `0 enforced / 1 not enforced / 2 undetermined`). A
+  skipped assertion is reported as UNKNOWN in `control_gaps` and `p0_security_alerts` — a
+  gap, never a pass.
 - **P1-2 — Single-member org** (`JourneyOfLife` only). Peer review and code-owner
   review cannot be enforced without locking out the sole admin. Add a second
   member/team, then raise `branch_required_approving_review_count = 1` and
