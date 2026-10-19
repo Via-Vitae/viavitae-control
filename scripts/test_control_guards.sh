@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # #############################################################################
-# test_control_guards.sh — deterministic, OFFLINE tests for the three CI guards
+# test_control_guards.sh — deterministic, OFFLINE tests for the four CI guards
 # that decide whether the Audit job passes:
 #   scripts/check_plan_selfcite.sh   (pure file analysis)
+#   scripts/detect_drift.sh          (declared inventory vs live org listing)
 #   scripts/assert_live_controls.sh  (reads live branch protection via gh)
 #   scripts/check_ci_credential.sh   (reads credential class + org via curl/gh)
 #
@@ -44,6 +45,9 @@ trap cleanup EXIT
 
 cat > "${SHIM}/gh" <<'SH'
 #!/usr/bin/env bash
+# `gh auth status` is consulted by the guards when no token is injected, so the
+# shim must answer it (FAKE_AUTH_RC selects available / unavailable keyring).
+if [[ "${1:-}" == "auth" ]]; then exit "${FAKE_AUTH_RC:-0}"; fi
 [[ "${1:-}" == "api" ]] || { echo "fake gh: unsupported: $*" >&2; exit 2; }
 path="${2:-}"; shift 2 2>/dev/null || true
 jqf=""
@@ -55,6 +59,15 @@ while [[ $# -gt 0 ]]; do
 done
 body=""
 case "${path}" in
+  orgs/*/repos*)
+    # detect_drift.sh's org listing: a plain newline-separated name list, not JSON
+    # (the real call pipes through --jq, which the shim has already consumed).
+    if [[ "${FAKE_ORGS_ERR:-}" == "1" ]]; then
+      echo "the following error was planted: Bad credentials (HTTP 401)" >&2
+      exit 1
+    fi
+    cat "${FAKE_DIR}/org_repos.txt" 2>/dev/null || true
+    exit 0 ;;
   orgs/*)
     body="$(cat "${FAKE_DIR}/org.json" 2>/dev/null || echo '{}')" ;;
   */branches/*/protection)
@@ -221,6 +234,72 @@ else bad "AL5 coverage notice wrong (exit ${rc})"; fi
 if grep -qE 'viavitae-empty|viavitae-ruleset' <<<"${out}"; then
   bad "AL6 asserted a repo it should skip (empty or ruleset-governed)"
 else pass "AL6 empty + ruleset repos correctly excluded"; fi
+
+# --- detect_drift.sh (DD) ---------------------------------------------------
+DD="${HERE}/detect_drift.sh"
+ddinv="$(mktemp -d)/repos_data.tf"
+cat > "${ddinv}" <<'EOF'
+locals {
+  inventory = {
+    "viavitae-alpha" = { visibility = "public" }
+    "viavitae-beta"  = { visibility = "public" }
+  }
+}
+EOF
+
+# DD1: declared == live -> exit 0
+printf 'viavitae-alpha\nviavitae-beta\n' > "${FAKE_DIR}/org_repos.txt"
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'inventory matches the live org' <<<"${out}"; then
+  pass "DD1 declared == live passes (exit 0)"
+else bad "DD1 reported drift on a matching org (exit ${rc}): ${out}"; fi
+
+# DD2: a live repo that is not declared -> SHADOW, exit 1
+printf 'viavitae-alpha\nviavitae-beta\nviavitae-shadow\n' > "${FAKE_DIR}/org_repos.txt"
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'viavitae-shadow' <<<"${out}"; then
+  pass "DD2 shadow repo caught (exit 1)"
+else bad "DD2 missed the shadow repo (exit ${rc})"; fi
+
+# DD3: a declared repo that is gone -> GHOST, exit 1
+printf 'viavitae-alpha\n' > "${FAKE_DIR}/org_repos.txt"
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'viavitae-beta' <<<"${out}"; then
+  pass "DD3 ghost repo caught (exit 1)"
+else bad "DD3 missed the ghost repo (exit ${rc})"; fi
+printf 'viavitae-alpha\nviavitae-beta\n' > "${FAKE_DIR}/org_repos.txt"  # restore
+
+# DD4: THE DEFECT CLASS - a failed org read must be "could not run", never a
+# verdict. Left unfixed it reported every declared repo as GHOST with exit 1.
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" FAKE_ORGS_ERR=1 INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]] && ! grep -q 'GHOST repos (declared but NOT live)' <<<"${out}" \
+   && grep -qi 'Bad credentials' <<<"${out}"; then
+  pass "DD4 failed org read -> exit 2 with the reason, no ghost flood"
+else bad "DD4 turned an outage into a drift verdict (exit ${rc}): ${out}"; fi
+
+# DD5: successful read that returns nothing - the blank-line trap. `printf '%s\n' ""`
+# emits one empty line, so a naive length check reads as "one repo" and passes.
+: > "${FAKE_DIR}/org_repos.txt"
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]] && grep -q 'refusing to report' <<<"${out}"; then
+  pass "DD5 empty-but-successful read -> exit 2 (blank line not counted as a repo)"
+else bad "DD5 accepted an empty org read (exit ${rc}): ${out}"; fi
+printf 'viavitae-alpha\nviavitae-beta\n' > "${FAKE_DIR}/org_repos.txt"  # restore
+
+# DD6: the run must name the credential that answered, so a local pass can never
+# be quoted as evidence about the CI secret (and vice versa).
+out="$(ORG=Via-Vitae GITHUB_TOKEN="***" INVENTORY="${ddinv}" "${DD}" 2>&1)"
+if grep -q 'credential_source=injected:GITHUB_TOKEN' <<<"${out}"; then
+  pass "DD6a injected token self-labelled"
+else bad "DD6a did not label the injected credential: ${out}"; fi
+out="$(ORG=Via-Vitae GITHUB_TOKEN="" FAKE_AUTH_RC=0 INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'credential_source=gh-auth-fallback' <<<"${out}"; then
+  pass "DD6b keyring fallback labelled as NOT the CI credential"
+else bad "DD6b fallback not labelled honestly (exit ${rc}): ${out}"; fi
+out="$(ORG=Via-Vitae GITHUB_TOKEN="" FAKE_AUTH_RC=1 INVENTORY="${ddinv}" "${DD}" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]] && grep -qi 'no credential' <<<"${out}"; then
+  pass "DD6c no credential at all -> exit 2 (not a pass, not a drift verdict)"
+else bad "DD6c accepted a credential-less run (exit ${rc}): ${out}"; fi
 
 # --- check_ci_credential.sh (CC) --------------------------------------------
 CC="${HERE}/check_ci_credential.sh"

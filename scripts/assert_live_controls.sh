@@ -50,6 +50,10 @@
 #     as true and every invariant would produce a false alarm.
 #   * PRIVATE repos cannot expose protection on the Free plan (HTTP 403); those
 #     are reported as ERROR so an opt-in there cannot pass silently.
+#   * When GITHUB_TOKEN is unset but `gh` is authenticated, every verdict below
+#     comes from the interactive keyring (org ADMIN), not from the CI credential.
+#     The run prints `credential_source=` so a local pass can never be quoted as
+#     evidence about the CI secret, and vice versa.
 # #############################################################################
 set -euo pipefail
 
@@ -61,10 +65,18 @@ command -v gh >/dev/null 2>&1 || { echo "gh CLI required" >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 2; }
 command -v python3 >/dev/null 2>&1 || { echo "python3 required (parses the inventory lists)" >&2; exit 2; }
 [[ -f "${INVENTORY}" ]] || { echo "inventory not found: ${INVENTORY}" >&2; exit 2; }
-if [[ -z "${GITHUB_TOKEN:-}" ]] && ! gh auth status >/dev/null 2>&1; then
+
+# Resolve the credential BEFORE any read, and name it in the output: this guard's
+# verdict is only evidence about the credential that actually served it.
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  CREDENTIAL_SOURCE="injected:GITHUB_TOKEN"
+elif gh auth status >/dev/null 2>&1; then
+  CREDENTIAL_SOURCE="gh-auth-fallback (interactive keyring, NOT the CI credential)"
+else
   echo "no credential: set GITHUB_TOKEN or authenticate gh" >&2
   exit 2
 fi
+printf 'NOTICE credential_source=%s\n' "${CREDENTIAL_SOURCE}" >&2
 
 # Declared opt-ins: "<repo>\t<[json list]>" for every PROTECTED repo. A repo is
 # asserted when default_branch_exists resolves true AND enable_branch_protection is
