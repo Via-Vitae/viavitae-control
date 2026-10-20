@@ -50,6 +50,14 @@ jobs:
           chmod +x scripts/check_plan_selfcite.sh
           ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
 
+      # Metadata-only expiry gate on docs/SECRETS_INVENTORY.md: no secrets, no
+      # network, so it fails on its own merits ahead of the credential steps.
+      # Red here means a dated credential expires within 14 days or already did.
+      - name: Check secret inventory expiry
+        run: |
+          chmod +x scripts/check_secret_inventory.sh
+          ./scripts/check_secret_inventory.sh docs/SECRETS_INVENTORY.md
+
       # Credential gates run BEFORE `Terraform plan` on purpose: a plan failure
       # skips every later step, so a gate parked downstream can never report a
       # verdict. The gate's exit 2 means "could not run" (surfaced as a warning),
