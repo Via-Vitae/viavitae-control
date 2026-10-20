@@ -19,9 +19,10 @@ Columns: `secret_id | vault_path (pass) | tier | type | entity | storage_locatio
 
 | secret_id | vault_path | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| K4 | viavitae/github/ci-plan-pat | T1 | fine-grained PAT (id 21301575) | Via-Vitae | GitHub + Actions secret `TF_GITHUB_TOKEN` | 2027-01-15 | 90d | 2026-10-19 | org member lists + 2-repo admin metadata (until F-04 de-grant) | CC6.1 / A.8.2 | re-mint per runbook; revoke via UI |
+| K4 | viavitae/github/ci-plan-pat | T1 | fine-grained PAT (id 21301575) | Via-Vitae | GitHub + Actions secret `TF_GITHUB_TOKEN` | 2027-01-15 | 90d | 2026-10-20 | 2-repo admin metadata (org grants removed 2026-10-20; F-04 closed by CI rerun attempt 2, "unused power" notice absent) | CC6.1 / A.8.2 | re-mint per runbook; revoke via UI |
 | K3 | viavitae/github/drift-pat | T1 | fine-grained PAT | Via-Vitae | GitHub + Actions secret `ORG_READ_TOKEN` | 2027-01-15 | 90d | 2026-10-19 | org-wide private-repo read | CC6.1 / A.5.17 | re-mint; revoke via UI |
-| B1 | viavitae/github/terraform-control-plane | T1 | classic PAT | all-three (human) | `gh` keyring (account `JourneyOfLife`) | 2099-12-31 | manual | 2026-10-19 | org admin on all three controllers | A.8.2 / CC6.2 | UI revoke + invalidate sessions |
+| B1 | viavitae/github/terraform-control-plane-v2 | T1 | classic PAT `terraform-control-plane-v2` | all-three (human) | GitHub account `JourneyOfLife` (string's consumers UNMAPPED — to be registered in COMPLIANCE.md P1 backlog) | 2026-10-27 | manual | 2026-10-20 | org admin on all three controllers (scopes verified live: repo, workflow, admin:org incl. write:org/read:org/manage_runners:org, read:user, user:email; **no gist**) | A.8.2 / CC6.2 | UI revoke + invalidate sessions |
+| B1b | (gh-managed, not in pass) | T1 | gh OAuth token (`gho_…`) | all-three (human) | `gh` keyring, account `JourneyOfLife` (active) | 2099-12-31 | manual | 2026-10-20 | same reach as B1 + `gist` (the only credential still carrying it); feeds `GITHUB_TOKEN` for laptop plan/apply | A.8.2 / CC6.2 | `gh auth refresh -h github.com --remove-scopes gist`; revoke via account settings |
 | AWS-1 | viavitae/aws/viavitae-terraform | T1 | IAM access keys | Via-Vitae | `~/.aws/credentials` | 2099-12-31 | 180d | 2026-10-19 | AWS account 775093708742 (S3 SCP-denied) | CC6.1 / A.5.17 | rotate in IAM console |
 | AGE-1 | (raw file, not pass) | T0 | age X25519 identity `~/.config/age/state-backup-key.txt` | all-three | host filesystem, mode 0600 | never | on-compromise | 2026-10-17 | every encrypted backup + vault | A.8.24 / A.5.30 | sealed 2-of-2 envelopes (pending) |
 
@@ -29,6 +30,12 @@ Columns: `secret_id | vault_path (pass) | tier | type | entity | storage_locatio
 is a **placeholder for "no server-side expiry"** — it is not a claim of safety; those
 rows are the rotation backlog (F-06). `never` means the item is a root key, rotated
 only on compromise. The gate treats `never`/`unknown` as findings to report, not passes.
+
+> **2026-10-20 correction:** the register previously claimed B1 was named
+> `terraform-control-plane` with `gist` and no expiry. Live measurement (classic-token
+> page) shows the only classic PAT is `terraform-control-plane-v2`, **expiring
+> 2026-10-27**, without `gist`; the `gist` scope belongs to the separate gh OAuth token
+> (B1b). The lesson is the register's own rule: read a credential live, never from prose.
 
 ## Rules
 
