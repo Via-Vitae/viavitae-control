@@ -41,8 +41,10 @@ else
   echo "HCP state pull failed (rc=$rc) — no archive written" >&2
 fi
 shred -u "$TMP"
-# password-store vault — git bundle, self-contained (--all):
-git -C ~/.password-store bundle create "/opt/jol/backup/tfstate/vault-$TS.bundle" --all
+# age vault (~/.vault) — git bundle, self-contained (--all). This is the store that holds
+# real secrets (scripts/vault.sh). ~/.password-store is the deprecated, never-initialized
+# `pass` skeleton — bundling it would back up nothing while looking like a vault copy.
+git -C ~/.vault bundle create "/opt/jol/backup/tfstate/vault-$TS.bundle" --all
 # PROVE the guard worked — must print nothing (no file group/other-readable):
 find /opt/jol/backup/tfstate -newermt "-10 minutes" -perm /g+r,o+r -print
 # PROVE restorability of one archive per run (sha256 round-trip):
