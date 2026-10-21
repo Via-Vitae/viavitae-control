@@ -52,6 +52,7 @@ non-2xx is reported per repo and the script exits non-zero.
 | `scripts/assert_org_2fa.sh` | Assert org-wide 2FA enforcement **out-of-band** — the assertion the CI plan can no longer make, because `var.manage_org_data=false` keeps organization full-detail reads out of the plan graph | read-only (`gh` GET) with an operator credential; exit 0 enforced, 1 not enforced, 2 undetermined (a null field is never read as `false`) |
 | `scripts/generate_inventory.sh` | Rebuild the candidate inventory | read-only |
 | `scripts/check_secret_inventory.sh` | Fail CI when a dated credential in `docs/SECRETS_INVENTORY.md` expires within 14 days (`WARN_DAYS` overrides); a `2099-*` no-expiry placeholder or `never` root-key row is a warning/notice, `unknown` is a failure | read-only; exit 0 clean, 1 expired/expiring/unknown, 2 register missing or unparseable (never a pass) |
+| `scripts/vault.sh` | age-backed secret store (`put`/`get`/`list`/`rm`/`cp`) reusing the `~/.config/age/state-backup-key.txt` identity; ciphertext under `~/.vault`, git-versioned local-only — supersedes the never-initialized `pass`/`~/.password-store` | host tooling, **not CI-gated**; reads the age identity from stdin/env only, never logs secret values; exit 0 ok, 1 usage/not-found, 2 backend missing |
 
 ## Audit prompt
 

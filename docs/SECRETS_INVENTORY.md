@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Entity | Via-Vitae (commercial IT company, org `Via-Vitae`) |
-| Type | Metadata register. **Never record a secret value here** — values live in `~/.password-store/viavitae/` (age-encrypted) or the GitHub Actions secret store. |
+| Type | Metadata register. **Never record a secret value here** — values live in the age vault `~/.vault/viavitae/` (encrypted with `scripts/vault.sh`, reusing the AGE-1 identity) or the GitHub Actions secret store. |
 | Consumed by | `scripts/check_secret_inventory.sh` (CI expiry gate in `.github/workflows/audit.yml`) |
 | Framework basis | ISO 27001:2022 A.5.17 (authentication information), A.8.2 (privileged access), A.5.18 (access rights); SOC 2 CC6.1/CC6.2/CC6.3; GDPR Art. 5(1)(f), Art. 32 |
 | Sibling registers | `jol-control` and `jolarca-control` keep their own copies of this file — **boundary 1**: no cross-entity rows, no merged register. Pattern source: `jolarca-control/docs/security/key-custody.md`. |
@@ -15,7 +15,7 @@ values, token strings, URLs with embedded secrets, or the age identity.
 
 ## Register
 
-Columns: `secret_id | vault_path (pass) | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path`
+Columns: `secret_id | vault_path (age vault) | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path`
 
 | secret_id | vault_path | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -53,8 +53,11 @@ only on compromise. The gate treats `never`/`unknown` as findings to report, not
    (AI_WORKFLOW_POLICY mandatory sign-off).
 3. `expires` within 14 days ⇒ `check_secret_inventory.sh` fails CI ⇒ rotate per
    §7.8 of the architecture prompt, then update `last_verified` here.
-4. The vault itself is backed up as a git bundle per
-   [`state/README.md`](../state/README.md) — same cadence as state archives.
+4. The vault (`~/.vault`, git-versioned, local-only) is backed up as a bundle alongside
+   the state archives per [`state/README.md`](../state/README.md) — same monthly cadence.
+5. **`pass`/`~/.password-store` is deprecated:** it was never `pass init`'d and the only
+   GPG key (`609F7926A8254CDB`) is signing-only `[SC]` with no encryption subkey, so it
+   cannot encrypt. The age vault supersedes it; `~/.password-store` holds no real secrets.
 
 ## Backup media (air-gapped copies)
 
