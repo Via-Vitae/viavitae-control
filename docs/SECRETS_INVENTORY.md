@@ -24,7 +24,7 @@ Columns: `secret_id | vault_path (pass) | tier | type | entity | storage_locatio
 | B1b | (gh-managed, not in pass) | T1 | gh OAuth token (`gho_…`) | all-three (human) | `gh` keyring, account `JourneyOfLife` (active) | 2099-12-31 | manual | 2026-10-20 | same reach as B1 + `gist` (the only credential still carrying it); feeds `GITHUB_TOKEN` for laptop plan/apply | A.8.2 / CC6.2 | trim `gist` via **browser flow only** (`gh auth refresh -h github.com --remove-scopes gist` in an interactive terminal — device flow re-mints with the old scope set, measured 2026-10-20); revoke via account settings |
 | IV-1 | (gh-managed, not in pass) | T1 | gh OAuth token, account `IterVitae` | Via-Vitae (reviewer role) | `gh` keyring, second account (inactive) | never | on-role-change | 2026-10-20 | outside-collaborator repo access; **sole PR reviewer — RETAINED per F-05 verdict (2026-10-20)**, admin invite still pending | A.5.17 / CC6.2 | `gh auth logout -h github.com -u IterVitae` + revoke in that account's settings |
 | AWS-1 | viavitae/aws/viavitae-terraform | T1 | IAM access keys | Via-Vitae | `~/.aws/credentials` | 2099-12-31 | 180d | 2026-10-19 | AWS account 775093708742 (S3 SCP-denied) | CC6.1 / A.5.17 | rotate in IAM console |
-| AGE-1 | (raw file, not pass) | T0 | age X25519 identity `~/.config/age/state-backup-key.txt` | all-three | host filesystem, mode 0600 | never | on-compromise | 2026-10-17 | every encrypted backup + vault | A.8.24 / A.5.30 | sealed 2-of-2 envelopes (pending) |
+| AGE-1 | (raw file, not pass) | T0 | age X25519 identity `~/.config/age/state-backup-key.txt` | all-three | host filesystem, mode 0600 | never | on-compromise | 2026-10-21 | every encrypted backup + vault | A.8.24 / A.5.30 | offline copies BACKUP-A/B (below) + sealed 2-of-2 envelopes (pending) |
 
 `expires` semantics: an ISO date is a hard deadline the CI gate enforces. `2099-12-31`
 is a **placeholder for "no server-side expiry"** — it is not a claim of safety; those
@@ -55,3 +55,27 @@ only on compromise. The gate treats `never`/`unknown` as findings to report, not
    §7.8 of the architecture prompt, then update `last_verified` here.
 4. The vault itself is backed up as a git bundle per
    [`state/README.md`](../state/README.md) — same cadence as state archives.
+
+## Backup media (air-gapped copies)
+
+Deliberately a list, not a table: `scripts/check_secret_inventory.sh` reads every
+`|`-row after the register's `expires` header, so a second table here would be
+mis-parsed. This section is prose to the gate.
+
+- **BACKUP-A** — 120 GB SATA SSD, model `SSD 128GB`, serial `YS20210624012696`, ext4 label
+  `BACKUP-A`. The **in-rotation** copy: connect monthly → `rsync` `/opt/jol/backup/tfstate/`
+  → decrypt-and-sha256-verify against live state → unmount → disconnect. First verified sync
+  2026-10-21 (12 archives, hash `c768f7a3…e1ee9e8f` matched live). Generic no-name media →
+  replace annually; not the long cold-storage copy (NAND charge-loss).
+- **BACKUP-B** — 320 GB HDD Seagate `ST9320423AS`, serial `5VJ7JXKC` (SMART: 0 pending,
+  0 uncorrectable, 24 stable reallocated). The **off-premises** copy: same monthly rsync +
+  verify, then stored outside the flat. Magnetic holds charge in long cold storage better
+  than SSD, so it is the survive-the-fire/last-line copy.
+- **Rejected:** 500 GB HDD Seagate `ST9500325AS` serial `S2W7B5ZC` — SMART `Reported_Uncorrect=7343`,
+  1 pending, 1 offline-uncorrectable, 25,733 h: actively failing, never a backup target.
+- **To identify (do NOT wipe):** two 14.6 GB LUKS USB sticks, labels `DR-JOL` / `DR-JOLM`,
+  not referenced by crypttab/fstab and not the system swap — a pre-existing encrypted store
+  of unknown purpose; open and register before repurposing.
+- Rotation: A↔B monthly; after each sync the freshly-written drive is unmounted and the other
+  is brought on-site, so one copy is always offline (air gap vs ransomware) and one off-premises
+  (vs fire/theft). Closes F-01's "no off-host copy" clause.
