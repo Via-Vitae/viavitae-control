@@ -36,3 +36,20 @@ repos:
         language: system
         stages: [commit-msg]
         always_run: true
+      # Editing the public expiry twin is the exact moment metadata can leak back in,
+      # and it is the moment the two copies can drift. Both checks are scoped to that
+      # one file so unrelated commits stay cheap. The sync check reads the confidential
+      # register outside this repo; if it cannot, it exits 2 and blocks the commit —
+      # "unable to verify" is never recorded as "in sync".
+      - id: secret-register-anti-leak
+        name: public secret register exposes no identifiers
+        entry: bash scripts/check_public_register.sh docs/SECRETS_INVENTORY.md
+        language: system
+        files: ^docs/SECRETS_INVENTORY\.md$
+        pass_filenames: false
+      - id: secret-register-sync
+        name: secret register twin matches the confidential register
+        entry: bash scripts/reconcile_secret_register.sh
+        language: system
+        files: ^docs/SECRETS_INVENTORY\.md$
+        pass_filenames: false

@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # A 14-day expiry warning is worthless if the only thing that reads it is a push.
+  # Without a schedule, a quiet month lets a credential expire unnoticed and the gate
+  # reports "green" about a state nobody looked at since.
+  schedule:
+    - cron: '30 6 * * *'   # daily 06:30 UTC
+  workflow_dispatch:        # manual re-check right after a rotation
 
 jobs:
   audit:
@@ -57,6 +63,16 @@ jobs:
         run: |
           chmod +x scripts/check_secret_inventory.sh
           ./scripts/check_secret_inventory.sh docs/SECRETS_INVENTORY.md
+
+      # The expiry gate only reads DATES, so a register that publishes vault paths,
+      # host paths, account ids and backup media serials sails through it green. This
+      # gate asserts the opposite property: the public twin exposes nothing an attacker
+      # can target. Same contract as above — no secrets, no network, fails on its own
+      # merits, and it sits before the credential steps for the same reason.
+      - name: Check public secret register (anti-leak)
+        run: |
+          chmod +x scripts/check_public_register.sh
+          ./scripts/check_public_register.sh docs/SECRETS_INVENTORY.md
 
       # Credential gates run BEFORE `Terraform plan` on purpose: a plan failure
       # skips every later step, so a gate parked downstream can never report a

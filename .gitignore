@@ -22,6 +22,11 @@ terraform.tfvars.json
 .env.*
 secrets.*
 
+# Staging area for the CONFIDENTIAL register that belongs to the private
+# viavitae-compliance repo. This repo is PUBLIC: a full custody register must
+# never be committed or pushed here (see docs/SECRETS_INVENTORY.md §Public twin).
+.private/
+
 # --- Audit evidence (may contain sensitive values from plan output) ----------
 audit-evidence/terraform-plan.txt
 

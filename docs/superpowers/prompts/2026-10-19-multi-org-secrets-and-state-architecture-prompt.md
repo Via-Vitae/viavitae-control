@@ -183,7 +183,7 @@ taken 2026-10-19; treat them as point-in-time truth, not as live API responses.
 
 ## 4.5 AWS
 
-- Exactly one account: `775093708742` ("Happy Path", ~$100 free-tier credits).
+- Exactly one account: `<aws-account-id>` ("Happy Path", ~$100 free-tier credits).
 - It is a member of an AWS Organization (management account `376896792604`) whose
   **Service Control Policy places an explicit deny on S3** (`p-r9i2lq77`).
   An SCP explicit deny overrides any IAM allow — no bucket can be created by this
@@ -215,7 +215,7 @@ taken 2026-10-19; treat them as point-in-time truth, not as live API responses.
 
 | # | Name | Where it lives | Backed by |
 | --- | --- | --- | --- |
-| C1 | `TF_GITHUB_TOKEN` | viavitae-control Actions secret | fine-grained PAT `viavitae-control-ci-plan` (token id 21301575); must hold **zero** Organization permissions — org grants are unused power and the CI gate prints a notice if present; correct end state is `Repositories 2` only |
+| C1 | `TF_GITHUB_TOKEN` | viavitae-control Actions secret | fine-grained PAT `viavitae-control-ci-plan` (token id <pat-id>); must hold **zero** Organization permissions — org grants are unused power and the CI gate prints a notice if present; correct end state is `Repositories 2` only |
 | C2 | `ORG_READ_TOKEN` | viavitae-control Actions secret | fine-grained PAT, read-only; consumed by `detect_drift.sh` and `assert_live_controls.sh` |
 | C3 | `GITHUB_TOKEN` | jol-control | classic PAT with `admin:org`, `repo`, `write:org`, `admin:repo_hook` |
 | C4 | `TFC_TOKEN` + repo PAT | jolarca-control | HCP Terraform workspace access plus repo admin |
@@ -326,7 +326,7 @@ Answer must cover:
 
 - **8.1 Feasibility today.** Explain, at student level, the SCP permission algebra:
   why an explicit deny in a Service Control Policy beats an allow in an IAM policy,
-  and what that means for account `775093708742`. Give the three resolution paths and
+  and what that means for account `<aws-account-id>`. Give the three resolution paths and
   the effort/risk of each, with the carve-out request written out as copy-pasteable
   text for the org administrator.
 - **8.2 Should S3 be the answer at all.** jolarca's ADR-0006 already rejected
