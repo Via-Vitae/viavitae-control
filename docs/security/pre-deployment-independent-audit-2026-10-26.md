@@ -59,7 +59,8 @@ registers:
      (VV-2026-10-005).
 - **Undecided (insufficient evidence):** Scope-of-release, Functionality,
   Integration and Evidence gates — no end-to-end journey on provisioned staging
-  (§21), and 15 repos not yet deep-audited (§26).
+  (§21). All 22 populated repos are now deep-audited; the 5 empty private repos
+  remain access-BLOCKED (§26).
 - **Independence is structurally pending:** a single person is implementer, approver
   and would-be verifier; six teams each hold blanket push on all 30 repos
   (fresh-verified, E16, VV-2026-10-003).
@@ -509,27 +510,27 @@ permission or live resource was modified by the audit.
 
 | # | Repository | Vis | Content | Head @2026-10-26 | Tier | Deep-audit status | Dependabot (crit/high) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | .github | pub | 16 | 49cba333 | meta | NOT RUN | 0/0 |
+| 1 | .github | pub | 16 | 49cba333 | meta | ASSESSED — org reusable CI/CodeQL/compliance workflows + CODEOWNERS/SECURITY (E17); CI green | 0/0 |
 | 2 | viavitae-control | pub | 73 | 7c9a1980 | control | ASSESSED (this doc) | 0/0 |
 | 3 | viavitae-compliance | **priv** | **EMPTY** | — | control | BLOCKED (empty + 403) | n/a |
 | 4 | viavitae-data-governance | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
 | 5 | viavitae-policies | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
 | 6 | viavitae-threat-model | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
 | 7 | viavitae-vendor-register | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
-| 8 | viavitae-training | pub | **EMPTY** | — | control | NOT RUN (nothing readable) | 0/0 |
-| 9 | viavitae-docs | pub | 181 | db67d1c3 | control | NOT RUN | **2/3** |
+| 8 | viavitae-training | pub | **EMPTY** | — | control | EMPTY — confirmed 0 blobs; nothing to audit (ISO A.6.3 training-records gap) | 0/0 |
+| 9 | viavitae-docs | pub | 181 | db67d1c3 | control | ASSESSED — public Hugo site; pentest/ROPA/ADRs as **empty stubs**; `noindex=false` + `Publish` green (VV-…-012) | **2/3** |
 | 10 | viavitae-infra | pub | 263 | a4145b54 | platform | ASSESSED — prod placeholders (E7) | 0/0 |
 | 11 | viavitae-observability | pub | **EMPTY** | — | platform | emptiness **is** the finding | 0/0 |
 | 12 | viavitae-runbooks | pub | **EMPTY** | — | platform | same | 0/0 |
 | 13 | viavitae-reusable-workflows | pub | **EMPTY** | — | platform | same | 0/0 |
 | 14 | viavitae-template | pub | 18 | 9b18a736 | platform | CLASS-VERIFIED (parent of landings, E9) | 0/0 |
-| 15 | viavitae-qa | pub | 118 | 2d670ecc | platform | PARTIAL — gates can't run (VV-…-009) | 0/5 |
+| 15 | viavitae-qa | pub | 118 | 2d670ecc | platform | ASSESSED — full harness (e2e/load/a11y/contract); **contract specs are placeholders** (VV-…-011); CI green | 0/5 |
 | 16 | viavitae-api | pub | 156 | 63cb4943 | app | ASSESSED (deploy red) | **8/23** |
-| 17 | viavitae-clients | pub | 86 | 3a9db5f8 | app | PARTIAL | 0/0 |
+| 17 | viavitae-clients | pub | 86 | 3a9db5f8 | app | ASSESSED — tenant registry + validate/provision/diff-guard workflows; CI green | 0/0 |
 | 18 | viavitae-web | pub | 195 | ca465637 | app | ASSESSED | **5/9** |
-| 19 | viavitae-brand | pub | 63 | f1555f9d | app | NOT RUN | **5/23** |
-| 20 | viavitae-demos | pub | 228 | 1ec6e2fd | app | NOT RUN | 0/0 |
-| 21 | viavitae-hermes-agents | pub | 72 | 0e35dccd | app | NOT RUN | 0/0 |
+| 19 | viavitae-brand | pub | 63 | f1555f9d | app | ASSESSED — design assets/tokens; no test suite; CI green but 5 crit/23 high deps | **5/23** |
+| 20 | viavitae-demos | pub | 228 | 1ec6e2fd | app | ASSESSED — **real landing templates live here** (135 files), not in landing repos; `.npmrc`/`.env.example` clean; CI green | 0/0 |
+| 21 | viavitae-hermes-agents | pub | 72 | 0e35dccd | app | ASSESSED — RAG agents with **fail-closed boundary tests** + gitleaks; CI green (positive) | 0/0 |
 | 22 | viavitae-landing-basilica | pub | 19 | 392760d3 | site | CLASS-ASSESSED — scaffold (§7) | 0/0 |
 | 23 | viavitae-landing-cathedral | pub | 19 | 526dc9cc | site | CLASS-ASSESSED | 0/0 |
 | 24 | viavitae-landing-cemetery-services | pub | 19 | 85a65368 | site | CLASS-ASSESSED | 0/0 |
@@ -580,8 +581,12 @@ contact name, organization name and **email**, with **server-enforced consent**
 R7 — a mature GDPR Art. 25 pattern whose governing DPIA lives in a **still-empty**
 repo (Art. 30 gap). Payment card data routes to Stripe/Paysera (Art. 28 agreements
 unevidenced). Pastoral/assessment content **may be Art. 9 special-category
-(religious) data**; lawful basis is UNDETERMINABLE with no DPIA. RAG tool
-permissions and webhook signature/origin checks were NOT RUN.
+(religious) data**; lawful basis is UNDETERMINABLE with no DPIA. On deep-audit the
+**webhook integrity controls are real**: Stripe `construct_event` signature check,
+Paysera `ss2` HMAC **fail-closed**, a `webhook_event` idempotency ledger (ADR-005),
+unit-tested for rejection (E19). The **RAG/agent boundary** is enforced by a
+fail-closed `BoundarySettings` requiring a separate KMS key + vault ref + audit
+stream (E20). Residual gap is *test quality*, not missing controls — see VV-…-011.
 
 ## 18. Baseline and test-evidence register (Phase 4 result)
 
@@ -590,11 +595,14 @@ permissions and webhook signature/origin checks were NOT RUN.
 | viavitae-web @ca465637 | Yes — lint, typecheck, unit+contract, e2e, a11y, lighthouse | Scheduled CI on `main` green 2026-10-26; one Dependabot PR `Lint` red 2026-10-26T04:19Z | VERIFIED PASS (main), VERIFIED FAIL (open PR #51 lint) |
 | viavitae-api @63cb4943 | Yes — pytest, nightly E2E | Nightly E2E green 2026-10-26; **`Deploy` push run red** (E12) | Mixed: tests PASS, deploy FAIL |
 | viavitae-clients @3a9db5f8 | Yes — CI + provision-dispatch | CI green; dispatch journey never observed end-to-end | Tests PASS, integration UNDETERMINED |
-| viavitae-qa @2d670ecc | Yes — Playwright @smoke, axe, Trivy | Gates "cannot run — staging not provisioned" (register P1-22) | BLOCKED (environment) |
+| viavitae-qa @2d670ecc | Yes — Playwright @smoke, axe, Trivy, load | Unit/contract/lint CI green on `main` 2026-10-26; browser/load still gated on unprovisioned staging (P1-22) | CI PASS (unit/contract), BLOCKED (browser/load env) |
+| .github, docs, brand, demos, hermes-agents, clients @heads in §16 | Yes — CI/CodeQL/Compliance; hermes adds gitleaks | All have a **green `main` push run** 2026-10-26; docs also `Publish docs site` green | VERIFIED PASS (build/CI) per repo (E17) |
+| viavitae-api @63cb4943 (webhooks) | Yes — `tests/webhooks/test_stripe_idempotency.py` | Rejection/503 fail-closed asserted & green; **idempotent-replay test is `pytest.skip(TODO)`** | VERIFIED PASS (rejection) / **NOT RUN (idempotency)** (E19) |
 
-Blocked/unexecuted checks register: browser/load E2E (staging), webhook signature
-verification, RAG tool-permission tests, per-repo deep dives for 15 repos — all
-**NOT RUN**, not **PASSED**.
+Blocked/unexecuted checks register now: browser/load E2E (staging), the skipped
+idempotent-replay assertion, and the trivial-pass qa contract specs — plus
+per-repo deep dives for the 5 empty private repos (access-BLOCKED). The 15 earlier
+"NOT RUN deep dives" have been executed; empties remain unevaluable.
 
 ## 19. GitHub, CI/CD and infrastructure assessment (Phase 8 result)
 
@@ -606,9 +614,9 @@ verification, RAG tool-permission tests, per-repo deep dives for 15 repos — al
   protected by the `protect-main` ruleset. (E10)
 - Org Actions restricted to a selected allow-list; provenance gate wired
   (`ai:<tier>` trailer enforced by a commit-msg hook + `provenance.yml`). (E11)
-- `main` CI health: web/clients/qa and scheduled compliance/CodeQL green through
-  the reference morning; control-plane `Audit` + `provenance` green since
-  2026-10-21. (E12)
+- `main` CI health: **all 22 populated repos have a green `main` push run**
+  2026-10-26 (web/clients/qa/.github/docs/brand/demos/hermes-agents confirmed, E17);
+  control-plane `Audit` + `provenance` green since 2026-10-21. (E12)
 - September's protections-downgrade danger closed: apply landed 2026-10-17; state
   now matches declared protections (E3).
 
@@ -623,7 +631,10 @@ verification, RAG tool-permission tests, per-repo deep dives for 15 repos — al
   ruleset/advanced-security reads on Free and show no readable branch protection
   — meaning confidential compliance repos will exist **unprotected** once populated
   (VV-2026-10-002 / -010).
-- Webhook inventory unobtainable (no `admin:org_hook` scope) — NOT RUN.
+- Webhook inventory unobtainable (no `admin:org_hook` scope) — NOT RUN (re-confirmed
+  2026-10-26: 404 + "needs admin:org_hook", E18). Org Actions allow-list floats **7
+  patterns to mutable `@*`** (checkout/setup-node/setup-python/cache/upload+download-artifact/setup-terraform)
+  while sha-pinning is off, incl. an unused `hashicorp/setup-terraform@*` (VV-…-013).
 
 ## 20. Privacy & compliance readiness matrix (Phase 9 result)
 
@@ -640,6 +651,7 @@ no certification or report exists, and this internal review is not one.
 | Lawful basis for religious/pastoral data | GDPR Art. 9 | DPO + legal | DPIA basis section | none | UNDETERMINED — legal call needed |
 | Data minimisation of the org's own telemetry | GDPR Art. 5 | Infra | billing/contact address handling | plus-address + no-default-var pattern evidenced (../COMPLIANCE.md P1-7/P1-12) | VERIFIED PASS (partial) |
 | ISMS scope, risk assessment, SOA, policies | ISO 27001 cl. 4–6, 13, App. A | Security | policy library, risk register, SoA | `policies`/`compliance`/`threat-model` empty; stubs in docs | **BLOCKED** |
+| Confidential compliance/security corpus kept non-public | GDPR Art. 5(1)(f) / ISO A.8 | DPO/Security | pentest/ROPA/DPIA in the **private** repos, not published | `viavitae-docs` is **public + `noindex=false`** and hosts pentest findings + ROPA/ADRs as **currently-empty stubs**, with a green `Publish` job | **FAIL on population** (VV-…-012); `netlify.toml` EU-self-host guard is a positive (E20) |
 | Access control & segregation of duties | ISO A.5.15–5.18 / SOC2 CC6 | Owner | role-scoped permissions | blanket team push; 2FA on | PARTIAL (VV-…-003) |
 | Change control & release evidence | SOC2 CC8 | Platform | gated PRs + branch protection | enforced on public repos | VERIFIED PASS (public only) |
 | Security monitoring & incident response | ISO A.8.16 / SOC2 CC7 | Ops | runbooks, alerting, IR plan | `runbooks`/`observability` empty | **BLOCKED** |
@@ -657,8 +669,8 @@ is unprovisioned (VV-2026-10-009):
 | Provider → consumer | Contract | Auth | Data | Failure behavior | Status |
 | --- | --- | --- | --- | --- | --- |
 | web → api | OpenAPI typed (`generated/`) | `API_SERVICE_TOKEN` | quote/assessment (email, org) | undefined in audit | NOT RUN |
-| clients → api | `provision-dispatch.yml` → `POST /v1/tenants/<slug>/provision` | dispatch token | tenant config | idempotency unverified | NOT RUN (UNDETERMINED) |
-| api → Stripe / Paysera | payment webhooks/callbacks | API keys + signatures | payment events | signature/origin check NOT RUN | BLOCKED |
+| clients → api | `provision-dispatch.yml` → `POST /v1/tenants/<slug>/provision` | dispatch token | tenant config | idempotency unverified (ledger exists; replay test skipped) | NOT RUN (UNDETERMINED) |
+| api → Stripe / Paysera / Bitrix24 | payment/CRM webhooks | Stripe `construct_event`, Paysera `ss2` HMAC **fail-closed**, Bitrix24 token | payment events | signature **verified & unit-tested**; **idempotent-replay test skipped (TODO)**; qa contract spec is trivial-pass | **VERIFIED PASS (sig reject)** / UNVERIFIED (idempotency) (VV-…-011, E19) |
 | api → Bitrix24 (on-prem CRM) | REST | creds | CRM records | creds expiry path unknown | NOT RUN |
 | api → Postgres | per-tenant schema + RLS | service creds | all tenant PII | cross-tenant isolation asserted in code, not tested | NOT RUN |
 | CI → container registry | Docker build/push | CI token | image artifact | **build-to-production currently RED** | **VERIFIED FAIL** (VV-…-001) |
@@ -684,11 +696,14 @@ on the sample, inferred for the nine identical — inference flagged);
 **integration/operational NOT RUN**. **Hazard: green gates over empty scaffolds are
 a false-readiness signal.** Decision owner: release manager (VV-2026-10-005).
 
-**Deep-audit gaps (honest non-coverage):** full Phase-5 eight-dimension reviews for
-`.github`, `viavitae-docs`, `viavitae-brand`, `viavitae-demos`,
-`viavitae-hermes-agents`, `viavitae-training`, and the private set remain **NOT
-RUN**; `viavitae-web/api/clients/infra/control` were assessed; landings + template
-were class-assessed. These are scheduled work, not silent skips.
+**Deep-audit status (updated 2026-10-26 session 2):** the 8 populated public deferred
+repos — `.github, docs, brand, demos, hermes-agents, qa, clients, template` — are now
+**deep-audited** (all green `main` builds; results in §16–§21). Remaining honest
+non-coverage: the **5 private repos** (empty + Free-plan 403 → BLOCKED) and the
+**4 public empties** (`runbooks/observability/reusable-workflows/training`, nothing
+to audit). **New insight:** the real per-vertical landing content lives in
+`viavitae-demos/templates` (135 files), not in the `viavitae-landing-*` scaffolds —
+feeds the VV-…-005 inclusion decision.
 
 ## 23. Findings register (Phase 11 result)
 
@@ -705,7 +720,10 @@ Severity, confidence and priority are tracked separately.
 | VV-2026-10-007 | Org-level SHA pinning disabled (`sha_pinning_required=false`) while repos rely on a per-repo "Action SHA pinning" check | Confirmed policy/config mismatch | Medium / High | Platform owner | Either require pinning at the org ruleset or formally document the per-repo gate as the compensating control; acceptance = configuration and policy agree. |
 | VV-2026-10-008 | Applied-input custody unverifiable: fresh plan aborts on missing required `billing_email`; the tfvars used for the 2026-10-17 apply is not in this workspace and its storage location is not evidenced | Confirmed, **scoped down after cross-check** | Low–Medium / High | Infra owner | The abort is **by design and documented** (../COMPLIANCE.md P1-12: `TF_VAR_billing_email` has no default for GDPR minimisation) — the residual gap is *custody*: record where the applied value lives and how it is protected/restored; acceptance = the custody path is exercised once and a clean-checkout plan procedure is reproduced. |
 | VV-2026-10-009 | QA browser/load gates cannot run — staging tenant not provisioned (register P1-22, still open) | Confirmed | **High** for integration gate / High | QA owner | Provision isolated staging + synthetic data; run the full cross-repo journey (clients merge → provision → staging smoke → sync); acceptance = dated E2E evidence covering the exact release version combination. |
-| VV-2026-10-010 | Org webhook inventory and private-repo protections unobtainable | BLOCKED | — | Owner | Grant scoped read (`admin:org_hook`) and/or GitHub Team for private-repo visibility; re-run the blocked cells of §15/§19. |
+| VV-2026-10-010 | Org webhook inventory and private-repo protections unobtainable | BLOCKED (re-confirmed) | — | Owner | Grant scoped read (`admin:org_hook`) and/or GitHub Team for private-repo visibility; re-run the blocked cells of §15/§19. |
+| VV-2026-10-011 | Webhook **idempotency unverified on the money path**: `test_replayed_event_is_idempotent` is `pytest.skip(TODO)`, and qa `contract/stripe/webhook-contract.spec.ts` is a trivial `assert.ok(true)` that reports green. The **signature-verification** control itself is real and fail-closed-tested — this is a *test-quality / false-assurance* gap, not a missing control | Confirmed | **Medium** / High | API + QA owners | Implement the skipped replay-idempotency assertion (single side-effect, 200-once ledger) and replace the placeholder contract spec with a check that fails if the signature guard is removed; acceptance = a non-skipped test that goes red on regression; independent run. |
+| VV-2026-10-012 | `viavitae-docs` is **public and indexable** (`noindex=false`, green `Publish` job) yet hosts the pentest findings-register, ROPA/DPIA and security ADRs as currently-**empty stubs** with only a non-enforced `sensitivity:` front-matter | Confirmed (latent) | **High on population** / High | DPO/Security | Move the confidential corpus into the private repos (or gate the published site); make `sensitivity` an enforced build filter, not metadata; acceptance = published site carries no internal-artifact content and a CI check fails the build if it does |
+| VV-2026-10-013 | Org Actions allow-list floats **7 patterns to mutable `@*`** with `sha_pinning_required=false`, incl. an unused `hashicorp/setup-terraform@*` (attack surface for a feature no workflow uses) | Confirmed | **Medium** / High | Platform owner | Pin used actions to commit SHAs (two pinned pnpm SHAs already prove it works), drop the unused setup-terraform pattern, enable org sha-pinning; acceptance = no `@*` for third-party/privileged actions and pinning enforced |
 
 **Risk acceptance** is tracked separately from these check results; none has been
 accepted, waived or closed by this document.
@@ -715,7 +733,7 @@ accepted, waived or closed by this document.
 | Gate | Result | Basis |
 | --- | --- | --- |
 | 1 Scope | FAIL / UNDETERMINED | Org reconciled 31/31, but release contents never named |
-| 2 Evidence | UNDETERMINED | 15 repos not deep-audited; blocked cells above |
+| 2 Evidence | UNDETERMINED | 22 populated repos now deep-audited; 5 private empty BLOCKED; staging E2E absent |
 | 3 Functionality | UNDETERMINED | No cross-repo E2E evidence on provisioned staging (VV-…-009) |
 | 4 Security | **VERIFIED FAIL** | 20 critical + 63 high open on default branches incl. release candidates (VV-…-004); detection not wired to enforcement |
 | 5 Privacy | **FAIL** | Art. 28/30 corpus absent while collection runs in code (§20, VV-…-002) |
@@ -757,15 +775,21 @@ document itself* are logged separately in §28 and are not org fixes.
 | VV-2026-10-008 | scoped down in-report | n/a | **N/A** (documentation) | — |
 | VV-2026-10-009 | no | no | **PENDING** | — |
 | VV-2026-10-010 | access request | no | **BLOCKED** | — |
+| VV-2026-10-011 | no | no | **PENDING** | — |
+| VV-2026-10-012 | no | no | **PENDING** | — |
+| VV-2026-10-013 | no | no | **PENDING** | — |
 
 ## 26. Coverage statement and evidence index
 
-Discovered **31** · reconciled **31** · accessible **26** (5 private, restricted
-reads) · with content **22** · empty **9** · assessed in depth **5** (control, web,
-api, infra, landing class via diocese+template) · class-assessed **11** · not yet
-deep-audited **15** · blocked **5**. Dependabot: **20 crit / 63 high** open;
-code-scanning: 3 open (api/web/demos). Exclusions from any completeness claim:
-private-repo blind spot, `admin:org_hook` scope, and the 15 NOT-RUN deep dives.
+Mutually-exclusive partition of **31**: **12 deep-assessed** (control, web, api,
+infra, template, .github, docs, brand, demos, hermes-agents, qa, clients) ·
+**10 landing class-assessed** · **9 empty-confirmed** (of which **5 private are also
+access-BLOCKED** for protection/security metadata; 4 public empties have no content
+to audit). 12 + 10 + 9 = 31. Dependabot: **20 crit / 63 high** open; code-scanning:
+3 open (api/web/demos); CI: a green `main` run on all 22 populated repos (E17).
+Exclusions from any completeness claim: the 5 private-repo blind spot and
+`admin:org_hook`. (Corrects the prior partition, which double-counted the empties and
+summed to 36 — see §28 item 7.)
 
 Evidence captures this session (retain under the same controlled handling as
 `audit-evidence/`; no secret values reproduced):
@@ -786,6 +810,10 @@ Evidence captures this session (retain under the same controlled handling as
 - **E14** Read-only `terraform plan` transcript: `Error: No value for required variable "billing_email"`, exit 1.
 - **E15** Dependabot open alerts by `security_advisory.severity` across all 31 repos (20 crit / 63 high) + `code-scanning/alerts` open counts (api/web/demos = 1 each).
 - **E16** Team→repo bindings, freshly read: each of architects/compliance/dpo/legal/platform/security returns 30 repos.
+- **E17** Per-repo live tree census (blob counts, top dirs, keyfiles, workflows, tests) for .github/docs/brand/demos/hermes-agents/qa/clients at the §16 heads; green `main` CI runs for all.
+- **E18** Blocked-cell re-read: 5 private repos → "Upgrade to GitHub Pro…" 403 for protection/rulesets; org webhooks → 404 "needs admin:org_hook"; org Actions allow-list patterns.
+- **E19** `viavitae-api` webhook handlers (stripe/paysera/bitrix24/router + `webhook_event` ledger, ADR-005) and `tests/webhooks/test_stripe_idempotency.py` (reject/503 asserted; replay `pytest.skip`).
+- **E20** Config content reads: docs pentest stub + `config/production/hugo.toml` (`noindex=false`) + `netlify.toml` EU-self-host guard; demos `.npmrc`/`.env.example` (no literals); hermes-agents `tests/test_boundary.py` (fail-closed `BoundarySettings`) + `.gitleaks.toml`.
 
 ---
 
@@ -849,10 +877,24 @@ auditing itself:
    register + operational result (§21) and a verification register (§25), renumbered
    PART II/III cleanly, and re-pointed every reference. Lesson: a "cleaner" rewrite
    can silently delete substance — re-verify deliverable coverage, not just prose.
+7. **§26 coverage arithmetic was wrong (self-caught on re-run).** The prior line
+   "assessed 5 · class 11 · not-deep 15 · blocked 5" double-counted the empties and
+   summed to **36**, not 31. Replaced with a mutually-exclusive partition summing to
+   31 (§26). Lesson: verify a coverage table's buckets are disjoint and total the
+   population.
+8. **Two suspicions I raised, then disproved by reading — in the org's favour.** I
+   flagged `viavitae-demos/.npmrc` as a likely token leak and treated webhook
+   signature/idempotency as a possible "missing control." Verification showed the
+   `.npmrc` uses `${NODE_AUTH_TOKEN}` indirection (clean), `.env.example` holds only
+   test-key placeholders, and the webhook signature check is genuinely fail-closed and
+   unit-tested. I recorded those VERIFIED PASS and scoped VV-…-011 down to the
+   *skipped idempotency test + placeholder contract spec* (Medium), not a High
+   "unprotected payments" claim. Lesson: run the check before writing the finding.
 
-None of these corrections changed the NO-GO recommendation; they made the report
-*more* strict and *more* complete, which is the correct direction for a compliance
-gate.
+None of these corrections changed the NO-GO recommendation (still four failed
+mandatory gates). Items 1–2 made the report *more* strict; items 7–8 made it *more*
+accurate — one finding upgraded (docs exposure, VV-…-012) and one instinct downgraded
+(webhooks, VV-…-011) on evidence, which is the correct direction for a compliance gate.
 
 ## 29. Glossary (student quick-reference)
 
