@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # #############################################################################
-# test_control_guards.sh — deterministic, OFFLINE tests for the four CI guards
+# test_control_guards.sh — deterministic, OFFLINE tests for the CI guards
 # that decide whether the Audit job passes:
 #   scripts/check_plan_selfcite.sh   (pure file analysis)
 #   scripts/detect_drift.sh          (declared inventory vs live org listing)
 #   scripts/assert_live_controls.sh  (reads live branch protection via gh)
 #   scripts/check_ci_credential.sh   (reads credential class + org via curl/gh)
+#   scripts/check_secret_inventory.sh   (register expiry, from a planted twin)
+#   scripts/check_public_register.sh    (anti-leak on the public twin)
+#   scripts/reconcile_secret_register.sh (twin vs confidential register + rotation)
 #
 # WHY. docs/COMPLIANCE.md §5.2 recorded that guards outnumber their tests ~12:1:
 # only update_contact_emails.sh had a suite, and each of these three shipped a
@@ -354,6 +357,110 @@ out="$(GH_TOKEN="***" ORG=Via-Vitae FAKE_ROOT_STATUS=200 FAKE_SCOPES="" FAKE_PRO
 if [[ ${rc} -eq 0 ]] && grep -q 'unused power' <<<"${out}"; then
   pass "CC7 requirement self-retracts with the config (exit 0 + unused-power notice)"
 else bad "CC7 still demands org detail this tree no longer reads (exit ${rc}): ${out}"; fi
+
+# --- secret-register gates (SI / SR / SC) -----------------------------------
+# The register split (public `secret_id | expires` twin + confidential register) only
+# holds if three properties are machine-checked. Each case below was first proven to be
+# a REAL hole on the pre-split file, so these are regression tests, not decorations.
+SI="${HERE}/check_secret_inventory.sh"
+SR="${HERE}/check_public_register.sh"
+SC="${HERE}/reconcile_secret_register.sh"
+sd="$(mktemp -d)"
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| B9 | 2099-12-31 |\n| A9 | never |\n' > "${sd}/twin.md"
+printf '| secret_id | expires | rotation | last_verified |\n| --- | --- | --- | --- |\n| K9 | 2027-01-15 | 90d | %s |\n| B9 | 2099-12-31 | manual | 2026-10-20 |\n| A9 | never | on-compromise | 2026-10-21 |\n' "$(date -u +%F)" > "${sd}/reg.md"
+
+out="$(bash "${SI}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'ok: 2027-01-15' <<<"${out}" && ! grep -q '^ok: 2099' <<<"${out}"; then
+  pass "SI1 dated row passes, no-expiry and never rows are not counted as ok (exit 0)"
+else bad "SI1 wrong verdict on a truthful twin (exit ${rc}): ${out}"; fi
+
+sed 's/2027-01-15/2026-11-01/' "${sd}/twin.md" > "${sd}/near.md"
+out="$(bash "${SI}" "${sd}/near.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'expires in' <<<"${out}"; then pass "SI2 planted near-expiry trips the gate (exit 1)"; else bad "SI2 missed near-expiry (exit ${rc})"; fi
+
+sed 's/2027-01-15/unknown/' "${sd}/twin.md" > "${sd}/unk.md"
+out="$(bash "${SI}" "${sd}/unk.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'expiry unknown' <<<"${out}"; then pass "SI3 unknown expiry is a finding (exit 1)"; else bad "SI3 accepted unknown (exit ${rc})"; fi
+
+sed 's/2027-01-15/15 Jan 2027/' "${sd}/twin.md" > "${sd}/fmt.md"
+out="$(bash "${SI}" "${sd}/fmt.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]]; then pass "SI4 non-ISO date -> could not evaluate (exit 2)"; else bad "SI4 returned ${rc}, expected 2"; fi
+
+out="$(bash "${SI}" "${sd}/nope.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]]; then pass "SI5 missing register -> exit 2, never a pass"; else bad "SI5 returned ${rc}, expected 2"; fi
+
+# SI6: THE DEFECT CLASS. Shortening a row so the expires cell falls off the end used to
+# be a silent `continue` — the credential stays live but stops being enforced.
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| K8 |\n' > "${sd}/trunc.md"
+out="$(bash "${SI}" "${sd}/trunc.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -qi 'no readable' <<<"${out}"; then
+  pass "SI6 truncated row (hidden expiry) caught (exit 1)"
+else bad "SI6 let a row with no readable expiry pass (exit ${rc}): ${out}"; fi
+
+# SI7: a table BELOW the register must not be enforced by the expiry gate. It is
+# forbidden instead by SR (structure), which is where the real risk lives.
+printf '\n| other | table |\n| --- | --- |\n| x | 2020-01-01 |\n' >> "${sd}/twin.md"
+out="$(bash "${SI}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && ! grep -q '2020-01-01' <<<"${out}"; then
+  pass "SI7 parsing stops at the end of the register table (exit 0, no foreign date read)"
+else bad "SI7 read a table outside the register (exit ${rc}): ${out}"; fi
+
+# SR1 runs on a FRESH twin: SI7 deliberately appended a foreign table to the previous
+# copy, and the anti-leak gate is supposed to reject that file.
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| B9 | 2099-12-31 |\n| A9 | never |\n' > "${sd}/twin.md"
+out="$(bash "${SR}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'only opaque ids' <<<"${out}"; then pass "SR1 opaque twin accepted (exit 0)"; else bad "SR1 rejected an opaque twin (exit ${rc}): ${out}"; fi
+
+# SR2: the same *classes* of content the old public register held — a vault path, a
+# 12-digit account id, a device serial — must be rejected even though every date is
+# valid. Values are SYNTHETIC: putting the real identifiers in a test fixture would
+# re-publish in a public repo exactly what this gate exists to retract.
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| X1 | 2027-01-15 |\n\nvault path `~/.vault/EXAMPLE/x`, AWS 000000000000, serial EXAMPLESERIAL0\n' > "${sd}/leak.md"
+out="$(bash "${SR}" "${sd}/leak.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'home path' <<<"${out}" && grep -q '12-digit' <<<"${out}" && grep -q 'serial' <<<"${out}"; then
+  pass "SR2 planted leak (path + account id + serial) caught (exit 1)"
+else bad "SR2 let topology metadata through (exit ${rc}): ${out}"; fi
+
+printf '| secret_id | expires | blast_radius |\n| --- | --- | --- |\n| K9 | 2027-01-15 | org-wide read |\n' > "${sd}/wide.md"
+out="$(bash "${SR}" "${sd}/wide.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q '2-column' <<<"${out}"; then pass "SR3 extra column rejected (exit 1)"; else bad "SR3 accepted a wide public table (exit ${rc}): ${out}"; fi
+
+printf '| secret_id | expires |\n| --- | --- |\n' > "${sd}/norows.md"
+out="$(bash "${SR}" "${sd}/norows.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'zero rows' <<<"${out}"; then pass "SR4 empty register is a finding, not a pass (exit 1)"; else bad "SR4 treated an empty register as clean (exit ${rc}): ${out}"; fi
+
+out="$(bash "${SR}" "${sd}/nope.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]]; then pass "SR5 missing twin -> exit 2"; else bad "SR5 returned ${rc}, expected 2"; fi
+
+out="$(PRIVATE_REGISTER="${sd}/reg.md" bash "${SC}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 0 ]] && grep -q 'agree on 3 credential' <<<"${out}"; then pass "SC1 twin matches register, no rotation overdue (exit 0)"; else bad "SC1 rejected a synced pair (exit ${rc}): ${out}"; fi
+
+# SC2: THE HOLE. Deleting a row from the twin is invisible to the expiry gate (SI ran on
+# the same file and stayed green); only set comparison against the register sees it.
+grep -v '^| B9 ' "${sd}/twin.md" > "${sd}/missing.md"
+out="$(PRIVATE_REGISTER="${sd}/reg.md" bash "${SC}" "${sd}/missing.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'MISSING from the public twin' <<<"${out}"; then
+  pass "SC2 credential dropped from the twin caught (exit 1)"
+else bad "SC2 let a deleted row pass unnoticed (exit ${rc}): ${out}"; fi
+
+sed 's/^| K9 | 2027-01-15/| K9 | 2030-01-01/' "${sd}/twin.md" > "${sd}/disagree.md"
+out="$(PRIVATE_REGISTER="${sd}/reg.md" bash "${SC}" "${sd}/disagree.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'expiry disagrees' <<<"${out}"; then pass "SC3 date disagreement caught (exit 1)"; else bad "SC3 accepted disagreement (exit ${rc}): ${out}"; fi
+
+sed 's/| 90d | '\"$(date -u +%F)\"'|/| 90d | 2025-01-01 |/' "${sd}/reg.md" > "${sd}/stale.md"
+if ! grep -q '2025-01-01' "${sd}/stale.md"; then
+  awk -F'|' 'BEGIN{OFS="|"} /K9/{$4=" 90d "; $5=" 2025-01-01 "} {print}' "${sd}/reg.md" > "${sd}/stale.md"
+fi
+out="$(PRIVATE_REGISTER="${sd}/stale.md" bash "${SC}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 1 ]] && grep -q 'rotation OVERDUE' <<<"${out}"; then
+  pass "SC4 overdue rotation caught — the only control over a never-expiring row (exit 1)"
+else bad "SC4 missed overdue rotation (exit ${rc}): ${out}"; fi
+
+out="$(PRIVATE_REGISTER="${sd}/absent.md" bash "${SC}" "${sd}/twin.md" 2>&1)"; rc=$?
+if [[ ${rc} -eq 2 ]] && grep -q 'not readable' <<<"${out}"; then
+  pass "SC6 unreadable confidential register -> exit 2, never reported as in sync"
+else bad "SC6 claimed sync without reading the register (exit ${rc}): ${out}"; fi
+rm -rf "${sd}"
 
 printf '\n=== control-guard tests %s ===\n' "$( [[ ${fail} -eq 0 ]] && echo 'PASSED' || echo 'FAILED' )"
 [[ ${fail} -eq 0 ]] || echo "A merge-gating guard misbehaved; do not trust it until this passes." >&2

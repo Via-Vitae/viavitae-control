@@ -1,84 +1,86 @@
-# Secret inventory — Via-Vitae plane
+# Secret inventory — Via-Vitae plane (public expiry twin)
 
 | Field | Value |
 | --- | --- |
 | Entity | Via-Vitae (commercial IT company, org `Via-Vitae`) |
-| Type | Metadata register. **Never record a secret value here** — values live in the age vault `~/.vault/viavitae/` (encrypted with `scripts/vault.sh`, reusing the AGE-1 identity) or the GitHub Actions secret store. |
-| Consumed by | `scripts/check_secret_inventory.sh` (CI expiry gate in `.github/workflows/audit.yml`) |
-| Framework basis | ISO 27001:2022 A.5.17 (authentication information), A.8.2 (privileged access), A.5.18 (access rights); SOC 2 CC6.1/CC6.2/CC6.3; GDPR Art. 5(1)(f), Art. 32 |
-| Sibling registers | `jol-control` and `jolarca-control` keep their own copies of this file — **boundary 1**: no cross-entity rows, no merged register. Pattern source: `jolarca-control/docs/security/key-custody.md`. |
+| Classification | PUBLIC — this repository is published on GitHub. Treat every byte below as readable by anyone, permanently. |
+| Owner / Approver | Sole operator of the Via-Vitae plane (identity recorded in the confidential register, not here — naming the holder in a public file is itself a finding) |
+| Version | 2.0 (2026-10-26) — the full custody register used to live here; it moved. See §Why two files. |
+| Next review | 2027-01-15, aligned to the earliest date in the table below |
+| Authoritative source | `Via-Vitae/viavitae-compliance` (private) → `docs/security/SECRETS_INVENTORY.md`. Values here are **derived**; never edit a date here without editing the register. |
+| Consumed by | `scripts/check_secret_inventory.sh` (offline expiry gate in `.github/workflows/audit.yml`) and `scripts/check_public_register.sh` (offline anti-leak gate) |
+| Framework basis | ISO 27001:2022 A.5.17, A.8.2, A.8.24; SOC 2 CC6.1/CC6.2; GDPR Art. 5(1)(c) data minimisation, Art. 5(1)(f), Art. 32 |
 
-Storing this metadata unencrypted in a private repo is an accepted risk: it names
-credentials an attacker could already enumerate only after compromising the account,
-and the register's availability is itself a control (A.5.30). It must never contain
-values, token strings, URLs with embedded secrets, or the age identity.
+## Why two files
 
-## Register
+A secret register is audit evidence: it names credentials, says where each one is
+stored, who can use it and what breaks if it leaks. For years this file was that
+register while sitting in a **public** repository, and its own accepted-risk paragraph
+asserted the opposite ("storing this metadata in a private repo"). Both halves cannot be
+true, and the false half was the justification.
 
-Columns: `secret_id | vault_path (age vault) | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path`
+The split keeps the two jobs that were fighting each other:
 
-| secret_id | vault_path | tier | type | entity | storage_location | expires | rotation | last_verified | blast_radius | control_id | recovery_path |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| K4 | viavitae/github/ci-plan-pat | T1 | fine-grained PAT (id 21301575) | Via-Vitae | GitHub + Actions secret `TF_GITHUB_TOKEN` | 2027-01-15 | 90d | 2026-10-20 | 2-repo admin metadata (org grants removed 2026-10-20; F-04 closed by CI rerun attempt 2, "unused power" notice absent) | CC6.1 / A.8.2 | re-mint per runbook; revoke via UI |
-| K3 | viavitae/github/drift-pat | T1 | fine-grained PAT | Via-Vitae | GitHub + Actions secret `ORG_READ_TOKEN` | 2027-01-15 | 90d | 2026-10-19 | org-wide private-repo read | CC6.1 / A.5.17 | re-mint; revoke via UI |
-| B1b | (gh-managed, not in pass) | T1 | gh OAuth token (`gho_…`) | all-three (human) | `gh` keyring, account `JourneyOfLife` (active) | 2099-12-31 | manual | 2026-10-20 | same reach as B1 + `gist` (the only credential still carrying it); feeds `GITHUB_TOKEN` for laptop plan/apply | A.8.2 / CC6.2 | trim `gist` via **browser flow only** (`gh auth refresh -h github.com --remove-scopes gist` in an interactive terminal — device flow re-mints with the old scope set, measured 2026-10-20); revoke via account settings |
-| IV-1 | (gh-managed, not in pass) | T1 | gh OAuth token, account `IterVitae` | Via-Vitae (reviewer role) | `gh` keyring, second account (inactive) | never | on-role-change | 2026-10-20 | outside-collaborator repo access; **sole PR reviewer — RETAINED per F-05 verdict (2026-10-20)**, admin invite still pending | A.5.17 / CC6.2 | `gh auth logout -h github.com -u IterVitae` + revoke in that account's settings |
-| AWS-1 | viavitae/aws/viavitae-terraform | T1 | IAM access keys | Via-Vitae | `~/.aws/credentials` | 2099-12-31 | 180d | 2026-10-19 | AWS account 775093708742 (S3 SCP-denied) | CC6.1 / A.5.17 | rotate in IAM console |
-| AGE-1 | (raw file, not pass) | T0 | age X25519 identity `~/.config/age/state-backup-key.txt` | all-three | host filesystem, mode 0600 | never | on-compromise | 2026-10-21 | every encrypted backup + vault | A.8.24 / A.5.30 | offline copies BACKUP-A/B (below) + sealed 2-of-2 envelopes (pending) |
+- **Confidential register** (private repo): every column — vault path, type, owner,
+  consumers, blast radius, control id, recovery path, backup media, revocation evidence.
+  This is what an auditor is handed.
+- **Public expiry twin** (this file): only what a CI gate needs to decide "is a dated
+  credential about to expire", which is an opaque key and a date. Nothing else.
 
-`expires` semantics: an ISO date is a hard deadline the CI gate enforces. `2099-12-31`
-is a **placeholder for "no server-side expiry"** — it is not a claim of safety; those
-rows are the rotation backlog (F-06). `never` means the item is a root key, rotated
-only on compromise. The gate treats `never`/`unknown` as findings to report, not passes.
+## Accepted risk, stated correctly
 
-> **2026-10-20 correction:** the register previously claimed B1 was named
-> `terraform-control-plane` with `gist` and no expiry. Live measurement (classic-token
-> page) shows the only classic PAT is `terraform-control-plane-v2`, **expiring
-> 2026-10-27**, without `gist`; the `gist` scope belongs to the separate gh OAuth token
-> (B1b). The lesson is the register's own rule: read a credential live, never from prose.
->
-> **2026-10-20 retirement:** B1 (`terraform-control-plane-v2`) **deleted** by the owner
-> after the consumer hunt found no automated use (only a name mention in two Obsidian
-> notes and two `ghp_` lines in `~/.bash_history` echoing into `/tmp/test_secret.txt`
-> and `/tmp/github_token.txt`). Both `/tmp` files are gone (boot cleanup) and the token
-> is dead server-side, so the history lines are now harmless residue — purge with
-> `sed -i '/ghp_/d' ~/.bash_history` when convenient. Interactive laptop auth rides the
-> gh OAuth token (B1b), unaffected — verified post-deletion via `gh api user`.
-> If a manual apply ever demands a classic PAT, re-mint per the runbook and add a row.
+Exposing *this* file publicly is an accepted risk because it contains no identifying
+metadata: an outsider learning that a key called `K4` expires on 2027-01-15 learns
+nothing about which service it opens, where it is stored, or what it reaches. The
+accepted residual risk is that the register's *existence and shape* are public (how many
+dated credentials there are, and when the next rotation window lands) — a timing hint for
+an attacker, judged proportionate to the benefit of having the check run in public CI
+without a credential.
+
+The confidential register is **never** stored in this repository, not even as a copy, a
+draft, or a rename. `.private/` is git-ignored as the staging area for the file that
+belongs to the private repo, and `scripts/check_public_register.sh` fails CI if anything
+identifier-shaped appears in this file.
+
+## Machine contract (read before editing)
+
+1. The table below is the **only** table in this file that may contain an `expires`
+   header, and it must be the **last** table: the gate parses every `|`-row after that
+   header, so a second table further down is silently mis-read or crashes the gate.
+2. Exactly two columns: `secret_id`, `expires`. Adding a column here re-publishes the
+   metadata you just removed.
+3. `secret_id` is the primary key and must exist in the confidential register.
+   `reconcile_secret_register.sh` proves the two sets agree.
+4. `expires` is one of: an ISO `YYYY-MM-DD` hard deadline (CI-enforced), `2099-12-31`
+   (no server-side expiry — a rotation backlog item, **not** a safety claim), `never`
+   (root key, rotated only on compromise), or `unknown` (nobody has measured it).
+5. `never`, `unknown` and `2099-*` are reported as notice/warning/error respectively and
+   are **never** counted as passes.
+
+## Register (derived — edit the private register instead)
+
+| secret_id | expires |
+| --- | --- |
+| K4 | 2027-01-15 |
+| K3 | 2027-01-15 |
+| B1b | 2099-12-31 |
+| IV-1 | never |
+| ID-1 | never |
+| AWS-1 | 2099-12-31 |
+| AGE-1 | never |
 
 ## Rules
 
-1. One row per credential; file name = the account, not the service.
-2. Adding a credential without adding its row is a review-checklist failure
-   (AI_WORKFLOW_POLICY mandatory sign-off).
-3. `expires` within 14 days ⇒ `check_secret_inventory.sh` fails CI ⇒ rotate per
-   §7.8 of the architecture prompt, then update `last_verified` here.
-4. The vault (`~/.vault`, git-versioned, local-only) is backed up as a bundle alongside
-   the state archives per [`state/README.md`](../state/README.md) — same monthly cadence.
-5. **`pass`/`~/.password-store` is deprecated:** it was never `pass init`'d and the only
-   GPG key (`609F7926A8254CDB`) is signing-only `[SC]` with no encryption subkey, so it
-   cannot encrypt. The age vault supersedes it; `~/.password-store` holds no real secrets.
-
-## Backup media (air-gapped copies)
-
-Deliberately a list, not a table: `scripts/check_secret_inventory.sh` reads every
-`|`-row after the register's `expires` header, so a second table here would be
-mis-parsed. This section is prose to the gate.
-
-- **BACKUP-A** — 120 GB SATA SSD, model `SSD 128GB`, serial `YS20210624012696`, ext4 label
-  `BACKUP-A`. The **in-rotation** copy: connect monthly → `rsync` `/opt/jol/backup/tfstate/`
-  → decrypt-and-sha256-verify against live state → unmount → disconnect. First verified sync
-  2026-10-21 (12 archives, hash `c768f7a3…e1ee9e8f` matched live). Generic no-name media →
-  replace annually; not the long cold-storage copy (NAND charge-loss).
-- **BACKUP-B** — 320 GB HDD Seagate `ST9320423AS`, serial `5VJ7JXKC` (SMART: 0 pending,
-  0 uncorrectable, 24 stable reallocated). The **off-premises** copy: same monthly rsync +
-  verify, then stored outside the flat. Magnetic holds charge in long cold storage better
-  than SSD, so it is the survive-the-fire/last-line copy.
-- **Rejected:** 500 GB HDD Seagate `ST9500325AS` serial `S2W7B5ZC` — SMART `Reported_Uncorrect=7343`,
-  1 pending, 1 offline-uncorrectable, 25,733 h: actively failing, never a backup target.
-- **To identify (do NOT wipe):** two 14.6 GB LUKS USB sticks, labels `DR-JOL` / `DR-JOLM`,
-  not referenced by crypttab/fstab and not the system swap — a pre-existing encrypted store
-  of unknown purpose; open and register before repurposing.
-- Rotation: A↔B monthly; after each sync the freshly-written drive is unmounted and the other
-  is brought on-site, so one copy is always offline (air gap vs ransomware) and one off-premises
-  (vs fire/theft). Closes F-01's "no off-host copy" clause.
+1. One row per credential, mirroring one row in the confidential register; the row is
+   added to **both** files or the change is not finished (AI_WORKFLOW_POLICY sign-off).
+2. A date here that disagrees with the register is a documentation defect even when CI is
+   green — `reconcile_secret_register.sh` is the check that says so.
+3. `expires` within 14 days ⇒ `check_secret_inventory.sh` exits 1 ⇒ the advisory `Audit`
+   job goes red. **Advisory means it does not block the merge:** the live `protect-main`
+   ruleset requires only the `provenance` context. Treat a red `Audit` on `main` as a
+   defect to fix before the next change, not as a warning you may walk past.
+4. Rotate per §7.8 of
+   `docs/superpowers/prompts/2026-10-19-multi-org-secrets-and-state-architecture-prompt.md`,
+   then update `last_verified` in the confidential register and re-derive this table.
+5. The `2099-*`, `never` and `unknown` rows are the rotation backlog; they cannot be
+   enforced by date, only by the rotation policy applied to the confidential register.
