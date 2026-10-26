@@ -10,6 +10,13 @@ This document maps each control to the Terraform resource / script that implemen
 it, its status on the current plan, and residual gaps. It is the audit-facing
 companion to the effective-control matrix emitted by `terraform output`.
 
+> **Independent audit (2026-10-26):** the pre-deployment audit working report, its
+> 31-repository coverage matrix and findings `VV-2026-10-0NN` are kept in
+> [`security/pre-deployment-independent-audit-2026-10-26.md`](security/pre-deployment-independent-audit-2026-10-26.md).
+> Recommendation there is NO-GO; P-series and F-series findings below remain the
+> remediation register and are cross-referenced from that report (P1-3, P1-10,
+> P1-12, P1-16/P1-22 map onto VV-2026-10-004/-003/-008/-009).
+
 ## 1. Control → implementation mapping
 
 | # | Control | SOC 2 | ISO 27001 | GDPR | Implemented by | Free status |
