@@ -25,20 +25,20 @@ registers:
 - **PART I — Method (a student guide, §2–§14):** for each audit phase it explains
   in plain language *what the step proves, how it is examined, what evidence
   counts, and what a fail/blocked result means.* Read this to learn the craft.
-- **PART II — Findings & evidence (§15–§22):** the actual results for Via-Vitae,
-  each tied to an evidence reference (E1–E16) and a version (the commit head in
-  §16). Read this to see the state.
-- **PART III — Action (§23–§25):** what to do, in what order, who owns it (§23),
-  a self-audit log of the auditor's own corrected errors (§24), and a glossary
-  (§25). Read this to act and to trust the rest.
+- **PART II — Findings & evidence (§15–§26):** the actual results for Via-Vitae,
+  one section per phase, each tied to an evidence reference (E1–E16) and a version
+  (the commit head in §16). Read this to see the state.
+- **PART III — Action (§27–§29):** what to do, in what order, who owns it (§27),
+  a self-audit log of the auditor's own corrected errors (§28), and a glossary
+  (§29). Read this to act and to trust the rest.
 
 ## 1. Executive summary
 
 - **Scope reconciled:** 31 live = 31 declared = 0 shadow = 0 ghost (E1/E2); state
   holds all 31 repos plus 21 branch protections, serial 143 (E3). The expected 31
   was verified, not assumed.
-- **Governance layer is healthy:** org 2FA enforced; secret scanning + push
-  protection on all 26 public repos; branch protections strict and
+- **Governance layer is healthy** (§19 detail): org 2FA enforced; secret scanning +
+  push protection on all 26 public repos; branch protections strict and
   admin-enforced; `main` CI green on the app repos as at the reference date
   (E10/E11/E12). September's protections-downgrade danger is closed (E3).
 - **Four mandatory release gates FAIL outright:**
@@ -53,19 +53,19 @@ registers:
      `vendor-register`, `policies`, `compliance`, `threat-model`) and all ops repos
      (`runbooks`, `observability`, `reusable-workflows`, `training`) are **empty**,
      yet the product already collects emails and possibly Art. 9 religious data
-     (VV-2026-10-002).
+     (VV-2026-10-002). See the readiness matrix in §20.
   4. **Landing scope — FAIL:** the ten `viavitae-landing-*` repos are verifiably
      empty template scaffolds and no include/exclude decision is recorded
      (VV-2026-10-005).
 - **Undecided (insufficient evidence):** Scope-of-release, Functionality,
-  Integration and Evidence gates — no end-to-end journey on provisioned staging,
-  and 15 repos not yet deep-audited.
+  Integration and Evidence gates — no end-to-end journey on provisioned staging
+  (§21), and 15 repos not yet deep-audited (§26).
 - **Independence is structurally pending:** a single person is implementer, approver
   and would-be verifier; six teams each hold blanket push on all 30 repos
   (fresh-verified, E16, VV-2026-10-003).
-- **Recommendation: NO-GO**, revisable only by the ordered remediation in §23 and
+- **Recommendation: NO-GO**, revisable only by the ordered remediation in §27 and
   then a separately-recorded approval. This audit wrote no code and changed no
-  control; the auditor's own first-draft errors are logged in §24.
+  control; the auditor's own first-draft errors are logged in §28.
 
 ---
 
@@ -168,7 +168,7 @@ where identity and permission are actually checked *server-side*.
 *Integration* gate stays undecided. A data category with no retention/deletion
 story is a GDPR exposure even if the code is perfect.
 
-**Next action.** Feed the register into Phase 7 (§11). See §17 for what was mapped.
+**Next action.** Feed the register into Phase 7 (§8). See §17 for what was mapped.
 
 ## 5. Phase 4 — Reproducible baselines
 
@@ -221,7 +221,8 @@ and severity*, absence of alerts ≠ absence of vulnerabilities. 8.7 Judge test
 *quality* (skips, flakes, over-permissive mocks), not a coverage number alone.
 8.8 Compare documentation to the observed implementation.
 
-**Evidence.** One report row per repo (§19). Source: code + CI + API.
+**Evidence.** One coverage row per repo (§16) and full reports in §26. Source:
+code + CI + API.
 
 **Acceptance criteria.** Each dimension is Verdict + Evidence + Status for the
 repo's head, with justified *NOT APPLICABLE*.
@@ -248,8 +249,8 @@ destinations, analytics/trackers/embeds, consent, accessibility, preview/public
 exposure and domains. If excluded from the release, *verify* the exclusion: no
 deploy target, no route, no domain, no embed.
 
-**Evidence.** The readiness matrix (§20 of Part II / §6 finding) with the sampled
-head. Source: file tree + repo settings (`has_pages`).
+**Evidence.** The readiness result (§22) with the sampled head. Source: file tree
++ repo settings (`has_pages`).
 
 **Acceptance criteria.** Each landing is explicitly *included* (with a defined
 minimum scope) or *excluded* (with evidence the exclusion holds).
@@ -269,7 +270,7 @@ the contract, auth, data, version assumptions, owner and failure behavior.
 *Idempotency* = calling the same operation twice must not double the business
 effect (no duplicate confirmation email, no duplicate charge).
 
-**Actions.** 1) Build the register (§11). 2) Test compatibility/failure cases:
+**Actions.** 1) Build the register (§21). 2) Test compatibility/failure cases:
 schema change, mixed versions, expired credentials, timeouts, duplicate/out-of-
 order events, partial transactions, retries, shared-package bumps. 3) Verify the
 full journey on the exact version combination.
@@ -307,7 +308,7 @@ candidate's* commit — a check on an older commit does not bless a newer artifa
 4) If AI agents/MCP exist, examine tool permissions, credential access, isolation and
 untrusted-content handling; a prompt is **not** a permission boundary.
 
-**Evidence.** Governance/pipeline findings with cited API observations (§15.5).
+**Evidence.** Governance/pipeline findings with cited API observations (§19).
 Source: org + repo settings, Actions runs.
 
 **Acceptance criteria.** Policy and configuration agree; no unmanaged bypass.
@@ -339,14 +340,14 @@ DPO need (Art. 37); special-category/children data (Art. 8/9); e-communications/
 tracking rules. Record framework *editions and source dates*; never invent clause
 numbers; disclose when the authoritative text was not re-verified.
 
-**Evidence.** Control-to-evidence matrix (§11.2, §15.6): requirement → boundary →
-owner → expected evidence → observed evidence & date → gap → remediation.
+**Evidence.** Control-to-evidence matrix (§20): requirement → boundary → owner →
+expected evidence → observed evidence & date → gap → remediation.
 
 **Acceptance criteria.** Each applicable control has observed evidence, not a plan.
 
 **Failure or blockage.** An empty governance repository means Art. 28/30/DPIA
 controls are *BLOCKED* — you cannot evidence a register that does not exist, and
-the product already collects data (see §17/§20).
+the product already collects data (see §17/§22).
 
 **Next action.** Populate the minimum corpus for what the pilot actually collects;
 route the Art. 9 lawful-basis question to a person qualified to make a legal call.
@@ -368,7 +369,7 @@ irreversible changes need a real recovery plan, not an assumed rollback.
 4) Assess capacity/performance against representative load; do not invent
 universal thresholds.
 
-**Evidence.** Recovery tests with before/after and dates (§15.7). Source: runbooks,
+**Evidence.** Recovery tests with before/after and dates (§21). Source: runbooks,
 backup tooling, load tests.
 
 **Acceptance criteria.** A dated restore test meets stated RPO/RTO.
@@ -387,7 +388,7 @@ the finding is real. *Priority* = when to fix. They are deliberately separate: a
 high-impact suspicion with low confidence is still worth investigating but not
 necessarily first.
 
-**Actions.** 1) Give every finding the full record (§19 table): id, type
+**Actions.** 1) Give every finding the full record (§23 table): id, type
 (confirmed/suspected/evidence-gap), affected repos+versions, criterion, expected
 vs observed, evidence, how to reproduce, impact/likelihood/severity rationale,
 root-cause status, plain-language remediation, owner, dependencies, target date,
@@ -407,7 +408,7 @@ keeping every repo traceable.
 **Acceptance criteria.** No finding is "resolved" because a plan exists; resolution
 needs independently verified evidence (§13).
 
-**Next action.** Use the roadmap in §22.
+**Next action.** Use the checklist in §27.
 
 ## 13. Phase 12 — Independently verify remediation
 
@@ -425,12 +426,12 @@ where practical. 5) Check regression + security tests. 6) Check affected integra
 date, conclusion. 9) Reassess the final release artifact; if a material change
 post-dates verification, decide which evidence must be refreshed.
 
-**Evidence.** Verification register (§21): accepted / rejected / pending, per fix.
+**Evidence.** Verification register (§25): accepted / rejected / pending, per fix.
 
 **Acceptance criteria.** Only a row signed by an *independent* verifier with a date
 counts as closed.
 
-**Failure or blockage.** Because this org is single-person (§15.2), independent
+**Failure or blockage.** Because this org is single-person (§15), independent
 verification is *structurally pending* — self-acceptance must never be recorded as
 independent closure.
 
@@ -448,15 +449,15 @@ residual risks with owners and expiry — it must never mask a failed mandatory 
 Risk acceptance can accept a *business* risk; it cannot make a failed control pass,
 and cannot override a legal obligation.
 
-**Actions.** Define acceptance criteria *first* (§15.8 uses the ten gates of the
+**Actions.** Define acceptance criteria *first* (§24 uses the ten gates of the
 brief), then evaluate. State the auditor's *recommendation* and the approver's
 *decision* separately; the audit must not itself trigger deployment.
 
-**Evidence.** The gate table with per-gate basis links.
+**Evidence.** The gate table with per-gate basis links (§24).
 
 **Decision categories.** GO / GO WITH CONDITIONS / NO-GO / UNDETERMINED.
 
-**Next action.** The named approver records the decision with residual risks (§23).
+**Next action.** The named approver records the decision with residual risks (§27).
 
 ---
 
@@ -491,7 +492,7 @@ permission or live resource was modified by the audit.
 > **Corrections to earlier draft (2026-10-26):** two rows previously listed here
 > as access blocks — "Dependabot severity unreadable" and "code-scanning sweep
 > wrong endpoint" — were **the auditor's own query bugs, not access limits.** With
-> the correct fields the severities are fully readable; see §24 and E15. The
+> the correct fields the severities are fully readable; see §28 and E15. The
 > *Security* gate is therefore decided on evidence, not left undecided.
 
 ## 16. Inventory reconciliation and coverage matrix (Phase 2 result)
@@ -595,27 +596,82 @@ Blocked/unexecuted checks register: browser/load E2E (staging), webhook signatur
 verification, RAG tool-permission tests, per-repo deep dives for 15 repos — all
 **NOT RUN**, not **PASSED**.
 
-## 19. Findings register (Phase 11 result)
+## 19. GitHub, CI/CD and infrastructure assessment (Phase 8 result)
 
-Severity, confidence and priority are tracked separately.
+**VERIFIED PASS (observed 2026-10-26):**
+- Org-wide 2FA enforced (`two_factor_requirement_enabled: true`). (E11)
+- All 26 public repos: secret scanning + push protection enabled. (E10)
+- 21 branches carry classic branch protection with **strict** up-to-date
+  enforcement and **admin enforcement**; no force pushes; `viavitae-control`
+  protected by the `protect-main` ruleset. (E10)
+- Org Actions restricted to a selected allow-list; provenance gate wired
+  (`ai:<tier>` trailer enforced by a commit-msg hook + `provenance.yml`). (E11)
+- `main` CI health: web/clients/qa and scheduled compliance/CodeQL green through
+  the reference morning; control-plane `Audit` + `provenance` green since
+  2026-10-21. (E12)
+- September's protections-downgrade danger closed: apply landed 2026-10-17; state
+  now matches declared protections (E3).
 
-| ID | Title | Class | Severity / Confidence | Owner | Remediation (plain language) & acceptance |
+**Finds on this layer:**
+- **Team bindings are blanket, not tier-scoped** — each of the 6 teams
+  (architects/compliance/dpo/legal/platform/security) is attached to **30 repos**
+  (fresh-verified, E16), so tier-based CODEOWNERS cannot segregate duties
+  (VV-2026-10-003).
+- Org-level SHA pinning is **off** while repos rely on a per-repo check
+  (VV-2026-10-007).
+- **Private-repo blind spot:** the 5 private repos return HTTP 403 for
+  ruleset/advanced-security reads on Free and show no readable branch protection
+  — meaning confidential compliance repos will exist **unprotected** once populated
+  (VV-2026-10-002 / -010).
+- Webhook inventory unobtainable (no `admin:org_hook` scope) — NOT RUN.
+
+## 20. Privacy & compliance readiness matrix (Phase 9 result)
+
+**Applicability:** GDPR applies (EU/Lithuanian establishment, EEA data subjects);
+Lithuanian e-communications rules apply to analytics consent (NOT RUN). ISO/IEC
+27001:2022 and SOC 2 (2017 TSC) are *assurance objectives*, not attested states —
+no certification or report exists, and this internal review is not one.
+
+| Requirement (plain language) | Framework ref | Owner | Expected evidence | Observed @2026-10-26 | Status |
 | --- | --- | --- | --- | --- | --- |
-| VV-2026-10-001 | Production deploy path non-functional; all prod k8s manifests are `placeholder.yaml` | Confirmed | **High** / High | Infra owner | Repair the image build/push failure; replace each placeholder with real reviewed Argo CD manifests; acceptance = successful prod-candidate deploy of the exact release commit through dev→staging→prod with recorded run links; independent re-run required. |
-| VV-2026-10-002 | Compliance & operations artifact repos empty while product code cites them (DPIA-001 et al.) | Confirmed | **High** (compliance blocker; not exploitable) / High | DPO/compliance role (same human today) | Populate ROPA, DPIA (incl. Art. 9 basis), retention schedule, policy library, vendor register with Art. 28 terms, runbooks, training records; acceptance = every cited ID resolves to a real document; decide the Free-plan protection limitation for the private repos (upgrade, or accept the unprotected-population risk explicitly). |
-| VV-2026-10-003 | Single-person org: owner = implementer = approver; all six teams hold blanket push on all 30 repos (no tier scoping, so tier-based CODEOWNERS cannot segregate) | Confirmed governance gap | **High** for SOC 2 CC-series / High (fresh-verified E16) | Owner | Establish the largest feasible separation of duties (active peer-reviewer account, or documented compensating controls + independent-assurance engagement); scope team bindings to tiers; acceptance = team permissions match tier policy and the review chain is demonstrably enforced. |
-| VV-2026-10-004 | **20 critical + 63 high** open Dependabot alerts on default branches, concentrated in release candidates (api 8/23, brand 5/23, web 5/9, docs 2/3, qa 0/5 — E15). GitHub alerts are *detected* (Dependabot updates on) but **no required status check blocks merge/deploy on critical**, so detection is not enforced | Confirmed, **severity-ranked** | **High** / High | Per-repo owners | Triage by reachability on `main`; remediate criticals on api/web/clients/brand before release; add a Dependabot-critical gate (fail CI when `main` carries critical/high on reachable deps) wired into the ruleset so detection becomes enforcement; acceptance = fresh zero-critical snapshot dated against the release commit + a green blocking check. |
-| VV-2026-10-005 | Ten landing repos are scaffolds; release inclusion undecided | Confirmed + decision request | **Medium** / High | Owner | Decide exclude-vs-include per landing page. Exclusion must be evidenced (no deploy target, no domain, no indexing); inclusion requires content, privacy notice, form destination, consent behavior and accessibility verification. |
-| VV-2026-10-006 | Sole reviewer `IterVitae` recorded "inactive, admin invite pending" yet absent from live outside-collaborators | Evidence gap / suspected access anomaly | **Medium** / Low — needs confirmation | Owner | Produce the access-review record: current role, membership, review capability of that account; acceptance = API-visible membership matching documented policy. |
-| VV-2026-10-007 | Org-level SHA pinning disabled (`sha_pinning_required=false`) while repos rely on a per-repo "Action SHA pinning" check | Confirmed policy/config mismatch | Medium / High | Platform owner | Either require pinning at the org ruleset or formally document the per-repo gate as the compensating control; acceptance = configuration and policy agree. |
-| VV-2026-10-008 | Applied-input custody unverifiable: fresh plan aborts on missing required `billing_email`; the tfvars used for the 2026-10-17 apply is not in this workspace and its storage location is not evidenced | Confirmed, **scoped down after cross-check** | Low–Medium / High | Infra owner | The abort is **by design and documented** (../COMPLIANCE.md P1-12: `TF_VAR_billing_email` has no default for GDPR minimisation) — the residual gap is *custody*: record where the applied value lives and how it is protected/restored; acceptance = the custody path is exercised once and a clean-checkout plan procedure is reproduced. |
-| VV-2026-10-009 | QA browser/load gates cannot run — staging tenant not provisioned (register P1-22, still open) | Confirmed | **High** for integration gate / High | QA owner | Provision isolated staging + synthetic data; run the full cross-repo journey (clients merge → provision → staging smoke → sync); acceptance = dated E2E evidence covering the exact release version combination. |
-| VV-2026-10-010 | Org webhook inventory and private-repo protections unobtainable | BLOCKED | — | Owner | Grant scoped read (`admin:org_hook`) and/or GitHub Team for private-repo visibility; re-run the blocked cells of §15/§16. |
+| Record why/how each data type is processed | GDPR Art. 30 | DPO | ROPA document | `data-governance` empty | **BLOCKED** |
+| Impact assessment for high-risk processing | GDPR Art. 35 | DPO | DPIA (incl. Art. 9 basis) | DPIA-001 cited in code, doc absent | **BLOCKED** |
+| Written terms with every processor | GDPR Art. 28 | Legal/DPO | Vendor/sub-processor register | `vendor-register` empty (Stripe/Paysera/Bitrix24 unlisted) | **BLOCKED** |
+| Lawful basis for religious/pastoral data | GDPR Art. 9 | DPO + legal | DPIA basis section | none | UNDETERMINED — legal call needed |
+| Data minimisation of the org's own telemetry | GDPR Art. 5 | Infra | billing/contact address handling | plus-address + no-default-var pattern evidenced (../COMPLIANCE.md P1-7/P1-12) | VERIFIED PASS (partial) |
+| ISMS scope, risk assessment, SOA, policies | ISO 27001 cl. 4–6, 13, App. A | Security | policy library, risk register, SoA | `policies`/`compliance`/`threat-model` empty; stubs in docs | **BLOCKED** |
+| Access control & segregation of duties | ISO A.5.15–5.18 / SOC2 CC6 | Owner | role-scoped permissions | blanket team push; 2FA on | PARTIAL (VV-…-003) |
+| Change control & release evidence | SOC2 CC8 | Platform | gated PRs + branch protection | enforced on public repos | VERIFIED PASS (public only) |
+| Security monitoring & incident response | ISO A.8.16 / SOC2 CC7 | Ops | runbooks, alerting, IR plan | `runbooks`/`observability` empty | **BLOCKED** |
+| SOC 2 operating effectiveness over a period | SOC2 all TSC | QSA (external) | Type II window evidence | none engaged | PENDING — out of this audit |
 
-**Risk acceptance** is tracked separately from these check results; none has been
-accepted, waived or closed by this document.
+Technical findings are separated from legal determinations; the Art. 9 basis row is
+explicitly a legal question, not an engineering one.
 
-## 20. Landing assessment and per-repo deep-audit gaps
+## 21. Integration register and operational resilience (Phases 7 & 10 result)
+
+**Integration register** (provider → consumer; contract / auth / data / failure
+behavior / status). End-to-end success is **NOT RUN** on all rows because staging
+is unprovisioned (VV-2026-10-009):
+
+| Provider → consumer | Contract | Auth | Data | Failure behavior | Status |
+| --- | --- | --- | --- | --- | --- |
+| web → api | OpenAPI typed (`generated/`) | `API_SERVICE_TOKEN` | quote/assessment (email, org) | undefined in audit | NOT RUN |
+| clients → api | `provision-dispatch.yml` → `POST /v1/tenants/<slug>/provision` | dispatch token | tenant config | idempotency unverified | NOT RUN (UNDETERMINED) |
+| api → Stripe / Paysera | payment webhooks/callbacks | API keys + signatures | payment events | signature/origin check NOT RUN | BLOCKED |
+| api → Bitrix24 (on-prem CRM) | REST | creds | CRM records | creds expiry path unknown | NOT RUN |
+| api → Postgres | per-tenant schema + RLS | service creds | all tenant PII | cross-tenant isolation asserted in code, not tested | NOT RUN |
+| CI → container registry | Docker build/push | CI token | image artifact | **build-to-production currently RED** | **VERIFIED FAIL** (VV-…-001) |
+| Terraform control plane → GitHub org | provider 6.x | GITHUB_TOKEN | repo/policy config | applied 2026-10-17, works | VERIFIED PASS |
+
+**Operational resilience result:** control-plane state+vault backup is real,
+air-gapped and hash-verified with monthly A↔B rotation (E13). Application-data
+backup: scripts exist in `viavitae-infra/backup` but no dated restore test —
+NOT RUN. **RPO/RTO: none defined** anywhere (runbooks empty). Incident response,
+escalation, capacity/performance testing: NOT RUN. Deployment & rollback: pipeline
+red; Argo CD sync untested. **Operations gate: VERIFIED FAIL.**
+
+## 22. Landing assessment and per-repo deep-audit gaps (Phase 6 result)
 
 **Landing class (all ten, one class — §7 method):** two commits each (template
 scaffold + a `.gitignore` fix); `main.py` is the PyCharm placeholder
@@ -634,7 +690,27 @@ a false-readiness signal.** Decision owner: release manager (VV-2026-10-005).
 RUN**; `viavitae-web/api/clients/infra/control` were assessed; landings + template
 were class-assessed. These are scheduled work, not silent skips.
 
-## 21. Release gates and decision (Phase 13 result)
+## 23. Findings register (Phase 11 result)
+
+Severity, confidence and priority are tracked separately.
+
+| ID | Title | Class | Severity / Confidence | Owner | Remediation (plain language) & acceptance |
+| --- | --- | --- | --- | --- | --- |
+| VV-2026-10-001 | Production deploy path non-functional; all prod k8s manifests are `placeholder.yaml` | Confirmed | **High** / High | Infra owner | Repair the image build/push failure; replace each placeholder with real reviewed Argo CD manifests; acceptance = successful prod-candidate deploy of the exact release commit through dev→staging→prod with recorded run links; independent re-run required. |
+| VV-2026-10-002 | Compliance & operations artifact repos empty while product code cites them (DPIA-001 et al.) | Confirmed | **High** (compliance blocker; not exploitable) / High | DPO/compliance role (same human today) | Populate ROPA, DPIA (incl. Art. 9 basis), retention schedule, policy library, vendor register with Art. 28 terms, runbooks, training records; acceptance = every cited ID resolves to a real document; decide the Free-plan protection limitation for the private repos (upgrade, or accept the unprotected-population risk explicitly). |
+| VV-2026-10-003 | Single-person org: owner = implementer = approver; all six teams hold blanket push on all 30 repos (no tier scoping, so tier-based CODEOWNERS cannot segregate) | Confirmed governance gap | **High** for SOC 2 CC-series / High (fresh-verified E16) | Owner | Establish the largest feasible separation of duties (active peer-reviewer account, or documented compensating controls + independent-assurance engagement); scope team bindings to tiers; acceptance = team permissions match tier policy and the review chain is demonstrably enforced. |
+| VV-2026-10-004 | **20 critical + 63 high** open Dependabot alerts on default branches, concentrated in release candidates (api 8/23, brand 5/23, web 5/9, docs 2/3, qa 0/5 — E15). GitHub alerts are *detected* (Dependabot updates on) but **no required status check blocks merge/deploy on critical**, so detection is not enforced | Confirmed, **severity-ranked** | **High** / High | Per-repo owners | Triage by reachability on `main`; remediate criticals on api/web/clients/brand before release; add a Dependabot-critical gate (fail CI when `main` carries critical/high on reachable deps) wired into the ruleset so detection becomes enforcement; acceptance = fresh zero-critical snapshot dated against the release commit + a green blocking check. |
+| VV-2026-10-005 | Ten landing repos are scaffolds; release inclusion undecided | Confirmed + decision request | **Medium** / High | Owner | Decide exclude-vs-include per landing page. Exclusion must be evidenced (no deploy target, no domain, no indexing); inclusion requires content, privacy notice, form destination, consent behavior and accessibility verification. |
+| VV-2026-10-006 | Sole reviewer `IterVitae` recorded "inactive, admin invite pending" yet absent from live outside-collaborators | Evidence gap / suspected access anomaly | **Medium** / Low — needs confirmation | Owner | Produce the access-review record: current role, membership, review capability of that account; acceptance = API-visible membership matching documented policy. |
+| VV-2026-10-007 | Org-level SHA pinning disabled (`sha_pinning_required=false`) while repos rely on a per-repo "Action SHA pinning" check | Confirmed policy/config mismatch | Medium / High | Platform owner | Either require pinning at the org ruleset or formally document the per-repo gate as the compensating control; acceptance = configuration and policy agree. |
+| VV-2026-10-008 | Applied-input custody unverifiable: fresh plan aborts on missing required `billing_email`; the tfvars used for the 2026-10-17 apply is not in this workspace and its storage location is not evidenced | Confirmed, **scoped down after cross-check** | Low–Medium / High | Infra owner | The abort is **by design and documented** (../COMPLIANCE.md P1-12: `TF_VAR_billing_email` has no default for GDPR minimisation) — the residual gap is *custody*: record where the applied value lives and how it is protected/restored; acceptance = the custody path is exercised once and a clean-checkout plan procedure is reproduced. |
+| VV-2026-10-009 | QA browser/load gates cannot run — staging tenant not provisioned (register P1-22, still open) | Confirmed | **High** for integration gate / High | QA owner | Provision isolated staging + synthetic data; run the full cross-repo journey (clients merge → provision → staging smoke → sync); acceptance = dated E2E evidence covering the exact release version combination. |
+| VV-2026-10-010 | Org webhook inventory and private-repo protections unobtainable | BLOCKED | — | Owner | Grant scoped read (`admin:org_hook`) and/or GitHub Team for private-repo visibility; re-run the blocked cells of §15/§19. |
+
+**Risk acceptance** is tracked separately from these check results; none has been
+accepted, waived or closed by this document.
+
+## 24. Release gates and decision (Phase 13 result)
 
 | Gate | Result | Basis |
 | --- | --- | --- |
@@ -642,10 +718,10 @@ were class-assessed. These are scheduled work, not silent skips.
 | 2 Evidence | UNDETERMINED | 15 repos not deep-audited; blocked cells above |
 | 3 Functionality | UNDETERMINED | No cross-repo E2E evidence on provisioned staging (VV-…-009) |
 | 4 Security | **VERIFIED FAIL** | 20 critical + 63 high open on default branches incl. release candidates (VV-…-004); detection not wired to enforcement |
-| 5 Privacy | **FAIL** | Art. 28/30 corpus absent while collection runs in code (VV-…-002) |
-| 6 Integration | UNDETERMINED | Provisioning journey unverified (VV-…-009) |
-| 7 Operations | **VERIFIED FAIL** | Deploy red; prod manifests placeholder; no RPO/RTO; empty runbooks (VV-…-001) |
-| 8 Landing scope | **FAIL** | Unfinished and undocumented either way (VV-…-005) |
+| 5 Privacy | **FAIL** | Art. 28/30 corpus absent while collection runs in code (§20, VV-…-002) |
+| 6 Integration | UNDETERMINED | Provisioning journey unverified (§21, VV-…-009) |
+| 7 Operations | **VERIFIED FAIL** | Deploy red; prod manifests placeholder; no RPO/RTO; empty runbooks (§21, VV-…-001) |
+| 8 Landing scope | **FAIL** | Unfinished and undocumented either way (§22, VV-…-005) |
 | 9 Independence | NOT SATISFIED | Self-review only (VV-…-003/-006) |
 | 10 Approval | n/a | This report is a recommendation, not a decision |
 
@@ -662,7 +738,27 @@ owner) must record any GO/GO-WITH-CONDITIONS decision separately, with residual
 risks, named approver, compensating controls and expiry. GO WITH CONDITIONS must
 not mask a failed mandatory gate; risk acceptance does not override legal obligations.
 
-## 22. Coverage statement and evidence index
+## 25. Verification register (Phase 12)
+
+No org-side remediation has been submitted for verification yet; every finding
+below is at **fix proposed = no**, because the audit was performed against the
+current state and remediation has not begun. Self-corrections of the *audit
+document itself* are logged separately in §28 and are not org fixes.
+
+| Finding | Fix proposed | Fix implemented | Independently verified | Verifier / date |
+| --- | --- | --- | --- | --- |
+| VV-2026-10-001 | no | no | **PENDING** | — (independence structurally pending, §13/§15) |
+| VV-2026-10-002 | no | no | **PENDING** | — |
+| VV-2026-10-003 | no | no | **PENDING** | — |
+| VV-2026-10-004 | no | no | **PENDING** | — |
+| VV-2026-10-005 | decision requested | no | **PENDING** | owner |
+| VV-2026-10-006 | no | no | **PENDING** | — |
+| VV-2026-10-007 | no | no | **PENDING** | — |
+| VV-2026-10-008 | scoped down in-report | n/a | **N/A** (documentation) | — |
+| VV-2026-10-009 | no | no | **PENDING** | — |
+| VV-2026-10-010 | access request | no | **BLOCKED** | — |
+
+## 26. Coverage statement and evidence index
 
 Discovered **31** · reconciled **31** · accessible **26** (5 private, restricted
 reads) · with content **22** · empty **9** · assessed in depth **5** (control, web,
@@ -695,7 +791,7 @@ Evidence captures this session (retain under the same controlled handling as
 
 # PART III — ACTION
 
-## 23. Student action checklist
+## 27. Student action checklist
 
 Work top-to-bottom; each item names the person who must act.
 
@@ -711,18 +807,18 @@ Work top-to-bottom; each item names the person who must act.
    so detection actually blocks (VV-…-004).
 5. **Populate the minimum GDPR corpus** (DPO role): ROPA, DPIA with the Art. 9
    religious-data basis, retention, vendor/Art. 28 register, policies, runbooks
-   (VV-…-002). Decide Free-plan protection for the private repos.
+   (VV-…-002, matrix §20). Decide Free-plan protection for the private repos.
 6. **Strengthen separation of duties** (owner): a real second reviewer, or documented
    compensating controls before claiming SOC 2 CC1.4/CC8.1 (VV-…-003, -006).
 7. **Close the config/policy mismatches** (platform owner): org SHA-pinning vs
    per-repo gate (VV-…-007); input-custody documentation (VV-…-008); decide landing
    include/exclude with evidence (VV-…-005).
 8. **Obtain the blocked reads** (owner): scoped `admin:org_hook` and/or GitHub Team
-   for the private repos; re-run §15/§16 (VV-…-010).
+   for the private repos; re-run §15/§19 (VV-…-010).
 9. **Re-run gates and record the decision separately** (approver): never let the
-   auditor's recommendation be read as the approval.
+   auditor's recommendation be read as the approval (§24/§25).
 
-## 24. Self-audit correction log (paranoid review of this auditor's first draft)
+## 28. Self-audit correction log (paranoid review of this auditor's own work)
 
 Recorded so the reader can trust the remaining conclusions and see the method
 auditing itself:
@@ -734,8 +830,7 @@ auditing itself:
    "UNDETERMINED (provisional)" to **VERIFIED FAIL**. Lesson: re-test your own tool
    before recording a limitation.
 2. **Code-scanning "wrong endpoint" was also my bug.** `/code-scanning/alerts` works;
-   open counts are api 1 / web 1 / demos 1. The corresponding access-limitation row
-   was retracted.
+   open counts are api 1 / web 1 / demos 1. The access-limitation row was retracted.
 3. **"all six teams push on all repos" was carried from memory (2026-09-27), now
    fresh-verified** against the live API (each team → 30 repos, E16). It holds — but
    I re-tested rather than shipping an unverified recollection, per §1.1 of
@@ -744,13 +839,22 @@ auditing itself:
    reading COMPLIANCE.md P1-12 it is intentional (GDPR minimisation). The finding was
    narrowed to *input custody* and downgraded.
 5. **Total "~151 alerts" was an untriaged count** (it mixed all severities). The
-   actionable figure is the 20-critical/63-high split now in §16/§19.
+   actionable figure is the 20-critical/63-high split now in §16/§23.
+6. **My own restructuring regression, caught on final read before merge:** when I
+   split the report into Method vs Findings, I dropped two required result sections
+   (the Phase-8 governance/CI-CD assessment and the Phase-9 GDPR/ISO/SOC 2 readiness
+   matrix) and left several internal cross-references pointing at numbers that no
+   longer existed. The executive summary asserted "governance is healthy" with no
+   supporting results table behind it. I restored §19 and §20, added an integration
+   register + operational result (§21) and a verification register (§25), renumbered
+   PART II/III cleanly, and re-pointed every reference. Lesson: a "cleaner" rewrite
+   can silently delete substance — re-verify deliverable coverage, not just prose.
 
-None of these corrections changed the NO-GO recommendation; two of them
-(VV-…-004 Security, and the honest handling of the earlier "151") made the report
-*more* strict, not less — which is the correct direction for a compliance gate.
+None of these corrections changed the NO-GO recommendation; they made the report
+*more* strict and *more* complete, which is the correct direction for a compliance
+gate.
 
-## 25. Glossary (student quick-reference)
+## 29. Glossary (student quick-reference)
 
 | Term | Plain-language meaning |
 | --- | --- |
