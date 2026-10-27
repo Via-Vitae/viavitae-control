@@ -11,6 +11,28 @@ status-vocabulary: ["VERIFIED PASS", "VERIFIED FAIL", "BLOCKED", "NOT RUN", "NOT
 registers:
   findings: "VV-2026-10-0NN (this document); P0-x/P1-x and F1–F11 remain in ../COMPLIANCE.md"
   secrets: "../SECRETS_INVENTORY.md"
+revisions:
+  - "2026-10-26: original report + deep-audit completion (PRs #39, #40)"
+  - "2026-10-27: webhook claim correction — §17, §18, §20, §21, §23, §25, §26, §27,
+    §28, E19; VV-2026-10-011 re-scoped Medium→High on a disproved premise;
+    VV-2026-10-014 added (false-assurance claims incl. a DPIA whose M1–M4 measures
+    were audited against the code), VV-2026-10-015 added (provenance gate present in
+    1 of 31 repos) and VV-2026-10-016 added (zero Alembic revisions → no schema, no
+    RLS); VV-2026-10-017 added (template ci.yml `to_json` drops its arguments, so
+    lint/typecheck/test/build never run in 14 repos while `CI status` reports success);
+    VV-2026-10-004 corrected (Trivy-CRITICAL enforcement does exist on viavitae-api,
+    which is now merge-locked); Functionality and Integration gates moved to FAIL;
+    remediation pushed as viavitae-api#9 and viavitae-control#42 (both unmerged); the
+    api 8 criticals are traced to the uninstalled optional pdf extra (VV-…-018) and the
+    decorative-test-matrix root cause is fixed on a local template branch (E29, E30)"
+  - "2026-10-27 (later): persistence-baseline design spec written (VV-2026-10-016
+    deepened — zero ORM models, tenant ContextVar never set, no search_path routing);
+    VV-2026-10-019 closes the two deferred verifications (RAG index claim disproved,
+    qa placeholder confirmed at the remote head); evidence extended to E31"
+  - "2026-10-27 (pushes): register and spec pushed to PR #42; template one-token fix
+    pushed as viavitae-template#4; api dependency bumps pushed as viavitae-api#10, which
+    cleared Trivy 8→1→0 CRITICAL and flipped CI status to CLEAN — and disproved my own
+    'all 8 are lockfile-only' claim (certifi ships via httpx): E32, §28 item 14"
 ---
 
 # Via-Vitae Pre-Deployment Independent Audit — Working Report & Student Guide (2026-10-26)
@@ -41,7 +63,8 @@ registers:
   push protection on all 26 public repos; branch protections strict and
   admin-enforced; `main` CI green on the app repos as at the reference date
   (E10/E11/E12). September's protections-downgrade danger is closed (E3).
-- **Four mandatory release gates FAIL outright:**
+- **Four mandatory release gates FAIL outright (a fifth and a sixth were added on
+  2026-10-27):**
   1. **Security — VERIFIED FAIL:** **20 critical + 63 high** Dependabot alerts sit
      open on default branches, concentrated in the release candidates (api 8/23,
      brand 5/23, web 5/9, docs 2/3); GitHub *detects* them but *no required check
@@ -57,8 +80,18 @@ registers:
   4. **Landing scope — FAIL:** the ten `viavitae-landing-*` repos are verifiably
      empty template scaffolds and no include/exclude decision is recorded
      (VV-2026-10-005).
-- **Undecided (insufficient evidence):** Scope-of-release, Functionality,
-  Integration and Evidence gates — no end-to-end journey on provisioned staging
+  5. **Integration — FAIL (added 2026-10-27 as a correction):** the `api → Stripe /
+     Paysera / Bitrix24` leg is not merely unproven, it is **unimplemented** — all
+     three handlers are `501` stubs with no signature verification and no
+     idempotency ledger, so no payment, donation or CRM sync can ever complete
+     (VV-2026-10-011 re-scoped, VV-2026-10-014, §17/§21/E19).
+  6. **Functionality — FAIL (added 2026-10-27):** `viavitae-api` has **no database
+     schema at all** — `app/db/migrations/versions/` contains only `.gitkeep` (zero
+     Alembic revisions) and the image never runs `alembic upgrade head`, so the
+     documented per-tenant schemas and row-level security (ADR-004, DPIA M1) do not
+     exist and no persisted feature can work (VV-2026-10-016, E24).
+- **Undecided (insufficient evidence):** Scope-of-release and
+  Evidence gates — no end-to-end journey on provisioned staging
   (§21). All 22 populated repos are now deep-audited; the 5 empty private repos
   remain access-BLOCKED (§26).
 - **Independence is structurally pending:** a single person is implementer, approver
@@ -67,6 +100,11 @@ registers:
 - **Recommendation: NO-GO**, revisable only by the ordered remediation in §27 and
   then a separately-recorded approval. This audit wrote no code and changed no
   control; the auditor's own first-draft errors are logged in §28.
+- **Correction notice (2026-10-27):** a later session read the *implementation*, not
+  the docstrings, and found the webhook claims repeated throughout this report were
+  false. §17, §18, §21, §23, §24, §25, §28 and E19 carry the correction; the earlier
+  conclusions they replaced are marked as retracted rather than silently deleted, so
+  the error trail stays auditable.
 
 ---
 
@@ -512,7 +550,7 @@ permission or live resource was modified by the audit.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | .github | pub | 16 | 49cba333 | meta | ASSESSED — org reusable CI/CodeQL/compliance workflows + CODEOWNERS/SECURITY (E17); CI green | 0/0 |
 | 2 | viavitae-control | pub | 73 | 7c9a1980 | control | ASSESSED (this doc) | 0/0 |
-| 3 | viavitae-compliance | **priv** | **EMPTY** | — | control | BLOCKED (empty + 403) | n/a |
+| 3 | viavitae-compliance | **priv** | **skeleton only** — `docs/security/` directories, 0 files (E28) | — | control | BLOCKED (no files + 403) | n/a |
 | 4 | viavitae-data-governance | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
 | 5 | viavitae-policies | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
 | 6 | viavitae-threat-model | **priv** | **EMPTY** | — | control | BLOCKED | n/a |
@@ -525,7 +563,7 @@ permission or live resource was modified by the audit.
 | 13 | viavitae-reusable-workflows | pub | **EMPTY** | — | platform | same | 0/0 |
 | 14 | viavitae-template | pub | 18 | 9b18a736 | platform | CLASS-VERIFIED (parent of landings, E9) | 0/0 |
 | 15 | viavitae-qa | pub | 118 | 2d670ecc | platform | ASSESSED — full harness (e2e/load/a11y/contract); **contract specs are placeholders** (VV-…-011); CI green | 0/5 |
-| 16 | viavitae-api | pub | 156 | 63cb4943 | app | ASSESSED (deploy red) | **8/23** |
+| 16 | viavitae-api | pub | 156 | 63cb4943 | app | ASSESSED (deploy red) | **7/23** (corrected 2026-10-27: 7 open Dependabot critical alerts; Trivy finds 8 — certifi is Trivy-only. E26) |
 | 17 | viavitae-clients | pub | 86 | 3a9db5f8 | app | ASSESSED — tenant registry + validate/provision/diff-guard workflows; CI green | 0/0 |
 | 18 | viavitae-web | pub | 195 | ca465637 | app | ASSESSED | **5/9** |
 | 19 | viavitae-brand | pub | 63 | f1555f9d | app | ASSESSED — design assets/tokens; no test suite; CI green but 5 crit/23 high deps | **5/23** |
@@ -544,7 +582,10 @@ permission or live resource was modified by the audit.
 
 Exactly ten repos match `viavitae-landing-*` — all listed. Dependabot totals:
 **20 critical / 63 high** open across the estate (E15), concentrated in the
-release candidates. Code-scanning open alerts (E15): api 1, web 1, demos 1,
+release candidates. **Re-measured 2026-10-27 (E33): 19 critical / 62 high / 61 medium /
+8 low** by paging `repos/<r>/dependabot/alerts?state=open` over all 31 repos and
+grouping by `security_advisory.severity` — one critical and one high fewer than the
+reference-date figures, i.e. alert counts drift and must carry a date and an instrument. Code-scanning open alerts (E15): api 1, web 1, demos 1,
 clients/brand/qa 0.
 
 ## 17. Architecture and data flows (Phase 3 result)
@@ -554,10 +595,16 @@ commercial IT company operating an EU pilot **in Lithuania** — church-vertical
 websites, e-commerce and a marketplace, self-hosted on **Proxmox** with **k3s +
 Argo CD (GitOps)**; personal data claimed to stay in the EEA. (E5, E6)
 
-Verified components: **viavitae-api** (FastAPI/Python 3.12; multi-tenant Postgres
-with per-tenant schemas + row-level security; Alembic; Bitrix24 on-prem CRM;
+Verified components: **viavitae-api** (FastAPI/Python 3.12; Bitrix24 on-prem CRM;
 **Stripe + Paysera** payment webhooks; a **RAG pastoral AI assistant**; GIS
-cemetery mapping; donations). **viavitae-web** (Next.js 15/React 19, next-intl
+cemetery mapping; donations). **Corrected 2026-10-27:** this line first read
+"multi-tenant Postgres with per-tenant schemas + row-level security; Alembic".
+That is the **design** (ADR-004 / `docs/data-model.md`), not the state of the
+code: `app/db/migrations/versions/` holds only `.gitkeep` — **zero Alembic
+revisions exist** — and `Dockerfile` never runs `alembic upgrade head`, so the
+image starts against an empty schema (VV-2026-10-016).
+
+Other verified components: **viavitae-web** (Next.js 15/React 19, next-intl
 LT/EN/RU, OpenAPI typed contracts, Keycloak identity config, self-hosted Matomo,
 cookie/legal pages, Zod-validated server-side quote proxy). **viavitae-clients**
 (per-client tenant registry as the audit trail). **viavitae-infra** (Ansible 96,
@@ -581,23 +628,32 @@ contact name, organization name and **email**, with **server-enforced consent**
 R7 — a mature GDPR Art. 25 pattern whose governing DPIA lives in a **still-empty**
 repo (Art. 30 gap). Payment card data routes to Stripe/Paysera (Art. 28 agreements
 unevidenced). Pastoral/assessment content **may be Art. 9 special-category
-(religious) data**; lawful basis is UNDETERMINABLE with no DPIA. On deep-audit the
-**webhook integrity controls are real**: Stripe `construct_event` signature check,
-Paysera `ss2` HMAC **fail-closed**, a `webhook_event` idempotency ledger (ADR-005),
-unit-tested for rejection (E19). The **RAG/agent boundary** is enforced by a
+(religious) data**; lawful basis is UNDETERMINABLE with no DPIA. **Corrected
+2026-10-27 — the sentence this replaced ("the webhook integrity controls are
+real: Stripe `construct_event` signature check, Paysera `ss2` HMAC fail-closed,
+a `webhook_event` idempotency ledger") was false.** The `viavitae-api` webhook
+handlers are **fail-closed stubs, not implemented controls**: Stripe, Paysera
+and Bitrix24 each check only that a signature/token is *present* and that a
+secret is *configured*, then raise `501 not_implemented` behind a `# TODO(api)`
+block. No signature is ever verified, no `webhook_event` ledger exists (the ORM
+file is a TODO comment with no model and no migration) and the `stripe` SDK is
+not a declared dependency (E19 corrected, VV-…-011 re-scoped, VV-…-014). The
+**RAG/agent boundary** is enforced by a
 fail-closed `BoundarySettings` requiring a separate KMS key + vault ref + audit
-stream (E20). Residual gap is *test quality*, not missing controls — see VV-…-011.
+stream (E20). The webhook residual gap is therefore **an unimplemented
+money path plus documentation that asserts it exists** — not, as first written,
+"test quality only".
 
 ## 18. Baseline and test-evidence register (Phase 4 result)
 
 | Repo @head | Build/tests defined? | Observed result this pass | Status |
 | --- | --- | --- | --- |
 | viavitae-web @ca465637 | Yes — lint, typecheck, unit+contract, e2e, a11y, lighthouse | Scheduled CI on `main` green 2026-10-26; one Dependabot PR `Lint` red 2026-10-26T04:19Z | VERIFIED PASS (main), VERIFIED FAIL (open PR #51 lint) |
-| viavitae-api @63cb4943 | Yes — pytest, nightly E2E | Nightly E2E green 2026-10-26; **`Deploy` push run red** (E12) | Mixed: tests PASS, deploy FAIL |
+| viavitae-api @63cb4943 | Yes — pytest, nightly E2E | Nightly E2E green 2026-10-26; **`Deploy` push run red** (E12). **Clarified 2026-10-27:** the "E2E" job is `deployments/k6/smoke.js` against `docker compose up postgres redis api` and asserts only health/version plus that scaffolded endpoints answer **501** with the right error envelope (`checks: rate>0.99`, `p(95)<800`). It is honest about the scaffold — but it is **not** a business journey and cannot be, because no migration creates any table (VV-…-016) | Mixed: tests PASS, deploy FAIL; E2E label overstates scope (VV-…-016) |
 | viavitae-clients @3a9db5f8 | Yes — CI + provision-dispatch | CI green; dispatch journey never observed end-to-end | Tests PASS, integration UNDETERMINED |
 | viavitae-qa @2d670ecc | Yes — Playwright @smoke, axe, Trivy, load | Unit/contract/lint CI green on `main` 2026-10-26; browser/load still gated on unprovisioned staging (P1-22) | CI PASS (unit/contract), BLOCKED (browser/load env) |
 | .github, docs, brand, demos, hermes-agents, clients @heads in §16 | Yes — CI/CodeQL/Compliance; hermes adds gitleaks | All have a **green `main` push run** 2026-10-26; docs also `Publish docs site` green | VERIFIED PASS (build/CI) per repo (E17) |
-| viavitae-api @63cb4943 (webhooks) | Yes — `tests/webhooks/test_stripe_idempotency.py` | Rejection/503 fail-closed asserted & green; **idempotent-replay test is `pytest.skip(TODO)`** | VERIFIED PASS (rejection) / **NOT RUN (idempotency)** (E19) |
+| viavitae-api @63cb4943 (webhooks) | Yes — `tests/webhooks/test_stripe_idempotency.py` | Input-guard rejection (400 / 503) asserted & green. **Corrected 2026-10-27:** the 501 stub branch had *no* test at all — replacing the `raise ApiError(501)` with `return {"status": "received"}` still passed 9/9, because every request died earlier at the 503 "secret unconfigured" guard; **idempotent-replay test is `pytest.skip(TODO)`** | VERIFIED PASS (input guards only) / **NOT RUN → now covered by a pin test** (signature verification, processing, idempotency) (E19 corrected, VV-…-014) |
 
 Blocked/unexecuted checks register now: browser/load E2E (staging), the skipped
 idempotent-replay assertion, and the trivial-pass qa contract specs — plus
@@ -617,6 +673,13 @@ per-repo deep dives for the 5 empty private repos (access-BLOCKED). The 15 earli
 - `main` CI health: **all 22 populated repos have a green `main` push run**
   2026-10-26 (web/clients/qa/.github/docs/brand/demos/hermes-agents confirmed, E17);
   control-plane `Audit` + `provenance` green since 2026-10-21. (E12)
+  **Corrected 2026-10-27 (E27, VV-…-017): this is weaker than it reads.** For 14 repos
+  (`api`, `brand`, `infra`, `template`, all ten `landing-*`) the green `CI status` is
+  produced while the `Lint` / `Typecheck` / `Test` / `Build` legs are `skipped` with an
+  empty matrix, so those runs never demonstrated unit tests, type checks or the
+  coverage floor. What stays verified for those repos is `Compliance status`
+  (gitleaks / licence / action-pinning / governance), Semgrep SAST, Trivy dependency
+  scan and CodeQL — all of which run outside the broken matrix.
 - September's protections-downgrade danger closed: apply landed 2026-10-17; state
   now matches declared protections (E3).
 
@@ -653,7 +716,7 @@ no certification or report exists, and this internal review is not one.
 | ISMS scope, risk assessment, SOA, policies | ISO 27001 cl. 4–6, 13, App. A | Security | policy library, risk register, SoA | `policies`/`compliance`/`threat-model` empty; stubs in docs | **BLOCKED** |
 | Confidential compliance/security corpus kept non-public | GDPR Art. 5(1)(f) / ISO A.8 | DPO/Security | pentest/ROPA/DPIA in the **private** repos, not published | `viavitae-docs` is **public + `noindex=false`** and hosts pentest findings + ROPA/ADRs as **currently-empty stubs**, with a green `Publish` job | **FAIL on population** (VV-…-012); `netlify.toml` EU-self-host guard is a positive (E20) |
 | Access control & segregation of duties | ISO A.5.15–5.18 / SOC2 CC6 | Owner | role-scoped permissions | blanket team push; 2FA on | PARTIAL (VV-…-003) |
-| Change control & release evidence | SOC2 CC8 | Platform | gated PRs + branch protection | enforced on public repos | VERIFIED PASS (public only) |
+| Change control & release evidence | SOC2 CC8 | Platform | gated PRs + branch protection | PR workflow + 2 required contexts enforced on public repos, **but 0 approving reviews and the provenance gate exists in only 1 of 31 repos (E21, VV-…-015)** | **PARTIAL** (was "VERIFIED PASS (public only)"; corrected 2026-10-27) |
 | Security monitoring & incident response | ISO A.8.16 / SOC2 CC7 | Ops | runbooks, alerting, IR plan | `runbooks`/`observability` empty | **BLOCKED** |
 | SOC 2 operating effectiveness over a period | SOC2 all TSC | QSA (external) | Type II window evidence | none engaged | PENDING — out of this audit |
 
@@ -669,10 +732,10 @@ is unprovisioned (VV-2026-10-009):
 | Provider → consumer | Contract | Auth | Data | Failure behavior | Status |
 | --- | --- | --- | --- | --- | --- |
 | web → api | OpenAPI typed (`generated/`) | `API_SERVICE_TOKEN` | quote/assessment (email, org) | undefined in audit | NOT RUN |
-| clients → api | `provision-dispatch.yml` → `POST /v1/tenants/<slug>/provision` | dispatch token | tenant config | idempotency unverified (ledger exists; replay test skipped) | NOT RUN (UNDETERMINED) |
-| api → Stripe / Paysera / Bitrix24 | payment/CRM webhooks | Stripe `construct_event`, Paysera `ss2` HMAC **fail-closed**, Bitrix24 token | payment events | signature **verified & unit-tested**; **idempotent-replay test skipped (TODO)**; qa contract spec is trivial-pass | **VERIFIED PASS (sig reject)** / UNVERIFIED (idempotency) (VV-…-011, E19) |
+| clients → api | `provision-dispatch.yml` → `POST /v1/tenants/<slug>/provision` | dispatch token | tenant config | idempotency unverified (no ledger exists — see VV-…-014) | NOT RUN (UNDETERMINED) |
+| api → Stripe / Paysera / Bitrix24 | payment/CRM webhooks | **Not implemented** (corrected 2026-10-27): handlers are `501` stubs; only presence-of-signature and secret-configured are checked; no ledger; `stripe` SDK absent from dependencies | payment events | every event refused (fail-closed), so no payment or CRM change can ever be applied — the provider keeps retrying forever | **VERIFIED FAIL (integration absent)**; the prior cell "VERIFIED PASS (sig reject)" is **retracted** (VV-…-011 re-scoped, -014, E19) |
 | api → Bitrix24 (on-prem CRM) | REST | creds | CRM records | creds expiry path unknown | NOT RUN |
-| api → Postgres | per-tenant schema + RLS | service creds | all tenant PII | cross-tenant isolation asserted in code, not tested | NOT RUN |
+| api → Postgres | per-tenant schema + RLS (**design only** — zero Alembic revisions, so no tables/policies exist, VV-…-016) | service creds | would hold all tenant PII | cross-tenant isolation cannot be tested because there is no schema; `tests/isolation/*` are skipped TODOs | **VERIFIED FAIL (layer absent)**, was "NOT RUN" (E24) |
 | CI → container registry | Docker build/push | CI token | image artifact | **build-to-production currently RED** | **VERIFIED FAIL** (VV-…-001) |
 | Terraform control plane → GitHub org | provider 6.x | GITHUB_TOKEN | repo/policy config | applied 2026-10-17, works | VERIFIED PASS |
 
@@ -714,16 +777,22 @@ Severity, confidence and priority are tracked separately.
 | VV-2026-10-001 | Production deploy path non-functional; all prod k8s manifests are `placeholder.yaml` | Confirmed | **High** / High | Infra owner | Repair the image build/push failure; replace each placeholder with real reviewed Argo CD manifests; acceptance = successful prod-candidate deploy of the exact release commit through dev→staging→prod with recorded run links; independent re-run required. |
 | VV-2026-10-002 | Compliance & operations artifact repos empty while product code cites them (DPIA-001 et al.) | Confirmed | **High** (compliance blocker; not exploitable) / High | DPO/compliance role (same human today) | Populate ROPA, DPIA (incl. Art. 9 basis), retention schedule, policy library, vendor register with Art. 28 terms, runbooks, training records; acceptance = every cited ID resolves to a real document; decide the Free-plan protection limitation for the private repos (upgrade, or accept the unprotected-population risk explicitly). |
 | VV-2026-10-003 | Single-person org: owner = implementer = approver; all six teams hold blanket push on all 30 repos (no tier scoping, so tier-based CODEOWNERS cannot segregate) | Confirmed governance gap | **High** for SOC 2 CC-series / High (fresh-verified E16) | Owner | Establish the largest feasible separation of duties (active peer-reviewer account, or documented compensating controls + independent-assurance engagement); scope team bindings to tiers; acceptance = team permissions match tier policy and the review chain is demonstrably enforced. |
-| VV-2026-10-004 | **20 critical + 63 high** open Dependabot alerts on default branches, concentrated in release candidates (api 8/23, brand 5/23, web 5/9, docs 2/3, qa 0/5 — E15). GitHub alerts are *detected* (Dependabot updates on) but **no required status check blocks merge/deploy on critical**, so detection is not enforced | Confirmed, **severity-ranked** | **High** / High | Per-repo owners | Triage by reachability on `main`; remediate criticals on api/web/clients/brand before release; add a Dependabot-critical gate (fail CI when `main` carries critical/high on reachable deps) wired into the ruleset so detection becomes enforcement; acceptance = fresh zero-critical snapshot dated against the release commit + a green blocking check. |
+| VV-2026-10-004 | **20 critical + 63 high** open Dependabot alerts on default branches, concentrated in release candidates (api 8/23, brand 5/23, web 5/9, docs 2/3, qa 0/5 — E15). GitHub alerts are *detected* (Dependabot updates on) but **no required status check blocks merge/deploy on critical**, so detection is not enforced | Confirmed, **severity-ranked**; **partly disproved for `viavitae-api` on 2026-10-27 (see the correction cell)** | **High** / High | Per-repo owners | Triage by reachability on `main`; remediate criticals on api/web/clients/brand before release; add a Dependabot-critical gate (fail CI when `main` carries critical/high on reachable deps) wired into the ruleset so detection becomes enforcement; acceptance = fresh zero-critical snapshot dated against the release commit + a green blocking check. **Correction (2026-10-27, E26): for `viavitae-api` this claim is wrong in the org's favour — enforcement exists.** Trivy runs with `severity: CRITICAL` and exit-code 1, `CI status` records `"dependency-scan": {"result": "failure"}`, and `CI status` is a required context, so a PR genuinely cannot merge: PR #9 is blocked today by **8 pre-existing** criticals while its own diff touches no dependency file. Two consequences the owner must decide on: (a) all 7 alerts have published fixes (pillow to 13.0.0 ×5, brotli to 1.2.1, brotlicffi to 1.2.1.0, all resolved in `uv.lock`), as does the 8th, Trivy-only certifi finding, **yet zero Dependabot PRs are open**, so the bumps must be authored by hand; (b) the gate has therefore **merge-locked the repo** — nothing has merged into `viavitae-api` since 2026-10-15 (PR #4), which is precisely the freeze the org deliberately avoided elsewhere by not requiring `CI status` while Trivy was red. Clearing the criticals is now the prerequisite for every other api remediation, including VV-…-011 and -014. **Landed 2026-10-27:** the remedy is pushed as PR `viavitae-api#10` (head `b1839ce`, two commits: pillow/brotli/brotlicffi, then certifi), where Trivy went 8 → 1 → 0 CRITICAL and `CI status` flipped FAILURE → SUCCESS with `mergeStateStatus: CLEAN`. Not merged by the agent; merging it is the owner action that unblocks every other api PR (E32) |
 | VV-2026-10-005 | Ten landing repos are scaffolds; release inclusion undecided | Confirmed + decision request | **Medium** / High | Owner | Decide exclude-vs-include per landing page. Exclusion must be evidenced (no deploy target, no domain, no indexing); inclusion requires content, privacy notice, form destination, consent behavior and accessibility verification. |
 | VV-2026-10-006 | Sole reviewer `IterVitae` recorded "inactive, admin invite pending" yet absent from live outside-collaborators | Evidence gap / suspected access anomaly | **Medium** / Low — needs confirmation | Owner | Produce the access-review record: current role, membership, review capability of that account; acceptance = API-visible membership matching documented policy. |
 | VV-2026-10-007 | Org-level SHA pinning disabled (`sha_pinning_required=false`) while repos rely on a per-repo "Action SHA pinning" check | Confirmed policy/config mismatch | Medium / High | Platform owner | Either require pinning at the org ruleset or formally document the per-repo gate as the compensating control; acceptance = configuration and policy agree. |
 | VV-2026-10-008 | Applied-input custody unverifiable: fresh plan aborts on missing required `billing_email`; the tfvars used for the 2026-10-17 apply is not in this workspace and its storage location is not evidenced | Confirmed, **scoped down after cross-check** | Low–Medium / High | Infra owner | The abort is **by design and documented** (../COMPLIANCE.md P1-12: `TF_VAR_billing_email` has no default for GDPR minimisation) — the residual gap is *custody*: record where the applied value lives and how it is protected/restored; acceptance = the custody path is exercised once and a clean-checkout plan procedure is reproduced. |
 | VV-2026-10-009 | QA browser/load gates cannot run — staging tenant not provisioned (register P1-22, still open) | Confirmed | **High** for integration gate / High | QA owner | Provision isolated staging + synthetic data; run the full cross-repo journey (clients merge → provision → staging smoke → sync); acceptance = dated E2E evidence covering the exact release version combination. |
 | VV-2026-10-010 | Org webhook inventory and private-repo protections unobtainable | BLOCKED (re-confirmed) | — | Owner | Grant scoped read (`admin:org_hook`) and/or GitHub Team for private-repo visibility; re-run the blocked cells of §15/§19. |
-| VV-2026-10-011 | Webhook **idempotency unverified on the money path**: `test_replayed_event_is_idempotent` is `pytest.skip(TODO)`, and qa `contract/stripe/webhook-contract.spec.ts` is a trivial `assert.ok(true)` that reports green. The **signature-verification** control itself is real and fail-closed-tested — this is a *test-quality / false-assurance* gap, not a missing control | Confirmed | **Medium** / High | API + QA owners | Implement the skipped replay-idempotency assertion (single side-effect, 200-once ledger) and replace the placeholder contract spec with a check that fails if the signature guard is removed; acceptance = a non-skipped test that goes red on regression; independent run. |
+| VV-2026-10-011 | **(re-scoped 2026-10-27 — the original wording was disproved by reading the handlers)** Money-path webhook processing is **unimplemented**: Stripe/Paysera/Bitrix24 handlers raise `501 not_implemented`, no signature verification exists, no `webhook_event` ledger model or migration exists, and `stripe` is not a declared dependency. On top of that, `test_replayed_event_is_idempotent` is `pytest.skip(TODO)` and qa `contract/stripe/webhook-contract.spec.ts` is a trivial `assert.ok(true)` that reports green. The original text ("the signature-verification control itself is real and fail-closed-tested — a test-quality gap, not a missing control") asserted a control that is not in the code | Confirmed | **High** (payments cannot function; release-blocking) / High | API + QA owners | Implement, in this order: signature verification (constant-time / provider SDK) → `webhook_event` ledger model + migration with RLS → async processing → re-read amounts from the provider API. Then replace the skipped test with the positive 200-once replay assertion and rewrite the placeholder contract spec so it fails if the guard is removed. Acceptance = payments path functional end-to-end on staging, a non-skipped test proven to go red under mutation, independent run. |
 | VV-2026-10-012 | `viavitae-docs` is **public and indexable** (`noindex=false`, green `Publish` job) yet hosts the pentest findings-register, ROPA/DPIA and security ADRs as currently-**empty stubs** with only a non-enforced `sensitivity:` front-matter | Confirmed (latent) | **High on population** / High | DPO/Security | Move the confidential corpus into the private repos (or gate the published site); make `sensitivity` an enforced build filter, not metadata; acceptance = published site carries no internal-artifact content and a CI check fails the build if it does |
 | VV-2026-10-013 | Org Actions allow-list floats **7 patterns to mutable `@*`** with `sha_pinning_required=false`, incl. an unused `hashicorp/setup-terraform@*` (attack surface for a feature no workflow uses) | Confirmed | **Medium** / High | Platform owner | Pin used actions to commit SHAs (two pinned pnpm SHAs already prove it works), drop the unused setup-terraform pattern, enable org sha-pinning; acceptance = no `@*` for third-party/privileged actions and pinning enforced |
+| VV-2026-10-014 | **False assurance about an unimplemented control, spanning 14 files / 28 claim-rewording diff hunks.** Size measured reproducibly, not asserted: `git diff --unified=0` on the fix branch reports **39 hunks** in 14 files, of which 5 are the generated `docs/api/v1-openapi.json` and 6 the new test file (E21, E25). At `viavitae-api @63cb4943` the three webhook module docstrings ("signature verified, idempotent on event id (ADR-005)"), their three route docstrings ("Receive, verify and acknowledge …"), `app/models/webhook_event.py` ("Stores every verified provider event …"), `docs/data-model.md` ("Two tables back the idempotency surface … a replayed delivery returns the stored result"), `docs/runbooks/webhook-replay.md` ("All webhook handlers are idempotent … a replay never double-applies a payment"), `docs/runbooks/bitrix24-outage-mode.md` ("All CRM writes are idempotent"), `scripts/replay_webhook.py`, `docs/architecture.md` ADR-005 ("Status: accepted" with no implementation line), `app/api/v1/gis.py` (the **user-visible** OpenAPI summary "Reserve a parcel (idempotent)", which propagates into the committed `docs/api/v1-openapi.json`) and `QODER.md` ("idempotent payment/CRM webhooks") all describe **design intent as present behavior**, while every handler returns `501`. `QODER.md` is the **agent-instruction file**, and is the mechanism by which this report inherited the false claim. **Privacy dimension (found on re-review, second draft of this finding):** `docs/DPIA-004-donations.md` listed the unimplemented ledger as an in-place mitigation (M2), rated R2 residual risk **Low** because of it, stated idempotency was "already in place", and concluded **Art. 36 prior consultation is not required** because "measures reduce residual risk to low for all identified risks" — a legal conclusion resting on a control that does not exist (GDPR Art. 35(7)(d)). Operational harm: an operator following the runbook would believe a replay is safe to repeat; a reviewer reading a docstring would believe the money path is guarded; a DPO reading the DPIA would believe R2 is mitigated | Confirmed | **High** (evidence/governance integrity; misleads operators, reviewers, this report and a DPIA) / High | API owner + audit lead + DPO | (1) Reword every claim as target design, never as behavior, while the stub stands; (2) add a pin test that reaches the 501 branch (not the 503 guard) and proves itself by mutation; (3) convert the invisible `pytest.skip` on the design contract into `xfail(strict=True)` so it self-flags as XPASS when the path is implemented; (4) annotate **every** DPIA measure row (M1–M4, not just M2 — see §28 item 11) against what the code actually does and mark the Art. 36 conclusion for DPO re-assessment without inventing a new risk rating; (5) correct this report and the stored working note. Acceptance = no unqualified "verified / idempotent / already in place" claim survives while the code returns 501.  **Status: FIX PUSHED, REVIEW PENDING** — committed on `viavitae-api` branch `fix/vv011-webhook-claim-integrity` (head `1b2cbe4`, base `63cb494`, 14 files) as PR **viavitae-api#9**, and the register corrections on `viavitae-control` branch `docs/audit-webhook-claim-correction` (head `3dc14a6`) as PR **#42**; both pushed with owner authorization on 2026-10-27, **neither merged**. api#9 cannot merge yet: its required `CI status` is red because of 8 pre-existing CRITICAL dependencies (see VV-…-004 correction and VV-…-017), not because of this change. Considered and deliberately **not** changed: `app/api/deps.py:52` ("Extract the client idempotency key" — literally true, it does extract a header) and `docs/api/versioning-policy.md:12` (a normative contract table, and the GIS schema does enforce `min_length=8`) |
+| VV-2026-10-015 | **AI-workflow provenance is enforced in 1 of 31 repos — including not in the repos where AI agents actually write code.** `policies/AI_WORKFLOW_POLICY.md` requires every AI-authored commit to carry an `ai:<tier>` trailer, gated by `scripts/check_commit_provenance.sh` (local) and `.github/workflows/provenance.yml` (server). A per-repo file-existence sweep over all 31 repos (E21) finds `provenance.yml` in **exactly one** repo (`viavitae-control`) and `.pre-commit-config.yaml` in **two** (`viavitae-control`, `viavitae-hermes-agents`); `viavitae-api` has none of these, its `.git/hooks` carries no `commit-msg`, and its two required contexts are only `CI status` + `Compliance status` (`variables.tf:168`) with `required_approving_review_count = 0` (`variables.tf:128`, live-verified for api). Consequence: in 29 of 31 repos an AI-authored change can reach `main` with **no provenance record and no review**, so the org cannot produce the SOC 2 CC8.1 / ISO A.8.32 change-attribution evidence its own policy claims | Confirmed policy/config mismatch | **High** for SOC 2 CC8.1 / A.8.32 change control / High (file existence verified org-wide) | Platform owner + audit lead | Decide per repo: copy `provenance.yml` (run-only steps, no secrets, so the Actions allow-list is not involved) into the populated app repos and add its check name to `branch_required_status_checks_contexts`, or amend the policy scope to state honestly that provenance is control-plane-only. Acceptance = policy text and enforced configuration agree for every repo the policy claims to cover, with a live 404/200 file check per repo attached. Depends on the same owner decision as VV-…-003 (reviews) — adding the context without wiring it into protection leaves it advisory |
+| VV-2026-10-016 | **`viavitae-api` has no database schema: the Alembic migration tree is empty.** `app/db/migrations/versions/` contains exactly one file, `.gitkeep` (whose own text reads "Migration revisions live here"), so **zero revisions exist**; `alembic.ini` + `env.py` implement a schema-per-tenant runner (ADR-004) with nothing to run, the `Dockerfile` `CMD` is `uvicorn` only (no `alembic upgrade head` at boot), and `scripts/create_migration.sh` / `provision_tenant.py` exist as the intended workflow. **Deeper than first written (measured 2026-10-27 while planning the fix, E31):** `grep -rn '__tablename__' app/models/*.py` returns **nothing** — every domain file (`donation.py`, `assessment.py`, `gis.py`, `quote.py`, `notification.py`, `ai_document.py`, `ai_interaction.py`) is a docstring plus a `TODO(api)` comment, so `Base.metadata` is empty and `alembic revision --autogenerate` would emit a **no-op** migration; and `tenant_id_ctx` is **never set** anywhere in `app/` (only its definition in `app/core/logging.py:22` and two read sites), which makes the `set_config('app.tenant_id', …)` call in `app/db/session.py:66-71` **unreachable**, while no `search_path` is ever assigned — so DPIA-004 M1's "enforced by middleware" fails on three counts, not one. What is genuinely real: slug validation and hostile-input rejection in `app/core/tenancy.py`, transaction-local `set_config`, `pool_pre_ping`, statement timeout, and PostgreSQL 17 with pgvector (`docker-compose.yml:15`), so `gen_random_uuid()` needs no `pgcrypto` | Confirmed | **High** (release-blocking: no persisted functionality is possible, and the RLS/tenant-isolation control claim is void) / High (directory listing, Dockerfile and workflow read directly, E24) | Infra + API owners | Establish the migration baseline: a first Alembic revision creating the control schema and one tenant schema with RLS policies, wired into deploy as an explicit ordered step (not an image side effect); then the ADR-005 `webhook_event` + `idempotency_key` tables, expand–contract, each migration carrying its policy change and an un-skipped isolation test. **Design spec of record: `docs/superpowers/specs/2026-10-27-viavitae-api-persistence-baseline-design.md`** (milestones M0–M5, decisions D1–D8, STOP conditions, rollback, cost; it also records the two-layer role requirement D2 — RLS is bypassed by the table owner, so an unprivileged `viavitae_app` role is mandatory for the control to mean anything). Acceptance = a dated `alembic upgrade head` against a fresh ephemeral database producing tables + policies, the isolation tests executing (not skipped) in a DB-enabled CI job, **and** the isolation test observed to fail after deliberately dropping one `CREATE POLICY`. **Blocks VV-…-011** — the ledger has nowhere to live until revisions exist |
+| VV-2026-10-017 | **A CI gate that cannot fail: in 14 of 31 repos the lint / typecheck / test / build legs never run, while the required `CI status` context reports success.** `viavitae-template`'s `ci.yml` builds its matrix lists with `to_json() { jq -cn --args '$ARGS.positional'; }` — the function **never forwards its arguments to `jq`** (no `"$@"`), so every list is `[]` regardless of what detection found. Reproduced locally: the same step logs `detected lint=python` while emitting `lint_stacks=[]`; adding `"$@"` emits `["python"]`, and the empty case still emits `[]`, so the fix is one token and cannot break the empty path. Live confirmation: on `viavitae-api` main run 38797087654 (`63cb494`) and on `viavitae-template` 38784899494 and `viavitae-brand` 38797074870, `Lint` / `Test` / `Typecheck` show conclusion `skipped` with the **unexpanded** job name `Test (${{ matrix.stack }})` and `matrix: null`, `steps: 0` — while `CI status` is `success`. Enumeration by reading each repo's workflow file (E27) finds the defective line in **14** repos: `viavitae-api`, `viavitae-brand`, `viavitae-infra`, `viavitae-template` and all ten `viavitae-landing-*`; `viavitae-web`, `viavitae-demos`, `viavitae-qa`, `viavitae-clients`, `viavitae-docs`, `viavitae-hermes-agents`, `.github` and `viavitae-control` do not contain it. Consequence for this audit: every "green `main` CI run" cited for those repos (§18, §19, E12/E17) is evidence of the compliance / Semgrep / Trivy / CodeQL legs **only** — it never demonstrated that unit tests, type checks or the coverage floor passed, and `CI status` being a required context means the org's release gate for those repos is decorative | Confirmed (reproduced + enumerated) | **High** (false assurance at the release gate; compliance-evidence integrity) / High | Platform owner + audit lead | Fix at the source first: add `"$@"` to `to_json` in `viavitae-template`, then propagate to the 13 other repos (they inherit the file, so a per-repo PR each, or a scripted sweep). Acceptance = on a fresh push per repo, the `Test` job reports with an **expanded** name (`Test (python)`), executes steps, and the aggregate is proven reactive by planting a deliberately failing test and watching `CI status` go red — a gate is only evidence once it has been seen to react |
+| VV-2026-10-018 | **The advertised "PDF quotes" feature is unimplemented AND unshippable, and that fact also re-scores VV-…-004 for `viavitae-api`.** `QODER.md:8` lists "PDF quotes" as a delivered capability, while every consumer is a stub: `app/api/v1/quotes.py:43` raises `NotImplementedError` for `render_quote_pdf`, and `app/services/payments/receipts.py:52` is a `TODO(api)`. `app/services/pdf.py` imports WeasyPrint lazily and raises `PdfRenderingError` when the optional `pdf` extra is absent — and **nothing installs that extra**: tracked-file searches for `--extra pdf` and `.[pdf]` each return **0** matches, and the image build runs `uv sync --frozen --no-dev` (Dockerfile lines 22-25), so `pillow`, `weasyprint`, `fonttools`, `brotli` and `brotlicffi` are provably **not installed** (verified with `find_spec` → `PIL: False`, `weasyprint: False`, `brotli: False`) | Confirmed (claim-vs-build, plus reachability measurement) | **Medium** (feature claim false; the 7 pdf-extra criticals were lockfile-only, but see E32: the 8th, certifi, was live in the image and is fixed on the same branch) / High | API owner + audit lead | Either remove the `pdf` extra from `pyproject.toml` until the path is built — which also deletes all 8 CRITICAL lockfile findings at once, since the tree is unused — or install it deliberately (`--extra pdf`) with the Cairo/Pango base deps in the image and a real test for `render_quote_pdf`. Decide, then make `QODER.md` state the chosen truth. Acceptance = no present-tense feature claim survives for a path that either raises `NotImplementedError` or cannot be imported in the shipped image |
+| VV-2026-10-019 | **Two deferred verifications closed — one claim disproved, one placeholder confirmed at the live head (E31).** (a) `app/workers/index_worker.py:4-6` states "Re-indexing is idempotent at the document level: the worker replaces the document's chunks rather than appending" — a **false present-tense claim of the same class as VV-…-014**: the function it delegates to, `ingest_document` in `app/services/rag/ingest.py:48-60`, performs **no persistence at all** (it chunks the text and returns counts, with `# TODO(api): … upsert into document_chunk under the tenant filter`), so there is nothing to replace and nothing to append. This item was recorded as SUSPECTED on 2026-10-27 and is now **CONFIRMED** by reading both bodies. (b) `viavitae-qa/contract/stripe/webhook-contract.spec.ts` contains two `assert.ok(true, "placeholder …")` cases under `node:test` — verified to be the file **as it exists at the remote head** `2d670ecc`, not merely in a stale local clone: the qa working copy is behind (local `3ace7525`, 2026-09-17), so the file's md5 was compared against `git show origin/main:…` and matched exactly | Confirmed (was SUSPECTED / NOT RUN) | **Medium** for (a) (RAG index correctness is unproven and the claim is false; no live data exposure because nothing writes) / **Medium** for (b) (a green contract test that cannot fail on the payment path) — confidence High for both | API + QA owners | (a) Reword `index_worker.py` as target behavior and let the ingest TODO own the claim; the replace-not-append assertion becomes testable only once `document_chunk` exists (VV-…-016 M5). (b) Replace the qa placeholders with assertions that call the real verification path and go red when the guard is removed — the same mutation-proof standard applied to the api pin test (E22) |
 
 **Risk acceptance** is tracked separately from these check results; none has been
 accepted, waived or closed by this document.
@@ -733,23 +802,25 @@ accepted, waived or closed by this document.
 | Gate | Result | Basis |
 | --- | --- | --- |
 | 1 Scope | FAIL / UNDETERMINED | Org reconciled 31/31, but release contents never named |
-| 2 Evidence | UNDETERMINED | 22 populated repos now deep-audited; 5 private empty BLOCKED; staging E2E absent |
-| 3 Functionality | UNDETERMINED | No cross-repo E2E evidence on provisioned staging (VV-…-009) |
-| 4 Security | **VERIFIED FAIL** | 20 critical + 63 high open on default branches incl. release candidates (VV-…-004); detection not wired to enforcement |
+| 2 Evidence | UNDETERMINED | 22 populated repos now deep-audited; 5 private empty BLOCKED; staging E2E absent. **Weakened 2026-10-27 (E27, VV-…-017):** for 14 of those repos the "green `main` CI run" cited as evidence never executed lint, typecheck, tests or the coverage gate |
+| 3 Functionality | **FAIL** (was UNDETERMINED; corrected 2026-10-27) | No cross-repo E2E evidence (VV-…-009); payment/donation journeys cannot function — webhook handlers are 501 stubs (VV-…-011) — and **no database schema exists at all** (zero Alembic revisions, VV-…-016), so no persisted functionality in the API can work |
+| 4 Security | **VERIFIED FAIL** | 20 critical + 63 high open on default branches incl. release candidates as at the reference date (VV-…-004; re-measured 2026-10-27: **19 critical / 62 high**, E33). **Refined 2026-10-27:** detection→enforcement is uneven, not uniformly absent — on `viavitae-api` a CRITICAL dependency genuinely blocks merge (E26, PR #9 is locked by it), while on the 14 repos of VV-…-017 the aggregate passes without ever running the test legs. **Reachability re-scored 2026-10-27 (E30→E32, VV-…-018):** of api's 8 Trivy CRITICAL findings, **7 sit in the optional `pdf` extra tree that the image never installs** (lockfile-only), but **the 8th — certifi — ships through `httpx` and was live**; both facts were measured per package, and the first draft's claim that all 8 were lockfile-only is retracted (E32, §28 item 14). Fixed on PR #10, which turned `CI status` green |
 | 5 Privacy | **FAIL** | Art. 28/30 corpus absent while collection runs in code (§20, VV-…-002) |
-| 6 Integration | UNDETERMINED | Provisioning journey unverified (§21, VV-…-009) |
+| 6 Integration | **FAIL** (was UNDETERMINED; corrected 2026-10-27) | `api → Stripe/Paysera/Bitrix24` is unimplemented (501 stubs, no signature check, no ledger) so it can never integrate (VV-…-011/-014); the remaining legs stay NOT RUN because provisioning is unverified (§21, VV-…-009) |
 | 7 Operations | **VERIFIED FAIL** | Deploy red; prod manifests placeholder; no RPO/RTO; empty runbooks (§21, VV-…-001) |
 | 8 Landing scope | **FAIL** | Unfinished and undocumented either way (§22, VV-…-005) |
 | 9 Independence | NOT SATISFIED | Self-review only (VV-…-003/-006) |
 | 10 Approval | n/a | This report is a recommendation, not a decision |
 
-**Recommendation: NO-GO.** Four mandatory gates fail outright (Security, Privacy,
-Operations, Landing scope); several others cannot be decided on available evidence.
+**Recommendation: NO-GO.** Six mandatory gates fail outright (Security, Privacy,
+Operations, Landing scope, Integration, Functionality); others cannot be decided on available evidence.
 Remediation to make a decision possible: (a) written release definition — repos +
 exact heads from §16; (b) fix VV-…-001 and -009 so journey evidence becomes
 producible; (c) remediate the 20 criticals and add the Dependabot enforcement gate
 (VV-…-004); (d) populate the minimum GDPR corpus (VV-…-002); (e) resolve the
-access-review gap (VV-…-006); (f) re-run gates and record the decision separately.
+access-review gap (VV-…-006); (f) implement the money-path webhook processing
+(VV-…-011) and remove the false claims that conceal it (VV-…-014); (g) re-run
+gates and record the decision separately.
 
 **Recommendation ≠ approval.** The authorized decision-maker (today, the same sole
 owner) must record any GO/GO-WITH-CONDITIONS decision separately, with residual
@@ -758,10 +829,12 @@ not mask a failed mandatory gate; risk acceptance does not override legal obliga
 
 ## 25. Verification register (Phase 12)
 
-No org-side remediation has been submitted for verification yet; every finding
-below is at **fix proposed = no**, because the audit was performed against the
-current state and remediation has not begun. Self-corrections of the *audit
-document itself* are logged separately in §28 and are not org fixes.
+Remediation began on 2026-10-27 for one finding (-014, with the -011 wording
+correction it implies) inside an isolated `viavitae-api` worktree and in this
+document. Nothing has been committed, pushed or independently reviewed, so the
+status stops at **FIX IN PROGRESS / REVIEW PENDING** — an implemented fix is not
+a verified fix. Self-corrections of the *audit document itself* are logged in §28
+and are not org fixes.
 
 | Finding | Fix proposed | Fix implemented | Independently verified | Verifier / date |
 | --- | --- | --- | --- | --- |
@@ -775,9 +848,15 @@ document itself* are logged separately in §28 and are not org fixes.
 | VV-2026-10-008 | scoped down in-report | n/a | **N/A** (documentation) | — |
 | VV-2026-10-009 | no | no | **PENDING** | — |
 | VV-2026-10-010 | access request | no | **BLOCKED** | — |
-| VV-2026-10-011 | no | no | **PENDING** | — |
+| VV-2026-10-011 | re-scoped 2026-10-27 (was scored on a false premise) | no — the implementation gap remains open | **PENDING** | — |
+| VV-2026-10-014 | yes | **yes — pushed as PRs, not merged**: `viavitae-api#9` (head `1b2cbe4`, 14 files) and this repo's PR **#42** (head `3dc14a6`) | **REVIEW PENDING** (no separate reviewer has inspected the diff; api#9 is additionally blocked by VV-…-004's 8 criticals) | — |
 | VV-2026-10-012 | no | no | **PENDING** | — |
 | VV-2026-10-013 | no | no | **PENDING** | — |
+| VV-2026-10-015 | yes (evidence gathered org-wide, E21) | no — adding the workflow/hook to 29 repos writes to other repositories and needs owner authorization | **PENDING** | — |
+| VV-2026-10-016 | yes (diagnosis + remediation plan in §23) | no — building the schema is feature work with a live DB, outside this session's authority | **PENDING** | — |
+| VV-2026-10-017 | yes (one-token root cause identified, reproduced locally, 14 repos enumerated) | **fix prepared locally, not pushed**: `viavitae-template` branch `fix/ci-matrix-args` (1-line diff, YAML parses, real detect script A/B in E29). Propagation to the 13 other repos awaits owner authorization | **PENDING** — acceptance additionally requires proving the aggregate reacts to a planted failing test | — |
+| VV-2026-10-018 | yes (two routes: drop the unused extra, or install it and implement the path) | no — owner decision on the feature, then code | **PENDING** | — |
+| VV-2026-10-019 | yes (wording + real contract assertions) | no — the api wording sits on the pushed PR #9 scope, which did not include this file; qa placeholder rewrite is another repo and needs authorization | **PENDING** | — |
 
 ## 26. Coverage statement and evidence index
 
@@ -813,7 +892,41 @@ Evidence captures this session (retain under the same controlled handling as
 - **E17** Per-repo live tree census (blob counts, top dirs, keyfiles, workflows, tests) for .github/docs/brand/demos/hermes-agents/qa/clients at the §16 heads; green `main` CI runs for all.
 - **E18** Blocked-cell re-read: 5 private repos → "Upgrade to GitHub Pro…" 403 for protection/rulesets; org webhooks → 404 "needs admin:org_hook"; org Actions allow-list patterns.
 - **E19** `viavitae-api` webhook handlers (stripe/paysera/bitrix24/router + `webhook_event` ledger, ADR-005) and `tests/webhooks/test_stripe_idempotency.py` (reject/503 asserted; replay `pytest.skip`).
+  **E19-CORRECTED (2026-10-27, re-read at @63cb4943, local worktree not the API):**
+  all three handlers finish with `raise ApiError("not_implemented", …, status_code=501)`
+  behind a `# TODO(api)` block; `app/models/webhook_event.py` is a docstring plus a
+  TODO comment (no ORM model, no migration); `pyproject.toml` declares no `stripe`
+  dependency, so `stripe.Webhook.construct_event` could not be called even if the
+  code had claimed to. The original E19 wording ("the control exists and is
+  code-tested") was read off the **docstrings and a stored working note**, not the
+  handler bodies, and is retracted. Only the input guards (400 / 503) were ever
+  tested — and the guard test itself hid the fact that the 501 branch was
+  unexercised (see VV-…-014).
 - **E20** Config content reads: docs pentest stub + `config/production/hugo.toml` (`noindex=false`) + `netlify.toml` EU-self-host guard; demos `.npmrc`/`.env.example` (no literals); hermes-agents `tests/test_boundary.py` (fail-closed `BoundarySettings`) + `.gitleaks.toml`.
+- **E21** (2026-10-27) Provenance/hook coverage sweep: for each of the 31 repos, `gh api repos/Via-Vitae/<r>/contents/.github/workflows/provenance.yml` and `.../contents/.pre-commit-config.yaml` → HAS_PROVENANCE = 1 (`viavitae-control`), HAS_PRECOMMIT = 2 (`viavitae-control`, `viavitae-hermes-agents`). Plus `variables.tf:128` / `:168` defaults and `viavitae-api` live protection JSON (`required_approving_review_count: 0`, contexts `CI status`/`Compliance status`), and its empty `.git/hooks` (no `commit-msg`) — basis for VV-…-015.
+- **E22** (2026-10-27) Mutation evidence for the -014 fix, in the isolated `viavitae-api` worktree @ `63cb494`: replacing each handler's 501 with a 200 acknowledgment made the pin test fail (stripe/paysera/bitrix each **exit 1**), all files restored byte-identical, suite green afterwards. A second mutation implementing the full design contract (`200` + `Idempotent-Replayed: true`) turned the converted `xfail(strict=True)` into a hard **XPASS** failure, proving the design test self-flags when the money path lands.
+- **E23** (2026-10-27) Baseline-vs-fix delta for the same repo: `pytest` baseline **122 passed / 6 skipped / cov 85.67%** → fixed **125 passed / 5 skipped / 1 xfailed / cov 86.85%** (skip count reduced by converting one invisible skip into an executable xfail — no test was weakened); `ruff check` 0, `ruff format --check` 120 files clean, `mypy --strict app` success/75 files, committed `docs/api/v1-openapi.json` == regenerated (`fresh: True`). Control plane at `d0251b6`: `detect_drift.sh` exit 0 (31==31), `test_control_guards.sh` exit 0 (42 PASS), `pre-commit run` exit 0.
+- **E24** (2026-10-27) DPIA-004 measures audited row-by-row against the code, with positive existence markers (empty shell output was re-probed, never read as absence): `app/db/migrations/versions/` = `ls -la` → **only `.gitkeep`**, i.e. zero Alembic revisions (→ VV-…-016); `app/workers/retention_worker.py` (cited by M4) → **ABSENT**, the directory holds `demo_reset`, `followups`, `index_worker`, `queue`, `reconciliation_worker`; M1's tenant GUC is real (`app/db/session.py` sets `app.tenant_id`) but no tables/policies can exist without revisions; M3's redaction is real (`_redact` over secret-named keys in `app/core/logging.py`) and CI SAST exists but runs **Semgrep** (`sast: name: SAST (Semgrep)`, configs `p/security-audit`, `p/secrets`, `p/owasp-top-ten`) plus **Trivy** in `dependency-scan` — **not** bandit, which is only a dev dependency; `Dockerfile` `CMD` = uvicorn only; `deployments/k6/smoke.js` thresholds `http_req_duration p(95)<800`, `checks rate>0.99` and asserts `501 not_implemented` for scaffolded paths (honest, but not a business journey).
+- **E25** (2026-10-27) Mechanical sizing of the -014 fix and of the merge gate the landing depends on. Change volume: `git diff --unified=0 | grep -c '^@@'` = **39 hunks / 14 files** in `viavitae-api` (218 insertions, 61 deletions) and **33 hunks / 1 file** in this repo (178 insertions, 44 deletions); per-file hunk distribution retained in the session log. Gate check, read live rather than from a note: `gh api repos/Via-Vitae/viavitae-control/rulesets/23943250 --jq '.rules[].type'` → `deletion, non_fast_forward, required_linear_history, pull_request, required_status_checks`, and the status rule is `{required_status_checks:[{context:"provenance"}], strict_required_status_checks_policy:true}` — so the `provenance` check **is** blocking on this repo (an older working note said it was declared-but-not-applied; that is now superseded by this live read).
+- **E26** (2026-10-27) Dependency and merge-state facts behind the VV-…-004 correction, read from the REST API for `viavitae-api`. **Counting basis stated, because the two instruments disagree:** open **Dependabot** critical alerts = **7** — pillow → 13.0.0 (alerts 4, 13, 30, 35, 46), brotlicffi → 1.2.1.0 (44), brotli → 1.2.1 (43), all `eco=pip manifest=uv.lock` — while **Trivy** reported **8** CRITICAL findings on the same commit; the extra one is **certifi**, which is **not a Dependabot alert at any severity** (`select(.dependency.package.name=="certifi")` over all open alerts returns nothing). Totals by severity: 7 critical / 23 high / 14 medium; **open Dependabot PRs = 0**; last merged PR = #4 at 2026-10-15T19:50Z; PR #9 rollup = `CI status` FAILURE and `Dependency scan (Trivy)` FAILURE while `Compliance status`, Semgrep, CodeQL (python + js), licence, action-pinning, governance, secret-scanning and drift-detection all SUCCESS; the Trivy step log ends `Total: 8 (CRITICAL: 8)` then `##[error]Process completed with exit code 1`, and the aggregate evaluator recorded `"dependency-scan": {"result": "failure"}`.
+- **E27** (2026-10-27) Root cause of VV-…-017. Defective line read verbatim from each repo's workflow: `to_json() { jq -cn --args '$ARGS.positional'; }` — no `"$@"`, so jq receives no positional arguments. Local reproduction under `set -euo pipefail`: with `lint=("python")` the same step prints `detected lint=python` yet yields `lint_stacks=[]`; the corrected function yields `["python"]`; both still yield `[]` when the array is empty, so the one-token fix cannot break the no-stack path. Live: `gh api repos/Via-Vitae/viavitae-api/actions/jobs/122345782966` → conclusion `skipped`, `matrix: null`, `steps: 0`, name `Test (${{ matrix.stack }})`; main push runs 38797087654 (api), 38784899494 (template) and 38797074870 (brand) all show Test/Lint skipped with the unexpanded name while `CI status` = success; web (40017382631), demos (38781543242) and qa (39028161804) show a real `Lint` success. Enumeration of the populated repos: the line is present in **14** (api, brand, infra, template, ten landing-*) and absent in 8.
+- **E28** (2026-10-27) Private-repo population re-check behind the §16 "EMPTY" rows and VV-…-002: `viavitae-policies`, `viavitae-data-governance`, `viavitae-threat-model` and `viavitae-vendor-register` still return "This repository is empty."; `viavitae-compliance` now reports content (7KB, updated 2026-10-26T14:24Z) but **zero files** — its tree is `docs/` then `docs/security/`, two directories only — so it remains unevaluable and **VV-…-002 stays open**. Org totals unchanged: 31 repos, 26 public / 5 private.
+- **E29** (2026-10-27) A/B of the VV-…-017 fix executed as the workflow's **own** script body, extracted from `viavitae-template/.github/workflows/ci.yml` (job `setup`, step `Detect present stacks`) and run with `bash -euo pipefail` inside the `viavitae-api` tree where python genuinely exists. Pre-fix: `lint_stacks=[]`, `typecheck_stacks=[]`, `test_stacks=[]`, `build_stacks=[]`, `has_source=true`. Post-fix (adding `"$@"`): `lint_stacks=["python"]`, `typecheck_stacks=["python"]`, `test_stacks=["python"]`, `build_stacks=["docker"]`, `has_source=true`. The one-line change is the only diff; the template file also declares a fifth output (`has-source`) that `viavitae-api`'s copy does not, so the 13 downstream repos have **drifted** from the template and cannot be fixed by a blind copy.
+- **E30** (2026-10-27) Dependency bump prepared on `viavitae-api` branch `fix/deps-pdf-extra-criticals` (base `63cb494`, worktree `viavitae-api-wt-deps`): `uv lock --upgrade-package pillow --upgrade-package brotli --upgrade-package brotlicffi` moved **exactly three** versions — pillow 12.3.0→13.0.0, brotli 1.2.0→1.2.1, brotlicffi 1.2.0.2→1.2.1.0 — with package count 78 before and after, nothing added or removed (compared as parsed `(name, version)` sets, not by eye); `uv lock --check` exit 0 so `uv sync --frozen` in CI stays valid; offline suite **122 passed / 6 skipped**, `ruff check` clean, `mypy --strict app` clean on 75 files. Reachability was measured rather than assumed: the Dockerfile installs with `uv sync --frozen --no-dev` (no `--extra pdf`), and `find_spec` confirms `PIL`, `weasyprint` and `brotli` are absent from the resolved environment, so these 8 CRITICAL findings are lockfile-only today (see VV-…-018). **CORRECTED by
+measurement, not reasoning (E32): the "8 are lockfile-only" conclusion was WRONG.**
+After this branch merged nothing, api#10's first run still failed Trivy with **1**
+CRITICAL left, and the log named it: `certifi GHSA-6q48-6c7w-9gw2`, installed
+2026.7.22, fixed 2026.10.18 — **certifi is a live runtime dependency via `httpx`**,
+confirmed by `uv sync --frozen --no-dev` then `find_spec`: `certifi: installed=True`,
+`httpx: installed=True`, while `PIL`, `weasyprint` and `brotli` are all `False`. So
+**7** of the 8 were lockfile-only (the uninstalled `pdf` extra tree) and **1 was
+shipped and reachable on every outbound TLS call**. Bumping certifi to 2026.10.23 took
+Trivy from 8 → 1 → 0 CRITICAL and flipped `CI status` from FAILURE to SUCCESS; the
+rollup on head `b1839ce` is `mergeStateStatus: CLEAN`, which lifts the merge lock.
+Also recorded: my first E26 draft said "8 alerts" and listed 7 rows, then my "correction" claimed the missing row was certifi — **both wrong**. There are 7 Dependabot alerts and 8 Trivy findings; certifi exists only in the latter. A count must name its instrument (E32)
+- **E31** (2026-10-27) Measurements taken while writing the persistence-baseline spec, each with the command that produced it: `grep -rn '__tablename__' app/models/*.py` → **no matches** (only 5 `mapped_column` hits, all in `base.py`'s mixins), so `Base.metadata` is empty and `--autogenerate` would emit a no-op revision; `grep -rn 'tenant_id_ctx' app/` → definition plus two reads, **no `.set(` writer**, so `app/db/session.py:66-71` never issues `set_config`; no `search_path` assignment anywhere in `app/`; `app/services/rag/ingest.py:48-60` performs no persistence (chunk + count only) while `app/workers/index_worker.py:4-6` claims chunk replacement → VV-…-019(a); `viavitae-qa/contract/stripe/webhook-contract.spec.ts` placeholders confirmed at the **remote** head by md5-comparing the working copy against `git show origin/main:…` (the local clone is behind: `3ace7525` vs remote `2d670ecc`) → VV-…-019(b); `docker-compose.yml:15` pins `pgvector/pgvector:pg17`, so `gen_random_uuid()` is built in and `IdMixin` needs no `pgcrypto`. Spec of record: `docs/superpowers/specs/2026-10-27-viavitae-api-persistence-baseline-design.md`.
+- **E32** (2026-10-27) Empirical test of the dependency remedy on `viavitae-api` PR **#10**, which falsified part of E30. First run after the pillow/brotli/brotlicffi bump (run 40554534148): `Dependency scan (Trivy)` **fail** with `Total: 1 (CRITICAL: 1)` and the row `certifi GHSA-6q48-6c7w-9gw2 fixed 2026.7.22 → 2026.10.18`, so `CI status` stayed **fail**. Reachability re-measured per package with `uv sync --frozen --no-dev` then `importlib.util.find_spec`: `certifi: installed=True`, `httpx: installed=True`, `PIL: installed=False`, `weasyprint: installed=False`, `brotli: installed=False` → certifi ships (through `httpx`), the other seven do not. After `uv lock --upgrade-package certifi` (→ 2026.10.23; 78 packages before/after, `uv lock --check` 0, local suite 122 passed / 6 skipped), head `b1839ce` reports `Dependency scan (Trivy)` **SUCCESS**, `CI status` **SUCCESS**, `Compliance status` **SUCCESS**, `mergeStateStatus: CLEAN`. Consequence: the api merge lock is liftable by merging #10; then #9 needs `gh pr update-branch` (strict up-to-date) before it can merge.
+- **E33** (2026-10-27) Org-wide Dependabot recount, grouped by `security_advisory.severity` over `state=open` alerts for all 31 repos: **19 critical, 62 high, 61 medium, 8 low**. The report's reference-date totals were 20 critical / 63 high (E15), so the estate improved by one critical and one high in the interim. Recorded to establish the rule used from now on in this register: **every alert count states its date and its instrument**, because Dependabot and Trivy disagree on the same commit (api: 7 Dependabot critical alerts vs 8 Trivy CRITICAL findings, E26/E32) and neither is stable over time.
 
 ---
 
@@ -828,22 +941,31 @@ Work top-to-bottom; each item names the person who must act.
 2. **Fix the deploy path** (infra owner): make `Deploy — viavitae-api` green and
    replace every `prod/**/placeholder.yaml` with a real manifest under Argo CD
    (VV-…-001).
-3. **Provision isolated staging + run the journey once** (QA owner): clients merge →
+3. **Build the money path** (API owner — this blocks step 4, and no payment or
+   donation can work until it is done): implement Stripe/Paysera/Bitrix24
+   signature verification → the `webhook_event` + `idempotency_key` ledger with
+   its migration and RLS → async processing → re-reading amounts from the
+   provider (VV-…-011). Note the dependency discovered on 2026-10-27: the ledger
+   has nowhere to live yet, because **the repo contains zero Alembic revisions**
+   — establish the migration baseline first (VV-…-016). Keep every claim about
+   replay safety in the future tense until it lands, and prove each new test by
+   mutation before citing it as evidence (VV-…-014).
+4. **Provision isolated staging + run the journey once** (QA owner): clients merge →
    provision → Playwright smoke → sync, with synthetic data (VV-…-009).
-4. **Remediate criticals and add the enforcement gate** (per-repo owners): clear the
+5. **Remediate criticals and add the enforcement gate** (per-repo owners): clear the
    20 criticals on api/web/brand/docs, then wire a Dependabot-critical required check
    so detection actually blocks (VV-…-004).
-5. **Populate the minimum GDPR corpus** (DPO role): ROPA, DPIA with the Art. 9
+6. **Populate the minimum GDPR corpus** (DPO role): ROPA, DPIA with the Art. 9
    religious-data basis, retention, vendor/Art. 28 register, policies, runbooks
    (VV-…-002, matrix §20). Decide Free-plan protection for the private repos.
-6. **Strengthen separation of duties** (owner): a real second reviewer, or documented
+7. **Strengthen separation of duties** (owner): a real second reviewer, or documented
    compensating controls before claiming SOC 2 CC1.4/CC8.1 (VV-…-003, -006).
-7. **Close the config/policy mismatches** (platform owner): org SHA-pinning vs
+8. **Close the config/policy mismatches** (platform owner): org SHA-pinning vs
    per-repo gate (VV-…-007); input-custody documentation (VV-…-008); decide landing
    include/exclude with evidence (VV-…-005).
-8. **Obtain the blocked reads** (owner): scoped `admin:org_hook` and/or GitHub Team
+9. **Obtain the blocked reads** (owner): scoped `admin:org_hook` and/or GitHub Team
    for the private repos; re-run §15/§19 (VV-…-010).
-9. **Re-run gates and record the decision separately** (approver): never let the
+10. **Re-run gates and record the decision separately** (approver): never let the
    auditor's recommendation be read as the approval (§24/§25).
 
 ## 28. Self-audit correction log (paranoid review of this auditor's own work)
@@ -885,16 +1007,116 @@ auditing itself:
 8. **Two suspicions I raised, then disproved by reading — in the org's favour.** I
    flagged `viavitae-demos/.npmrc` as a likely token leak and treated webhook
    signature/idempotency as a possible "missing control." Verification showed the
-   `.npmrc` uses `${NODE_AUTH_TOKEN}` indirection (clean), `.env.example` holds only
-   test-key placeholders, and the webhook signature check is genuinely fail-closed and
-   unit-tested. I recorded those VERIFIED PASS and scoped VV-…-011 down to the
-   *skipped idempotency test + placeholder contract spec* (Medium), not a High
-   "unprotected payments" claim. Lesson: run the check before writing the finding.
+   `.npmrc` uses `${NODE_AUTH_TOKEN}` indirection (clean) and `.env.example` holds
+   only test-key placeholders. **The webhook half of this item was itself wrong and
+   is retracted — see item 9.** I recorded the demos findings as VERIFIED PASS and
+   scoped VV-…-011 down to the *skipped idempotency test + placeholder contract
+   spec* (Medium), not a High "unprotected payments" claim. Lesson: run the check
+   before writing the finding — and check the *implementation*, not the prose.
+9. **My "the webhook control is real and unit-tested" conclusion was false, and the
+   retraction in item 8 was the error, not a correction (found 2026-10-27 by reading
+   the handler bodies in a local checkout).** All three handlers end in
+   `raise ApiError("not_implemented", …, 501)` behind a `# TODO(api)` block; there is
+   no signature verification, no `webhook_event` ORM model or migration, and no
+   `stripe` dependency in `pyproject.toml`. Three compounding causes: (a) I read the
+   module **docstrings** and a **stored working note** that repeated them instead of
+   the function bodies; (b) the repo's own docs (`data-model.md`, the replay runbook,
+   `replay_webhook.py`) make the same present-tense claim, so the code appeared to
+   corroborate itself; (c) the green guard tests looked like evidence of a working
+   control, but a **mutation proved otherwise** — replacing the 501 with
+   `return {"status": "received"}` still passed 9/9, because every request died at
+   the earlier 503 "secret unconfigured" guard and no test reached the stub branch.
+   Consequences: VV-…-011 re-scoped (Medium → **High**, it is a missing control and
+   an unimplemented money path, not test quality), §17/§18/§21/E19 corrected, and
+   VV-…-014 opened for the false-assurance defect itself. Lesson for students: a
+   test that passes when you delete the control is not evidence the control exists;
+   **mutation-test your own evidence before you cite it**, and never accept a
+   docstring, a runbook or your own earlier note as a substitute for reading the
+   implementation.
+10. **Two errors in my own remediation round, both caught by re-testing rather than
+   trusting my first pass (2026-10-27).** (a) After fixing the webhook claims I wrote
+   into §23 that the defect lived in "eight places" and that the fix left "no
+   unqualified claim" standing — while `docs/data-model.md` and
+   `docs/DPIA-004-donations.md` were still unedited and my change set was 12 files,
+   not the 14 the acceptance required. The count had been typed from recollection of
+   the edits I made, not from a sweep of the repo. Re-running the enumeration first
+   (`grep -rn -i 'idempoten|ADR-005'` across `app`, `docs`, `scripts`, `tests`,
+   `QODER.md`) produced the real set and exposed the DPIA as the most serious site,
+   because its Art. 36 conclusion depends on the missing control. Lesson: derive a
+   count from a command, never from memory of the work, and re-run the discovery
+   query *after* the fix to prove completeness. (b) In the hand-off I asserted that
+   `viavitae-api` "requires the standalone `ai:<tier>` provenance trailer, PR-only
+   merge" — true of `viavitae-control`, false of `viavitae-api`, which has no
+   `.pre-commit-config.yaml`, no installed `commit-msg` hook and no `provenance.yml`.
+   Chasing that discrepancy to ground produced VV-…-015 (provenance enforced in 1 of
+   31 repos). Lesson: a policy written in one repo does not travel; verify the
+   enforcement artifact exists in the repo you are actually standing in, and treat
+   your own hand-off text as a claim to be tested, not a fact to be reused.
+11. **Reviewing my own diff found an inconsistency I had introduced one round earlier
+    (2026-10-27).** I annotated DPIA-004's **M2** row as "not implemented" and left
+    **M1, M3 and M4** untouched in the same table — a half-applied correction that
+    would itself read as assurance. Verifying each row against the code produced
+    three new facts: M1 cites row-level security that cannot exist because
+    `migrations/versions/` holds only `.gitkeep` (**zero revisions** → VV-…-016);
+    M4 cites `app/workers/retention_worker.py`, which is **absent**; M3's substance
+    is real but names the wrong tool (CI runs **Semgrep + Trivy**, not bandit). Two
+    process lessons: (a) when fixing a claim, enumerate the *whole* artifact, not the
+    sentence that happened to be quoted at you — a partial correction can be worse
+    than none because it lends credibility to the untouched rows; (b) three of my
+    probe sections returned **empty output**, which in this workspace is never
+    evidence of absence — re-probing with explicit PRESENT/ABSENT markers is what
+    produced the finding. Also recorded positively: `deployments/k6/smoke.js` is
+    honest about the 501 scaffolds, so the org's own test design was better than the
+    documentation around it.
+12. **The count I criticized myself for inventing was still in the register two drafts
+    later (caught on the third pass, 2026-10-27).** Item 10(a) records that I typed
+    "eight places" from memory; I then "corrected" it to "14 files / 18 claim
+    strings", which was *also* a remembered number, not a measured one — and it went
+    into §23 twice before anyone tested it. The reproducible measure is hunk count
+    (`git diff --unified=0 | grep -c '^@@'` = 39 hunks, 14 files, of which 5 are the
+    generated OpenAPI snapshot and 6 the new test file → 28 claim-rewording hunks),
+    now recorded as E25. Lesson: fixing a fabricated number by recollection just
+    relocates the error — replace the number with the command that produces it, so
+    the next reader can re-derive it instead of trusting me.
+13. **Three defects in the hand-off I wrote last round, each caught by testing the
+    instruction instead of repeating it (2026-10-27).** (a) I told the owner to
+    "merge the open Dependabot PRs on `viavitae-api`" — `gh pr list --state open`
+    filtered to dependabot returns **zero**; the eight criticals need hand-authored
+    bumps, so my instruction was unexecutable. (b) I said to then "`gh run rerun` #9's
+    CI" — wrong mechanism twice over: a rerun replays the original `pull_request`
+    payload, and with `strict` required checks the branch must first be brought up to
+    date with `main`, so the correct action is `gh pr update-branch` (or a new push).
+    (c) My *first* local proof of the `to_json` bug was itself broken — I wrapped the
+    jq filter in double quotes so the shell expanded `$ARGS` and bash failed with
+    "unbound variable", which I nearly read as a pass. Rewritten as a file with the
+    filter single-quoted, it reproduced `[]` vs `["python"]` correctly (E27). A related
+    mislabel I also corrected in-place: a `|| echo READ_DENIED` fallback printed
+    "permission denied" where GitHub had actually said "This repository is empty" —
+    the same derived-column-vs-measured-value error logged in item 5. Lesson:
+    an instruction in a hand-off is a claim; run it or its cheap equivalent before
+    writing it down.
+14. **A wrong security conclusion of mine, corrected by a red pipeline rather than by
+    reasoning (2026-10-27).** I wrote in E30 and VV-…-018 that all 8 api CRITICALs were
+    "lockfile-only" because the `pdf` extra is not installed. The claim was over-
+    generalised from a correct partial observation: 7 of 8 were in that uninstalled tree,
+    but the 8th — certifi — arrives through `httpx`, which the image **does** install, so
+    a compromised-root-CA finding was genuinely shipped. What caught it was empirical
+    feedback: after pushing the bump, Trivy still exited 1 with `Total: 1 (CRITICAL: 1)`
+    and named the package. Had I merged on my reasoning, the gate would have gone green
+    later with a live finding re-opened. Two lessons: (a) a reachability conclusion
+    applies to the packages you actually inspected, not to the group they were counted
+    in; (b) verify by the gate's own verdict, not by the argument that predicted it —
+    the same rule that made me re-run `find_spec` per package instead of per extra.
 
-None of these corrections changed the NO-GO recommendation (still four failed
-mandatory gates). Items 1–2 made the report *more* strict; items 7–8 made it *more*
+None of these corrections changed the NO-GO recommendation — it is still NO-GO,
+after the 2026-10-27 corrections with **two more** failed mandatory gates than the
+original draft reported (Integration and Functionality were added, §24). Items 1–2 made the report *more* strict; items 7–8 made it *more*
 accurate — one finding upgraded (docs exposure, VV-…-012) and one instinct downgraded
-(webhooks, VV-…-011) on evidence, which is the correct direction for a compliance gate.
+(webhooks) on evidence, which is the correct direction for a compliance gate.
+**Item 9 then reversed that downgrade**: the webhook finding went back up to High
+when the implementation was actually read, and a new High finding (-014) was opened
+for the false assurance this report had itself published. A finding is only as
+trustworthy as the deepest artifact the auditor read.
 
 ## 29. Glossary (student quick-reference)
 
