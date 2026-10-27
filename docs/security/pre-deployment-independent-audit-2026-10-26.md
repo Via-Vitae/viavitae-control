@@ -1213,6 +1213,19 @@ auditing itself:
     Lessons: enumerate targets from the API or from `repos_data.tf`, never from recall;
     treat a 404 as *unknown*, not as *empty*, so a driver must distinguish "no rows" from
     "request failed"; and fetch the base ref from the remote before branching.
+18. **I turned this repo's own required gate red by rewriting a PR body, and the gate was right (2026-10-27).**
+    While consolidating PR #50 to describe both of its commits, I replaced the body and dropped
+    the standalone `ai:review` line. `provenance.yml` triggers on `types: [opened, edited,
+    synchronize]`, so the edit re-ran the required check, which failed with `Missing provenance
+    trailer` and set the merge gate to BLOCKED — two runs of the same check on the *same* head
+    sha, one success (the push) and one failure (the edit), with the later one binding. The fix
+    was to restore the trailer line in the body, after which `provenance` succeeded and the gate
+    returned to CLEAN (head `11b05d37`). Two lessons: a PR body in this org is a **policy
+    artifact**, not prose — editing it is a gated change, so the `ai:<tier>` line must survive
+    every rewrite; and when a required check shows both success and failure for one commit,
+    compare the run's trigger event and timestamps before deciding which one the rollup is
+    reporting. Recorded because the alternative reading — "the gate is flaky, rerun it" — would
+    have masked a real control firing correctly on my own mistake.
 
 None of these corrections changed the NO-GO recommendation — it is still NO-GO,
 after the 2026-10-27 corrections with **two more** failed mandatory gates than the
