@@ -9,6 +9,12 @@ decision-required-by: before any of the ten landing propagation PRs merges
 document-id: spec-2026-10-27-landing-repos
 revisions:
   - "2026-10-27 first edition, from live measurements taken the same day"
+  - "2026-10-27 pilot addendum (§9): option E is 25 README references plus 23 in
+    docs/architecture.md, not two sentences; is_template is true for 0 of 31 repos including
+    viavitae-template, which asserts otherwise in its own README → new finding VV-2026-10-025;
+    option A confirmed on basilica (run 40587988368, head f73ee589, gate CLEAN)"
+  - "2026-10-27 pre-pilot correction: §1 Dependabot row sharpened from one stub ecosystem to
+    four decorative ones, and option A's detection rule quoted from the workflow itself"
 ---
 
 # Why this document exists
@@ -38,7 +44,7 @@ prefix, cross-checked against `repos_data.tf` — never typed from memory (see a
 | markdown files | 8 · toml/yaml 6 · js/ts/jsx/vue **0** | tree census |
 | deployable web artifacts | **none** — no `index.html`, no `package.json`, no `hugo.toml`, no `netlify.toml`, no `Dockerfile` | tree census |
 | declared coverage floor | `COVERAGE_MIN: 80` in all 10 | `ci.yml` at the PR branch |
-| Dependabot | declares `pip` at `/` (and `npm` at `/`) | `.github/dependabot.yml` |
+| Dependabot | declares **five** ecosystems all pointed at `/`: `pip`, `npm`, `github-actions`, `terraform`, `docker` — and the repo contains **0** files any of them can read except the Actions workflow, so **four of five are decorative** | `.github/dependabot.yml` + tree census (0 `.tf`, 0 `Dockerfile`, 0 `package.json`, 0 `requirements*`) |
 | Terraform | 10 blocks, `tier = "site"`, `manage_files = false` in **all** 10 | `repos_data.tf` |
 | README | 12.9–13.0 KB, 10 distinct hashes (individually parameterised), and **all 10** contain "single source of truth for how a ViaVitae repository looks" and "Enterprise-grade repository template for regulated, EU-hosted software delivery" | contents API |
 | the real template | `viavitae-template` makes the same two claims, has **no** `main.py` — and is the only repo where the claim is true | contents API |
@@ -54,8 +60,11 @@ Three consequences follow directly from the table, and none of them is a coverag
    the source of truth for new repos. `viavitae-template` is. This is VV-2026-10-014's defect class
    (documentation asserting what the code does not do), replicated across ten repos — registered
    as **VV-2026-10-024**.
-3. **Dependabot scans a Python ecosystem that exists only as IDE debris**, so every future pip
-   advisory in these repos will be about a 528-byte sample.
+3. **Dependabot is pointed at four ecosystems that contain nothing.** `pip` scans a 528-byte IDE
+   sample, `npm` scans a repo with no `package.json`, `terraform` a repo with no `.tf`, `docker` a
+   repo with no `Dockerfile`. Only `github-actions` can actually find a dependency — in the
+   workflows themselves. This is sharper than "a stub ecosystem": four of five entries advertise
+   protection that cannot fire.
 
 # 2. Options
 
@@ -67,10 +76,15 @@ reversibility, and what it implies for compliance evidence.
 Delete `main.py`. Stack detection then finds no Python: `ci.yml` emits empty matrices, the
 python legs skip, and `CI status` aggregates only the legs that genuinely run.
 
-- **Proven safe, not assumed.** `viavitae-template` main is exactly this shape today: run
-  40572423651 logs `detected lint=none typecheck=none test=none build=none has_source=false`,
-  contains 0 `.py` files, and CI is **success**. Empty matrices are the template's *correct*
-  behaviour, distinguishable from VV-2026-10-017's bug only by *why* they are empty.
+- **Proven safe, not assumed — twice.** The detection rule itself was read from the workflow on
+  the branch: Python is added to `lint`, `typecheck` and `test` when `pyproject.toml` exists **or**
+  `requirements*.txt` matches **or** `find . -name '*.py'` returns anything. These repos have no
+  manifest and exactly one `.py`, so deleting `main.py` removes the last trigger; no other Python
+  file exists in any of the ten (verified per repo). And `viavitae-template` main is already in
+  that shape: run 40572423651 logs `detected lint=none typecheck=none test=none build=none
+  has_source=false`, has 0 `.py` files, and CI is **success**. Empty matrices are therefore the
+  template's *correct* behaviour, distinguishable from VV-2026-10-017's bug only by *why* they are
+  empty.
 - **Honesty test:** after A, a green `CI status` means "no code to test", not "code tested". That
   is why A must not ship without B — otherwise we recreate the decorative-gate complaint we just
   fixed. The difference is that here the claim ("this repo has no source") is verifiable: one
@@ -126,11 +140,13 @@ without recording it is how "temporary" scaffolds become permanent false claims.
 
 ### E. Correct the ten READMEs (independent of A–D, and required either way)
 
-Delete or rewrite the two false sentences (source-of-truth, enterprise-grade template) and the
-`pip`/`npm` Dependabot entries that address a stub. Replaces "the claim is inherited from the
-template" with "the claim is true for this repo": e.g. *"Governance scaffold for the
-`<vertical>` surface. Repository standards live in `viavitae-template`; landing-page content
-lives in `viavitae-demos/templates`."* This closes VV-2026-10-024.
+Rewrite the two false sentences (source-of-truth, enterprise-grade template — each occurs exactly
+once in each of the ten READMEs, which is what makes a scripted exact-match substitution safe), and
+reduce Dependabot to the one ecosystem that can actually read a dependency: keep `github-actions`,
+drop `pip`, `npm`, `terraform` and `docker`. Replaces "the claim is inherited from the template"
+with "the claim is true for this repo": e.g. *"Governance scaffold for the `<vertical>` surface.
+Repository standards live in `viavitae-template`; landing-page content lives in
+`viavitae-demos/templates`."* This closes VV-2026-10-024.
 
 # 3. Recommended package and ordering
 
@@ -163,8 +179,11 @@ on the first push after merge (already demonstrated on the PR heads).
   reconciled or destroyed by any future apply — safe to do out-of-band, but they are also not
   guarded by the control plane, so drift between the ten repos will not be detected. Note it as a
   known limitation rather than pretending Terraform owns these files.
-- **Supply chain:** `main.py` deletion has no dependency effect; removing the stub's `pip`
-  Dependabot ecosystem reduces future advisory noise about non-existent code.
+- **Supply chain:** `main.py` deletion has no dependency effect. Trimming Dependabot to
+  `github-actions` *lowers* apparent coverage in a way that must be stated plainly: four ecosystems
+  were listed and none of the four could ever resolve a dependency here, so the removal deletes
+  decoration, not protection. The org-level Dependabot alerts and security updates remain enabled
+  for these repos regardless (they follow the repo's manifests, of which there are none).
 
 # 5. Cost and operational risk
 
@@ -213,3 +232,39 @@ credentials, org settings, DNS, hosting or Terraform state.
 - Ten propagation PRs green and mergeable, each body describing all three changes it carries.
 - Register: VV-2026-10-024 closed only after the ten READMEs are re-read **by ref**, not from a
   local clone; VV-2026-10-005 moves from PENDING to a recorded D1/D2/D3 choice.
+
+# 9. Addendum after the basilica pilot (2026-10-27) — this package was partly wrong
+
+The owner chose to pilot one repo before the sweep. That decision falsified two claims in this
+document, which is the reason pilots exist.
+
+1. **Option E is not "two sentences".** `viavitae-landing-basilica/README.md` carries **25**
+   `template` references, including binding governance rule **R1 - Template-first** ("Every
+   ViaVitae repository is generated from `viavitae-landing-basilica`"), a working
+   `gh repo create --template Via-Vitae/viavitae-landing-basilica` command, and a §4 sync policy
+   ("Template improvements flow outward only … Never edit the template inside a" generated repo).
+   The same corpus appears in `docs/architecture.md` (**23** mentions) and `CONTRIBUTING.md` (4).
+   So E is a prose decision across three documents in ten repos, not a scripted substitution, and
+   it was deliberately **not** executed in the pilot. Anyone applying this package should treat §2
+   option E as needing owner-drafted wording, and should not let a bulk script invent it.
+2. **A new finding, VV-2026-10-025, sits underneath option E.** `is_template` is `true` for **0 of
+   31** repos in the organisation — including `viavitae-template`, whose own README line 37 states
+   "This repository is marked **Use this template** on GitHub" and line 50 gives the browser path.
+   Meanwhile the control plane never names any repo as a template source. So the documented
+   creation procedure cannot be executed anywhere, and fixing the landing READMEs without deciding
+   this leaves the org describing a mechanism that does not exist in either place. Route (a) enable
+   templating on `viavitae-template`, or route (b) document the Terraform-declared path — pick one
+   first, because the wording of option E depends on which is true.
+3. **Option A is confirmed.** Pilot on basilica: `main.py` deleted and Dependabot trimmed 186 → 46
+   lines, keeping `github-actions` only. CI run 40587988368 at head `f73ee589` logs
+   `detected lint=none typecheck=none test=none build=none`; python and build legs skip with
+   `steps: 0`; `Detect stack` (5), `SAST (Semgrep)` (9), `Dependency scan (Trivy)` (9) and the
+   required `CI status` (3) all **success**; gate **CLEAN**. Two implementation traps worth
+   repeating: my first trim left **orphan comment headers** for the removed ecosystems (valid YAML,
+   newly misleading) — fixed by treating each comment header plus its entry as one unit and
+   asserting no dropped ecosystem name survives in the output; and the `updates` list must be
+   re-parsed and each remaining entry checked for its `schedule`, not just counted.
+4. **What the pilot does not prove.** It does not prove the other nine repos behave identically —
+   it proves the mechanism. Per-repo assertions remain mandatory before each write, and the
+   Dependabot file in each repo must be re-read rather than assumed identical (the READMEs already
+   proved to be individually parameterised, ten distinct hashes).
