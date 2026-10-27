@@ -9,6 +9,12 @@ decision-required-by: before any of the ten landing propagation PRs merges
 document-id: spec-2026-10-27-landing-repos
 revisions:
   - "2026-10-27 first edition, from live measurements taken the same day"
+  - "2026-10-27 pilot addendum (§9): option E is 25 README references plus 23 in
+    docs/architecture.md, not two sentences; is_template is true for 0 of 31 repos including
+    viavitae-template, which asserts otherwise in its own README → new finding VV-2026-10-025;
+    option A confirmed on basilica (run 40587988368, head f73ee589, gate CLEAN)"
+  - "2026-10-27 pre-pilot correction: §1 Dependabot row sharpened from one stub ecosystem to
+    four decorative ones, and option A's detection rule quoted from the workflow itself"
 ---
 
 # Why this document exists
@@ -226,3 +232,39 @@ credentials, org settings, DNS, hosting or Terraform state.
 - Ten propagation PRs green and mergeable, each body describing all three changes it carries.
 - Register: VV-2026-10-024 closed only after the ten READMEs are re-read **by ref**, not from a
   local clone; VV-2026-10-005 moves from PENDING to a recorded D1/D2/D3 choice.
+
+# 9. Addendum after the basilica pilot (2026-10-27) — this package was partly wrong
+
+The owner chose to pilot one repo before the sweep. That decision falsified two claims in this
+document, which is the reason pilots exist.
+
+1. **Option E is not "two sentences".** `viavitae-landing-basilica/README.md` carries **25**
+   `template` references, including binding governance rule **R1 - Template-first** ("Every
+   ViaVitae repository is generated from `viavitae-landing-basilica`"), a working
+   `gh repo create --template Via-Vitae/viavitae-landing-basilica` command, and a §4 sync policy
+   ("Template improvements flow outward only … Never edit the template inside a" generated repo).
+   The same corpus appears in `docs/architecture.md` (**23** mentions) and `CONTRIBUTING.md` (4).
+   So E is a prose decision across three documents in ten repos, not a scripted substitution, and
+   it was deliberately **not** executed in the pilot. Anyone applying this package should treat §2
+   option E as needing owner-drafted wording, and should not let a bulk script invent it.
+2. **A new finding, VV-2026-10-025, sits underneath option E.** `is_template` is `true` for **0 of
+   31** repos in the organisation — including `viavitae-template`, whose own README line 37 states
+   "This repository is marked **Use this template** on GitHub" and line 50 gives the browser path.
+   Meanwhile the control plane never names any repo as a template source. So the documented
+   creation procedure cannot be executed anywhere, and fixing the landing READMEs without deciding
+   this leaves the org describing a mechanism that does not exist in either place. Route (a) enable
+   templating on `viavitae-template`, or route (b) document the Terraform-declared path — pick one
+   first, because the wording of option E depends on which is true.
+3. **Option A is confirmed.** Pilot on basilica: `main.py` deleted and Dependabot trimmed 186 → 46
+   lines, keeping `github-actions` only. CI run 40587988368 at head `f73ee589` logs
+   `detected lint=none typecheck=none test=none build=none`; python and build legs skip with
+   `steps: 0`; `Detect stack` (5), `SAST (Semgrep)` (9), `Dependency scan (Trivy)` (9) and the
+   required `CI status` (3) all **success**; gate **CLEAN**. Two implementation traps worth
+   repeating: my first trim left **orphan comment headers** for the removed ecosystems (valid YAML,
+   newly misleading) — fixed by treating each comment header plus its entry as one unit and
+   asserting no dropped ecosystem name survives in the output; and the `updates` list must be
+   re-parsed and each remaining entry checked for its `schedule`, not just counted.
+4. **What the pilot does not prove.** It does not prove the other nine repos behave identically —
+   it proves the mechanism. Per-repo assertions remain mandatory before each write, and the
+   Dependabot file in each repo must be re-read rather than assumed identical (the READMEs already
+   proved to be individually parameterised, ten distinct hashes).

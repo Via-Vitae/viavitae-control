@@ -56,6 +56,19 @@ jobs:
           chmod +x scripts/check_plan_selfcite.sh
           ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
 
+      # The audit register is a compliance artifact that asserts counts about itself
+      # (findings per table, evidence numbering, PART headings, markdown column counts).
+      # Four edits in one session broke it silently and each was caught by a throwaway
+      # script that then vanished, so the check is permanent here. Same placement rule as
+      # above: no secrets, no network, must fail on its own merits before the credential
+      # steps — a docs gate skipped behind a credential failure proves nothing.
+      - name: Check audit register integrity
+        run: |
+          chmod +x scripts/check_audit_register.py
+          python3 scripts/check_audit_register.py \
+            docs/security/pre-deployment-independent-audit-2026-10-26.md \
+            docs/superpowers/specs/*.md
+
       # Metadata-only expiry gate on docs/SECRETS_INVENTORY.md: no secrets, no
       # network, so it fails on its own merits ahead of the credential steps.
       # Red here means a dated credential expires within 14 days or already did.
