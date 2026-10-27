@@ -38,7 +38,7 @@ prefix, cross-checked against `repos_data.tf` — never typed from memory (see a
 | markdown files | 8 · toml/yaml 6 · js/ts/jsx/vue **0** | tree census |
 | deployable web artifacts | **none** — no `index.html`, no `package.json`, no `hugo.toml`, no `netlify.toml`, no `Dockerfile` | tree census |
 | declared coverage floor | `COVERAGE_MIN: 80` in all 10 | `ci.yml` at the PR branch |
-| Dependabot | declares `pip` at `/` (and `npm` at `/`) | `.github/dependabot.yml` |
+| Dependabot | declares **five** ecosystems all pointed at `/`: `pip`, `npm`, `github-actions`, `terraform`, `docker` — and the repo contains **0** files any of them can read except the Actions workflow, so **four of five are decorative** | `.github/dependabot.yml` + tree census (0 `.tf`, 0 `Dockerfile`, 0 `package.json`, 0 `requirements*`) |
 | Terraform | 10 blocks, `tier = "site"`, `manage_files = false` in **all** 10 | `repos_data.tf` |
 | README | 12.9–13.0 KB, 10 distinct hashes (individually parameterised), and **all 10** contain "single source of truth for how a ViaVitae repository looks" and "Enterprise-grade repository template for regulated, EU-hosted software delivery" | contents API |
 | the real template | `viavitae-template` makes the same two claims, has **no** `main.py` — and is the only repo where the claim is true | contents API |
@@ -54,8 +54,11 @@ Three consequences follow directly from the table, and none of them is a coverag
    the source of truth for new repos. `viavitae-template` is. This is VV-2026-10-014's defect class
    (documentation asserting what the code does not do), replicated across ten repos — registered
    as **VV-2026-10-024**.
-3. **Dependabot scans a Python ecosystem that exists only as IDE debris**, so every future pip
-   advisory in these repos will be about a 528-byte sample.
+3. **Dependabot is pointed at four ecosystems that contain nothing.** `pip` scans a 528-byte IDE
+   sample, `npm` scans a repo with no `package.json`, `terraform` a repo with no `.tf`, `docker` a
+   repo with no `Dockerfile`. Only `github-actions` can actually find a dependency — in the
+   workflows themselves. This is sharper than "a stub ecosystem": four of five entries advertise
+   protection that cannot fire.
 
 # 2. Options
 
@@ -67,10 +70,15 @@ reversibility, and what it implies for compliance evidence.
 Delete `main.py`. Stack detection then finds no Python: `ci.yml` emits empty matrices, the
 python legs skip, and `CI status` aggregates only the legs that genuinely run.
 
-- **Proven safe, not assumed.** `viavitae-template` main is exactly this shape today: run
-  40572423651 logs `detected lint=none typecheck=none test=none build=none has_source=false`,
-  contains 0 `.py` files, and CI is **success**. Empty matrices are the template's *correct*
-  behaviour, distinguishable from VV-2026-10-017's bug only by *why* they are empty.
+- **Proven safe, not assumed — twice.** The detection rule itself was read from the workflow on
+  the branch: Python is added to `lint`, `typecheck` and `test` when `pyproject.toml` exists **or**
+  `requirements*.txt` matches **or** `find . -name '*.py'` returns anything. These repos have no
+  manifest and exactly one `.py`, so deleting `main.py` removes the last trigger; no other Python
+  file exists in any of the ten (verified per repo). And `viavitae-template` main is already in
+  that shape: run 40572423651 logs `detected lint=none typecheck=none test=none build=none
+  has_source=false`, has 0 `.py` files, and CI is **success**. Empty matrices are therefore the
+  template's *correct* behaviour, distinguishable from VV-2026-10-017's bug only by *why* they are
+  empty.
 - **Honesty test:** after A, a green `CI status` means "no code to test", not "code tested". That
   is why A must not ship without B — otherwise we recreate the decorative-gate complaint we just
   fixed. The difference is that here the claim ("this repo has no source") is verifiable: one
@@ -126,11 +134,13 @@ without recording it is how "temporary" scaffolds become permanent false claims.
 
 ### E. Correct the ten READMEs (independent of A–D, and required either way)
 
-Delete or rewrite the two false sentences (source-of-truth, enterprise-grade template) and the
-`pip`/`npm` Dependabot entries that address a stub. Replaces "the claim is inherited from the
-template" with "the claim is true for this repo": e.g. *"Governance scaffold for the
-`<vertical>` surface. Repository standards live in `viavitae-template`; landing-page content
-lives in `viavitae-demos/templates`."* This closes VV-2026-10-024.
+Rewrite the two false sentences (source-of-truth, enterprise-grade template — each occurs exactly
+once in each of the ten READMEs, which is what makes a scripted exact-match substitution safe), and
+reduce Dependabot to the one ecosystem that can actually read a dependency: keep `github-actions`,
+drop `pip`, `npm`, `terraform` and `docker`. Replaces "the claim is inherited from the template"
+with "the claim is true for this repo": e.g. *"Governance scaffold for the `<vertical>` surface.
+Repository standards live in `viavitae-template`; landing-page content lives in
+`viavitae-demos/templates`."* This closes VV-2026-10-024.
 
 # 3. Recommended package and ordering
 
@@ -163,8 +173,11 @@ on the first push after merge (already demonstrated on the PR heads).
   reconciled or destroyed by any future apply — safe to do out-of-band, but they are also not
   guarded by the control plane, so drift between the ten repos will not be detected. Note it as a
   known limitation rather than pretending Terraform owns these files.
-- **Supply chain:** `main.py` deletion has no dependency effect; removing the stub's `pip`
-  Dependabot ecosystem reduces future advisory noise about non-existent code.
+- **Supply chain:** `main.py` deletion has no dependency effect. Trimming Dependabot to
+  `github-actions` *lowers* apparent coverage in a way that must be stated plainly: four ecosystems
+  were listed and none of the four could ever resolve a dependency here, so the removal deletes
+  decoration, not protection. The org-level Dependabot alerts and security updates remain enabled
+  for these repos regardless (they follow the repo's manifests, of which there are none).
 
 # 5. Cost and operational risk
 
