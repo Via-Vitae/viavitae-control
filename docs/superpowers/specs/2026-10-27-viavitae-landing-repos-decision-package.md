@@ -15,6 +15,13 @@ revisions:
     option A confirmed on basilica (run 40587988368, head f73ee589, gate CLEAN)"
   - "2026-10-27 pre-pilot correction: §1 Dependabot row sharpened from one stub ecosystem to
     four decorative ones, and option A's detection rule quoted from the workflow itself"
+  - "2026-10-28 independent review (register E48): the basilica pilot has **merged** (`main`
+    `6e9d18fd`, CI success), so nine repos remain, not ten; the Dependabot defect is mis-framed
+    here — the config file instructs per-repo trimming and each untrimmed entry is a **weekly
+    failing check run**, not decoration, and it spans **12** repos (45 dead entries), not 10;
+    required status contexts measured on all ten landings (the safety argument §2A was missing);
+    post-merge legs are **skipped, not absent**; §3's ordering rule and §5's `git revert`
+    rollback claim are both wrong as written — see §10"
 ---
 
 # Why this document exists
@@ -37,18 +44,18 @@ prefix, cross-checked against `repos_data.tf` — never typed from memory (see a
 
 | measurement | value | how |
 |---|---|---|
-| landing repos | 10 | API filter |
-| files per repo | 19, identical count in all 10 | `git/trees/main?recursive=1`, blobs only |
-| Python files per repo | **1** | tree census |
+| landing repos | 10 open propagation PRs at the time of writing; **nine** now — basilica's #6 merged as `main` `6e9d18fd` on 2026-10-28 (E48) | API filter + `pulls?state=open` |
+| files per repo | 19 in each of the nine; 18 in basilica after its stub deletion | `git/trees/main?recursive=1`, blobs only |
+| Python files per repo | **1** in each of the nine (`main.py`, identical blob `5596b447…` in all nine); **0** in basilica | tree census |
 | that file | `main.py`, 528 bytes, PyCharm sample: `This is a sample Python script`, `def print_hi(name)`, `print_hi('PyCharm')` | contents API at `ref=main` |
 | markdown files | 8 · toml/yaml 6 · js/ts/jsx/vue **0** | tree census |
 | deployable web artifacts | **none** — no `index.html`, no `package.json`, no `hugo.toml`, no `netlify.toml`, no `Dockerfile` | tree census |
 | declared coverage floor | `COVERAGE_MIN: 80` in all 10 | `ci.yml` at the PR branch |
-| Dependabot | declares **five** ecosystems all pointed at `/`: `pip`, `npm`, `github-actions`, `terraform`, `docker` — and the repo contains **0** files any of them can read except the Actions workflow, so **four of five are decorative** | `.github/dependabot.yml` + tree census (0 `.tf`, 0 `Dockerfile`, 0 `package.json`, 0 `requirements*`) |
+| Dependabot | declares **five** ecosystems all pointed at `/`: `pip`, `npm`, `github-actions`, `terraform`, `docker` — and the repo contains **0** files any of them can read except the Actions workflow. **Corrected framing (E48): the file's own header orders this** — `Delete the ecosystems that do not apply to the repository type`, and the Terraform and Docker blocks each say `Delete this block elsewhere`. So the defect is an **unfinished, documented step**, and the four stale entries are not harmless: each is attempted weekly and reported as a **failing check run** on `main`. Measured, not inferred | `.github/dependabot.yml` header at `ref=main` + `actions/runs?event=dynamic`: cathedral 4 failures × 3 Mondays (10-12/10-19/10-26), basilica's stopped the week after its trim merged |
 | Terraform | 10 blocks, `tier = "site"`, `manage_files = false` in **all** 10 | `repos_data.tf` |
 | README | 12.9–13.0 KB, 10 distinct hashes (individually parameterised), and **all 10** contain "single source of truth for how a ViaVitae repository looks" and "Enterprise-grade repository template for regulated, EU-hosted software delivery" | contents API |
 | the real template | `viavitae-template` makes the same two claims, has **no** `main.py` — and is the only repo where the claim is true | contents API |
-| basilica CI now | `Lint (python)`, `Test (python)`, `Typecheck (python)`, `CI status` **fail**; `Detect stack`, `Trivy`, `Semgrep`, `Compliance status`, `Action SHA pinning`, `Governance files`, `CodeQL` **pass** | run 40576614237 |
+| basilica CI now | **merged and green**: `main` `6e9d18fd` CI success. The nine remaining PR heads still fail `Lint (python)`, `Test (python)`, `Typecheck (python)` and the required `CI status`, while `Detect stack`, `Trivy`, `Semgrep`, `Compliance status`, `Action SHA pinning`, `Governance files`, `CodeQL` pass | check-runs per head + run list on `main` (E48) |
 | ADR registry | `viavitae-docs/content/architecture/adr-NNNN-*.md`, 12 files, numbers 0–11, next free **0012** | tree census |
 | where landing-page content actually is | `viavitae-demos/templates` (Next.js, 135 files) — established 2026-10-26 | prior census, unchanged |
 
@@ -89,6 +96,13 @@ python legs skip, and `CI status` aggregates only the legs that genuinely run.
   is why A must not ship without B — otherwise we recreate the decorative-gate complaint we just
   fixed. The difference is that here the claim ("this repo has no source") is verifiable: one
   `git ls-files '*.py'` returns nothing.
+- **Second safety pillar, measured on all ten (E48) and missing from the first edition:** the
+  removal is safe only if no *required* status check names a python leg. Measured live on every
+  one of the ten landings: classic branch protection (no rulesets anywhere) with
+  `required_status_checks.contexts = ["CI status", "Compliance status"]` and `strict = true`.
+  Both aggregates survive the deletion, so merges cannot freeze with an "expected" check that no
+  workflow reports. Stack detection alone was not sufficient evidence — in a repo whose contexts
+  name `Test (python)` byte-for-byte, option A would block every later merge instead of cleaning it.
 - Weakens nothing: `main.py` is not a test, not a gate, not a control. No test is deleted or
   relaxed. If real Python ever returns, detection re-arms the legs automatically — desired.
 - Cost: ten single-file deletions; no CI minutes; no spend.
@@ -141,28 +155,42 @@ without recording it is how "temporary" scaffolds become permanent false claims.
 ### E. Correct the ten READMEs (independent of A–D, and required either way)
 
 Rewrite the two false sentences (source-of-truth, enterprise-grade template — each occurs exactly
-once in each of the ten READMEs, which is what makes a scripted exact-match substitution safe), and
+once in each of the ten READMEs, which is what makes a scripted exact-match substitution safe) and
 reduce Dependabot to the one ecosystem that can actually read a dependency: keep `github-actions`,
-drop `pip`, `npm`, `terraform` and `docker`. Replaces "the claim is inherited from the template"
-with "the claim is true for this repo": e.g. *"Governance scaffold for the `<vertical>` surface.
-Repository standards live in `viavitae-template`; landing-page content lives in
+drop `pip`, `npm`, `terraform` and `docker`. **Split out (E48): the Dependabot half is not a
+prose-truthfulness item and it is not confined to the ten.** It is a live integration failing
+weekly in **12** repos — see register VV-2026-10-026, whose remedy set also includes
+`viavitae-brand` and `viavitae-clients`, and whose brand case is the *opposite* defect (real
+manifests in `tools/` and `build/` that no entry points at, so those dependencies are unmonitored)
+and needs `directory:` re-pointing, not deletion. Replaces "the claim is inherited from the
+template" with "the claim is true for this repo": e.g. *"Governance scaffold for the `<vertical>`
+surface. Repository standards live in `viavitae-template`; landing-page content lives in
 `viavitae-demos/templates`."* This closes VV-2026-10-024.
 
 # 3. Recommended package and ordering
 
-1. **E** — README truthfulness (10 edits) and Dependabot scope. No CI consequence.
-2. **A** — remove `main.py` (10 deletions) on the same open branches, so each propagation PR
-   becomes: matrix fix + install fix + scaffold removal. Each PR body updated to say all three.
+1. **E-README** — truthfulness prose (owner wording, currently blocked on VV-2026-10-025). No CI
+   consequence. The Dependabot half moved out to VV-2026-10-026 (12 repos) and is executable now.
+2. **A** — remove `main.py` (nine deletions) on the same open branches, so each propagation PR
+   becomes: matrix fix + install fix + scaffold removal + Dependabot trim. Each PR body updated to
+   say all four, and it must keep a standalone `ai:review` trailer — the `provenance.yml` gate
+   re-runs on `edited` and a body without the trailer turns the gate BLOCKED (§28 item 18).
 3. **B** — ADR-0012 in `viavitae-docs` recording the exemption and the D1 scope decision. Needs
    authorization to write that repo.
-4. Then merge the ten PRs. Expected post-merge state per repo: `Detect stack`, `Trivy`,
-   `Semgrep`, `Compliance status`, pinning, governance, `CodeQL` run and pass; python legs absent
-   because there is no Python. `CI status` green **and** explainable.
-5. Verify per repo by ref, not by badge: read the run's jobs and step counts, confirming no
-   python job is silently skipped-but-expected.
+4. Then merge the nine PRs. Expected post-merge state per repo, measured on basilica `main` rather
+   than predicted (E48): `Detect stack`, `Trivy`, `Semgrep`, `Compliance status`, pinning,
+   governance, `CodeQL`, `Licence compliance`, `Secret scanning` run and pass, **and the python and
+   build legs still appear — as `skipped` check runs with `steps: 0`, not absent**. Their displayed
+   names stay literally `Lint (${{ matrix.stack }})`, `Test (${{ matrix.stack }})` etc., because an
+   empty matrix never expands the `name:` expression; `CI status` green **and** explainable.
 
-Ordering rule that stays in force: **do not merge before step 2**, or the repo's `main` turns red
-on the first push after merge (already demonstrated on the PR heads).
+Ordering rule, **corrected (E48)**: the first edition said "do not merge before step 2", which
+permits merging after A but before B — and A-without-B is precisely the *silent green* §4 says this
+package must avoid. The rule is now: **A and B land together, or the exemption's absence is
+registered as an open finding until the ADR exists.** Basilica already violated this sequencing in
+the order the first edition recommended: it is CI-green on `main` with **no ADR written**, so its
+green state currently has no documented justification. That is the cost of the ordering error, and
+it is why VV-2026-10-024 cannot be closed on basilica yet.
 
 # 4. Security, privacy and compliance implications
 
@@ -194,8 +222,15 @@ on the first push after merge (already demonstrated on the PR heads).
 | D2 (real landing sites) | the largest engineering item in the estate roadmap | scope explosion | ten repos remain placeholders asserting they are production surfaces |
 | merge without A–E | 0 | **breaks `main` in ten repos today** | — |
 
-Rollback for every item is a single `git revert` / one file restore; nothing here touches
-credentials, org settings, DNS, hosting or Terraform state.
+Rollback, **corrected against the measured merge shape (E48)**: the first edition promised "a
+single `git revert` / one file restore" per item. This org squash-merges, so the three concerns
+arrive on `main` as **one commit touching three files** — basilica `6e9d18fd` carries
+`.github/dependabot.yml`, `.github/workflows/ci.yml` and `main.py` with a single parent. `git
+revert` of it therefore re-adds the stub, re-breaks `CI status` and un-trims Dependabot at once.
+Per-item rollback is a **new commit** restoring one file (`gh api .../contents/<path> --method
+PUT`, or `git checkout <old-sha> -- <path>`), not a revert; the one exempt case is that a
+`Revert ` subject skips the provenance trailer rule. Nothing here touches credentials, org
+settings, DNS, hosting or Terraform state.
 
 # 6. STOP conditions (do not proceed past these without the owner)
 
@@ -224,14 +259,27 @@ credentials, org settings, DNS, hosting or Terraform state.
 
 # 8. Acceptance criteria for this package
 
-- Each of the ten repos: `gh api .../contents/main.py?ref=main` returns 404 **and** the README no
-  longer claims to be the org's repository template or the source of truth for new repos.
-- One approved ADR (proposed number 0012, verify free at write time) naming all ten repos, the
-  evidence, the re-arm condition, and the fact that `COVERAGE_MIN: 80` is declared-but-unenforced
-  for them.
-- Ten propagation PRs green and mergeable, each body describing all three changes it carries.
-- Register: VV-2026-10-024 closed only after the ten READMEs are re-read **by ref**, not from a
-  local clone; VV-2026-10-005 moves from PENDING to a recorded D1/D2/D3 choice.
+Split (E48) so that the executable work is not gated on the blocked work. The first edition
+bundled "`main.py` gone" with "README no longer claims template status" into one criterion, which
+made nine repos' CI-honesty depend on an owner editorial decision about governance prose and could
+have kept `main` red indefinitely while nobody owed anything.
+
+**Gate A+B — closes VV-2026-10-020's landing half, executable today:**
+- Each of the nine remaining repos: `main.py` absent at `ref=main` after its PR merges (basilica
+  already satisfies this — verified 0 `.py` blobs at `ref=main`).
+- One approved ADR (proposed number 0012, verify free at write time) that names the ten repos
+  **and states the predicate that admits a repo to the class**, not only the list — otherwise an
+  eleventh scaffold created later sits outside the exemption while being equally untested.
+  Must record: the evidence, the re-arm condition, `COVERAGE_MIN: 80` declared-but-unenforced, and
+  the D1 scope choice.
+- Nine propagation PRs green on their heads and mergeable; `CI status` and `Compliance status`
+  both passing, since those are the only required contexts.
+
+**Gate E — closes VV-2026-10-024, blocked on the owner:**
+- README, `docs/architecture.md` and `CONTRIBUTING.md` re-read **by ref** (never from a local
+  clone) showing no template-status claim, with wording the owner chose — and that wording depends
+  on VV-2026-10-025 route (a) or (b), which is still unchosen.
+- VV-2026-10-005 moves from PENDING to a recorded D1/D2/D3 choice.
 
 # 9. Addendum after the basilica pilot (2026-10-27) — this package was partly wrong
 
@@ -268,3 +316,76 @@ document, which is the reason pilots exist.
    it proves the mechanism. Per-repo assertions remain mandatory before each write, and the
    Dependabot file in each repo must be re-read rather than assumed identical (the READMEs already
    proved to be individually parameterised, ten distinct hashes).
+
+# 10. Independent review of this package (2026-10-28) — seven defects, all measured
+
+Every claim above was re-derived from the live API rather than trusted. Verdict on each component:
+
+| component | necessary? | appropriate? | what the review changed |
+|---|---|---|---|
+| A, delete `main.py` in nine repos | **yes** — the sole cause of red on all nine heads | yes; verified per repo: exactly one `.py`, identical blob `5596b447…`, no `tests` dir, no `test_*.py` | added the missing second safety pillar (required contexts) and corrected "legs absent" to "legs skipped" |
+| B, ADR-0012 | **yes** | yes, but must state a class predicate, not only a list | must now land *with* A, not after it; basilica is already out of compliance with that rule |
+| C, tests for `print_hi` | correctly **rejected** | rejection correct | unchanged |
+| D, scope decision (D1 recommended) | yes | D1 correct on the evidence | unchanged |
+| E, README prose | yes | correctly **not executed** by script | Dependabot half split out into VV-2026-10-026 with a wider scope and different remedies |
+
+**1. The Dependabot defect was mis-framed and under-scoped.** The config file is not advertising
+protection it lacks — it *orders* the reader to trim: `Delete the ecosystems that do not apply to
+the repository type`, and the Terraform and Docker blocks say `Delete this block elsewhere`. The
+step was simply never executed. And the dead entries are not harmless: each is attempted on the
+declared weekly Monday schedule and reported as a failing check run on `main`. Measured on
+cathedral: three consecutive Mondays, each with `github_actions` **success** and `pip`,
+`npm_and_yarn`, `terraform`, `docker` **failure** — 4 failing runs per repo per week, annotated
+`Dependabot encountered an error performing the update`. Basilica's four failures stopped the week
+its trim merged, which is the before/after control. A new read-only guard,
+`scripts/check_dependabot_scope.py`, measures the whole estate: **45 dead entries across 12
+repos** (nine landings `4` each, `viavitae-template` `4`, `viavitae-brand` `4`,
+`viavitae-clients` `1`) and **5 real manifests that no entry points at**. So the template must not
+be trimmed as part of a sweep — the superset is its purpose — but it is *not* exempt from the cost:
+the template's own repo fails four updates every week too.
+
+**2. The mirror defect, new finding VV-2026-10-027.** `viavitae-brand` holds `tools/requirements.txt`
+and `build/package.json` while its `pip` and `npm` entries point at `/`. Those dependencies get no
+version updates and no Dependabot alerts from that entry — a monitoring blind spot, not decoration —
+while `api` and `docs` ship a root `Dockerfile` with no `docker` entry at all, and `infra` has
+`ansible` python requirements unmonitored. The remedy there is `directory:` re-pointing, **not**
+deletion; a blanket trim across "repos with dead entries" would have made brand worse.
+
+**3. A necessary safety argument was missing.** Option A's case rested on stack detection. The
+load-bearing fact is that on all ten landings the required contexts are exactly
+`CI status` and `Compliance status` (classic protection, no rulesets), so a removed leg can never
+leave a merge waiting on a check that no longer exists. Verified, not assumed.
+
+**4. The expected post-merge state was wrong.** Legs do not disappear; they remain as `skipped`
+check runs whose names are the unexpanded expressions `Lint (${{ matrix.stack }})`,
+`Test (${{ matrix.stack }})`, `Build (${{ matrix.stack }})`. Cosmetic in the code, unhelpful to an
+auditor reading a checks page, and worth naming so nobody mistakes a skipped leg for a missing gate.
+
+**5. The ordering rule contradicted §4.** "Do not merge before step 2" permits A-without-B, i.e.
+the silent green this package says it exists to prevent — and basilica is in exactly that state now
+(CI green, no ADR). §3 corrected; §8 split into a Gate A+B and a Gate E so blocked prose cannot
+hold nine repos red.
+
+**6. The rollback promise was false as written.** See §5: squash merges collapse three concerns
+into one commit, so `git revert` is all-or-nothing. Per-item rollback needs a new single-file
+commit.
+
+**7. Numbers stated without their counting rule are not reproducible.** §9.1 reports "25" README
+references and "23" architecture references. Measured under one rule (case-insensitive
+occurrences): README 25, `docs/architecture.md` **26**, `CONTRIBUTING.md` 4 — the 23 is *lines*
+containing a match, not mentions. Likewise "186 → 46 lines" is **185 → 45** under
+`splitlines()`; the earlier figures counted the trailing newline. Each number in a compliance
+artifact must name its instrument, as E33 requires for alert counts.
+
+**Instrument defects found in the reviewer's own tooling** (recorded because they are the reason
+the first pass could have been published wrong): `gh api <path> -f ref=main` silently switches the
+verb to **POST**, so every contents read returned 404 and looked like absent files — the pilot
+script's explicit `--method GET` was the tell; `--jq '[.content,.sha] | @tsv'` escapes the newlines
+inside the base64 payload and decodes to garbage (`UnicodeDecodeError 0x9d`), so one JSON read is
+required; a first-pass "does this manifest exist anywhere" test ignored `directory:` and would have
+filed `viavitae-brand` as *having* python coverage; and the same test flagged 12 pnpm workspace
+members (qa, demos, web) as unmonitored until `pnpm-workspace.yaml` was read — all six qa entries
+were false positives. The pilot script also **aborted** if an item was already done, which in a
+nine-repo sweep makes a partial run unresumable; the replacement driver treats DONE as skip and
+only an unexpected state as abort, and its trim output was checked byte-for-byte against the
+already-merged, CI-green basilica artifact rather than against its own assertions.
