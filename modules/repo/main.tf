@@ -32,6 +32,10 @@ resource "github_repository" "this" {
   license_template       = var.license_template != "" ? var.license_template : null
   delete_branch_on_merge = true
 
+  # Declared, not hand-toggled: see the variable comment for VV-2026-10-025. Only
+  # viavitae-template sets this true; every other repo keeps the GitHub default.
+  is_template = var.is_template
+
   # Disable legacy/attack-surface features by default (least privilege).
   has_issues   = true
   has_projects = false

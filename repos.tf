@@ -19,6 +19,10 @@ module "repo" {
   # never hits a "Branch not found" error. See modules/repo/main.tf guard.
   default_branch_exists = each.value.default_branch_exists
 
+  # GitHub template flag (VV-2026-10-025 route (a)): declared here so the flag the
+  # READMEs describe is owned by this control plane rather than set ad hoc in the UI.
+  is_template = each.value.is_template
+
   # Files (CODEOWNERS / security.yml / README / LICENSE) are only written when
   # manage_files = true — false for all existing repos (non-destructive baseline).
   manage_files     = each.value.manage_files

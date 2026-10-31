@@ -172,6 +172,18 @@ variable "gitleaks_version" {
   default     = "v8.30.1"
 }
 
+# Declared rather than toggled in the UI: VV-2026-10-025 exists because
+# viavitae-template's README asserts `This repository is marked **Use this template** on GitHub`
+# while `is_template` measured false for 0 of 31 repos. Setting that flag through the web UI
+# would leave the one true template undeclared in this control plane — the same drift class the
+# register warns about (a provisioning path outside Terraform). Default false keeps every other
+# repo byte-identical to its current state.
+variable "is_template" {
+  description = "Mark the repository as a GitHub template repository (enables \"Create this repository from a template\")."
+  type        = bool
+  default     = false
+}
+
 variable "pre_commit_hooks_version" {
   description = "pre-commit/pre-commit-hooks release version (e.g. v5.0.0)."
   type        = string
