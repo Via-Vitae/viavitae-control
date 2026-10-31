@@ -5,11 +5,17 @@ Why this exists (evidence VV-2026-10-026): `viavitae-template` ships `.github/de
 as a deliberate SUPERSET and tells the reader so in its own header comment —
 "Delete the ecosystems that do not apply to the repository type". Repos generated from it
 were never trimmed, so they declare ecosystems whose manifest does not exist. That is not
-cosmetic: every dead entry is attempted on the declared schedule and reported as a FAILING
-check run on the default branch (measured: 4 failures per repo per week on
-`viavitae-landing-cathedral` for three consecutive Mondays, and those failures stopped in
-`viavitae-landing-basilica` the week after its trim merged). An estate that mutes its own
-monitoring noise cannot tell a real Dependabot failure from scaffolding.
+cosmetic: every dead entry is attempted on the declared schedule, and 44 of the 45 measured
+dead entries FAILED on the 2026-10-26 weekly cycle (nine landings and the template 4 each,
+brand 3, clients 1). The 45th — brand's `pip` at `/` — PASSED while resolving nothing, which
+is the worse outcome: a dead entry can be silently vacuous instead of red. An estate that
+mutes its own monitoring noise cannot tell a real Dependabot failure from scaffolding.
+
+`--check-runs` exists because a config verdict alone is not sufficient. It says an entry CAN
+read a manifest; it does not say the updater works. Measured counter-example: `viavitae-qa`
+and `viavitae-web` pass the config check completely while their `npm_and_yarn` updater fails
+repeatedly (off-cycle, on security-update attempts). So exit 0 here means "no dead entry and
+no unmonitored manifest", never "Dependabot is working in this repo".
 
 The classifier is DIRECTORY-AWARE on purpose. A naive "does any requirements.txt exist
 anywhere" test gives the wrong answer for `viavitae-brand`, which holds
@@ -17,18 +23,19 @@ anywhere" test gives the wrong answer for `viavitae-brand`, which holds
 at `/`: those entries are dead *and* the real manifests are unmonitored — two defects, not
 one. `--selftest` locks that behaviour in offline, without network.
 
-Credential: this needs Contents:read on every org repo. The CI read-only PAT
-(ORG_READ_TOKEN) carries only Repository Administration + Metadata, so this is run by an
-operator (`gh auth token`), NOT wired into audit.yml — adding it to CI would mean widening
-a CI credential, which is a privilege increase and the owner's call.
+Credential: this needs Contents:read on every org repo, plus Actions:read with --check-runs.
+The CI read-only PAT (ORG_READ_TOKEN) carries only Repository Administration + Metadata, so
+this is run by an operator (`gh auth token`), NOT wired into audit.yml — adding it to CI would
+mean widening a CI credential, which is a privilege increase and the owner's call.
 
 Exit contract follows scripts/check_plan_selfcite.sh:
   0  every entry in every repo scanned resolves to at least one manifest
-  1  at least one dead entry (or an unmonitored manifest, in report form)
+  1  a dead entry, an unmonitored manifest, or (--check-runs) a failing updater
   2  nothing checkable (no repo readable, config absent) — never reported as a pass
 
 Usage:
   .venv/bin/python scripts/check_dependabot_scope.py [--org Via-Vitae] [--repos a,b]
+  .venv/bin/python scripts/check_dependabot_scope.py --check-runs [--window 2026-10-25..2026-10-31]
   .venv/bin/python scripts/check_dependabot_scope.py --selftest
 """
 from __future__ import annotations
@@ -39,6 +46,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import date, timedelta
 from pathlib import PurePosixPath
 
 import yaml
@@ -118,6 +126,67 @@ def in_workspace(directory, patterns):
             if rest and "/" not in rest:
                 return True
     return False
+
+
+# Dependabot names its update runs `"<ecosystem> in <directory> ... - Update #<id>"`, using
+# its own internal ecosystem ids and a `/.` suffix for the repo root. Graph-update rows
+# ("Graph Update: uv") carry no ` in ` and are not a version-update attempt.
+ECO_ALIAS = {"npm_and_yarn": "npm", "github_actions": "github-actions", "pip": "pip",
+             "docker": "docker", "terraform": "terraform"}
+RUN_NAME = re.compile(r"^(?P<eco>[a-z_]+) in (?P<dir>/\S*)\s")
+
+
+def parse_update_run_name(name):
+    """Return (config_ecosystem, normalised_directory) or None if not a version update."""
+    m = RUN_NAME.match(name or "")
+    if not m:
+        return None
+    eco = ECO_ALIAS.get(m.group("eco"), m.group("eco"))
+    d = m.group("dir")
+    if d in ("/.", "/"):
+        d = "/"
+    else:
+        d = "/" + d.strip("/").lstrip(".")
+    return eco, d
+
+
+def declared_entries(config_text):
+    """The (ecosystem, normalised directory) pairs a config declares. [] if unparseable."""
+    try:
+        cfg = yaml.safe_load(config_text)
+        updates = (cfg or {}).get("updates") or []
+    except Exception:  # noqa: BLE001 - classify() already reports this shape
+        return []
+    pairs = []
+    for u in updates if isinstance(updates, list) else []:
+        if not isinstance(u, dict):
+            continue
+        eco = u.get("package-ecosystem", "?")
+        for d in ([u["directory"]] if "directory" in u else u.get("directories") or ["/"]):
+            norm = "/" + str(d).strip("/") if str(d).strip("/") not in ("", "/") else "/"
+            pairs.append((eco, norm))
+    return pairs
+
+
+def failing_update_targets(repo, window):
+    """(ecosystem, dir) pairs whose update attempt FAILED in the window.
+
+    `window` must be a GitHub `created` RANGE (`start..end`). A bare date means "on that one
+    day", which is how the first version of this flag reported "no failing updater" for repos
+    known to have failed on 2026-10-26 -- a category that can never fire is not a control.
+
+    Returns None on a read failure -- the caller must report UNKNOWN, never zero.
+    """
+    out, err = gh(f"repos/{repo}/actions/runs?event=dynamic&created={window}&per_page=100",
+                  "--jq", '[.workflow_runs[] | select(.conclusion=="failure") | .name] | join("\\n")')
+    if out is None:
+        return None, err
+    targets = set()
+    for line in out.split("\n"):
+        parsed = parse_update_run_name(line.strip())
+        if parsed:
+            targets.add(parsed)
+    return targets, None
 
 
 def by_directory(paths):
@@ -269,6 +338,29 @@ def selftest():
         print(f"  {'ok  ' if got == want else 'FAIL'} in_workspace({d}, {list(pats)}) = {got}")
         if got != want:
             rc = 1
+    # run-name parser: the shapes Dependabot actually emits
+    name_cases = [
+        ("terraform in /. - Update #1652984220", ("terraform", "/")),
+        ("npm_and_yarn in /. - Update #1652981921", ("npm", "/")),
+        ("pip in /tools for Pillow - Update #1649387951", ("pip", "/tools")),
+        ("pip in / for ruff, mypy - Update #1652982886", ("pip", "/")),
+        ("github_actions in /. - Update #1652978444", ("github-actions", "/")),
+        ("Graph Update: uv", None),           # not a version-update attempt
+        ("CI", None),
+    ]
+    for raw, want in name_cases:
+        got = parse_update_run_name(raw)
+        print(f"  {'ok  ' if got == want else 'FAIL'} parse {raw[:46]!r} -> {got}")
+        if got != want:
+            rc = 1
+    # declared_entries must agree with classify() about what the config claims
+    pairs = declared_entries('version: 2\nupdates:\n  - package-ecosystem: "pip"\n    directory: "/tools"\n'
+                             '  - package-ecosystem: "github-actions"\n    directory: "/"\n')
+    if sorted(pairs) != [("github-actions", "/"), ("pip", "/tools")]:
+        print(f"  FAIL declared_entries -> {pairs}")
+        rc = 1
+    else:
+        print(f"  ok   declared_entries -> {pairs}")
     print("SELFTEST:", "PASS" if rc == 0 else "FAIL")
     return rc
 
@@ -278,7 +370,16 @@ def main():
     ap.add_argument("--org", default="Via-Vitae")
     ap.add_argument("--repos", help="comma-separated subset (default: whole org)")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--check-runs", action="store_true",
+                    help="also report declared entries whose updater run FAILED in the window")
+    ap.add_argument("--window", default=None,
+                    help="GitHub created range for --check-runs, e.g. 2026-10-25..2026-10-31 "
+                         "(default: the last 8 days)")
     args = ap.parse_args()
+
+    if args.window is None:
+        today = date.today()
+        args.window = f"{today - timedelta(days=8)}..{today}"
 
     if args.selftest:
         sys.exit(selftest())
@@ -293,7 +394,7 @@ def main():
             sys.exit(2)
         repos = [r for r in out.split("\n") if r.strip()]
 
-    checked = violations = unreadable = 0
+    checked = violations = unreadable = run_read_failures = 0
     for repo in sorted(repos):
         default, err = gh(f"repos/{repo}", "--method", "GET", "--jq", ".default_branch")
         if default is None:
@@ -313,15 +414,27 @@ def main():
         ws_text, _ = read_contents(repo, "pnpm-workspace.yaml", ref)
         root_pkg, _ = read_contents(repo, "package.json", ref)
         dead, unmon = classify(cfg, paths, workspace_patterns(ws_text, root_pkg))
-        if dead or unmon:
+        failing, ferr = set(), None
+        if args.check_runs:
+            failing, ferr = failing_update_targets(repo, args.window)
+            if failing is None:                       # unknown is never a pass
+                run_read_failures += 1
+                print(f"  {repo}: WARN update-run read failed ({ferr}) -> outcome UNDETERMINED")
+                failing = set()
+        declared = declared_entries(cfg)
+        confirmed = sorted(set(declared) & failing) if failing else []
+        if dead or unmon or confirmed or ferr:
             violations += 1
             print(f"  {repo} (@{ref}):")
             for d in dead:
-                print(f"      DEAD        {d}  <- attempted weekly, reported as a failing check")
+                print(f"      DEAD        {d}  <- no manifest here: attempt fails, or passes vacuously")
             for u in unmon:
                 print(f"      UNMONITORED {u}  <- real manifest no entry points at")
+            for eco, d in confirmed:
+                print(f"      FAILING     {eco} @ {d}  <- updater errored within {args.window}")
         else:
-            print(f"  {repo} (@{ref}): all {len(cfg.splitlines())}-line config resolves")
+            extra = ", no failing updater" if args.check_runs else ""
+            print(f"  {repo} (@{ref}): all {len(cfg.splitlines())}-line config resolves{extra}")
 
     if checked == 0:
         sys.stdout.flush()   # keep the verdict after the per-repo lines in a captured transcript
@@ -330,8 +443,9 @@ def main():
         sys.exit(2)
     sys.stdout.flush()
     print(f"\nSUMMARY: {checked} repo(s) with a dependabot config, {violations} with "
-          f"a dead or unmonitored entry, {unreadable} unreadable")
-    sys.exit(1 if violations or unreadable else 0)
+          f"a dead, unmonitored or failing entry, {unreadable} unreadable, "
+          f"{run_read_failures} run-outcome undetermined")
+    sys.exit(1 if violations or unreadable or run_read_failures else 0)
 
 
 if __name__ == "__main__":

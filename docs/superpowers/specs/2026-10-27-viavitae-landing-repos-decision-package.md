@@ -22,6 +22,12 @@ revisions:
     required status contexts measured on all ten landings (the safety argument §2A was missing);
     post-merge legs are **skipped, not absent**; §3's ordering rule and §5's `git revert`
     rollback claim are both wrong as written — see §10"
+  - "2026-10-31 re-validation of §10 (register E49): two of §10's own quantifiers were over-stated
+    — **44** of the 45 dead entries fail weekly, brand's `pip @ /` **passes vacuously** — and
+    VV-2026-10-027 is narrowed, because Dependabot's security-update path does reach undeclared
+    directories. The outcome check added to the guard found a defect §10 could not see: failing
+    npm updaters in `viavitae-qa` and `viavitae-web` on valid configs (VV-2026-10-028). All nine
+    PRs re-confirmed current against `main` and still blocked on `CI status`; 0012 still free."
 ---
 
 # Why this document exists
@@ -333,23 +339,29 @@ Every claim above was re-derived from the live API rather than trusted. Verdict 
 protection it lacks — it *orders* the reader to trim: `Delete the ecosystems that do not apply to
 the repository type`, and the Terraform and Docker blocks say `Delete this block elsewhere`. The
 step was simply never executed. And the dead entries are not harmless: each is attempted on the
-declared weekly Monday schedule and reported as a failing check run on `main`. Measured on
-cathedral: three consecutive Mondays, each with `github_actions` **success** and `pip`,
-`npm_and_yarn`, `terraform`, `docker` **failure** — 4 failing runs per repo per week, annotated
-`Dependabot encountered an error performing the update`. Basilica's four failures stopped the week
-its trim merged, which is the before/after control. A new read-only guard,
+declared weekly Monday schedule. Measured per repo on the 2026-10-26 cycle, **44 of the 45 dead
+entries produced a FAILING check run** on `main` (nine landings and the template 4 each, brand 3,
+clients 1) — cathedral shows three consecutive Mondays each with `github_actions` **success** and
+`pip`, `npm_and_yarn`, `terraform`, `docker` **failure**, annotated `Dependabot encountered an error
+performing the update`. The exception is the more alarming half, corrected in E49: **brand's
+`pip @ /` PASSED on 10-12, 10-19 and 10-26 while resolving nothing** — a dead entry can be silently
+green, so "is it red?" is not a test for "does it work?". Basilica is the control on the other side:
+its four failures stopped the week its trim merged. A new read-only guard,
 `scripts/check_dependabot_scope.py`, measures the whole estate: **45 dead entries across 12
 repos** (nine landings `4` each, `viavitae-template` `4`, `viavitae-brand` `4`,
 `viavitae-clients` `1`) and **5 real manifests that no entry points at**. So the template must not
 be trimmed as part of a sweep — the superset is its purpose — but it is *not* exempt from the cost:
 the template's own repo fails four updates every week too.
 
-**2. The mirror defect, new finding VV-2026-10-027.** `viavitae-brand` holds `tools/requirements.txt`
-and `build/package.json` while its `pip` and `npm` entries point at `/`. Those dependencies get no
-version updates and no Dependabot alerts from that entry — a monitoring blind spot, not decoration —
-while `api` and `docs` ship a root `Dockerfile` with no `docker` entry at all, and `infra` has
-`ansible` python requirements unmonitored. The remedy there is `directory:` re-pointing, **not**
-deletion; a blanket trim across "repos with dead entries" would have made brand worse.
+**2. The mirror defect, finding VV-2026-10-027 (narrowed by E49).** `viavitae-brand` holds
+`tools/requirements.txt` and `build/package.json` while its `pip` and `npm` entries point at `/`, and
+`api` and `docs` ship a root `Dockerfile` with no `docker` entry at all. The first edition of §10 said
+those dependencies get "no version updates and no Dependabot alerts", i.e. total blindness — that was
+too strong. Dependabot's **security-update and dependency-graph** paths do reach undeclared
+directories, proven by brand's own run names (`pip in /tools for Pillow - Update`, 2026-10-24) and
+api's `Graph Update: uv`. What is actually missing is **version currency**: routine bumps and their
+grouped PRs. The remedy is unchanged — re-point `directory:`, do not delete — because a blanket trim
+across "repos with dead entries" would still have made brand worse.
 
 **3. A necessary safety argument was missing.** Option A's case rested on stack detection. The
 load-bearing fact is that on all ten landings the required contexts are exactly
@@ -376,6 +388,14 @@ occurrences): README 25, `docs/architecture.md` **26**, `CONTRIBUTING.md` 4 — 
 containing a match, not mentions. Likewise "186 → 46 lines" is **185 → 45** under
 `splitlines()`; the earlier figures counted the trailing newline. Each number in a compliance
 artifact must name its instrument, as E33 requires for alert counts.
+
+**8. A defect the review round's own tool could not see (VV-2026-10-028).** After adding an outcome
+cross-check to the guard (`--check-runs`), `viavitae-qa` and `viavitae-web` — both fully clean on the
+config check, both with real root manifests — turn out to **fail their `npm_and_yarn` updater**
+(measured failing runs targeting `fast-uri` and `markdown-it`, whose alerts are still open as at
+2026-10-31). Detection works; auto-remediation does not. Cause is undetermined: the per-update log
+requires write access. This is the strongest argument in the package for measuring outcomes rather
+than configurations — a green config audit is not evidence that monitoring functions.
 
 **Instrument defects found in the reviewer's own tooling** (recorded because they are the reason
 the first pass could have been published wrong): `gh api <path> -f ref=main` silently switches the
