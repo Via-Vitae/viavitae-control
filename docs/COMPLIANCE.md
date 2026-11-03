@@ -603,6 +603,74 @@ repo visibility or rotate credentials automatically. The following need explicit
      `policies/AI_WORKFLOW_POLICY.md` §5.2 remains unsatisfiable on this repo.
   Coordination: PR #52 carries the same line on its own branch. `main` is authoritative;
   that branch must rebase and take `main`'s version of `org_settings.tf`.
+- **P1-26 — OPEN (found 2026-11-03 UTC, 2026-11-04 00:24 local): the dependency-update
+  pipeline that PR #58 landed can only produce pull requests that cannot merge, and nothing
+  in this repo records how to adopt one.** `.github/dependabot.yml` configures two ecosystems
+  (`terraform` and `github-actions`), weekly on Monday, each grouped with `patterns: ["*"]`
+  and `open-pull-requests-limit: 5`. Every PR it opens is authored by `dependabot[bot]` with
+  the bot's own body. `.github/PULL_REQUEST_TEMPLATE.md`, landed in the same PR, does end with
+  a standalone `ai:top` line - but GitHub pre-fills a template only for **human**-opened PRs,
+  so the bot never receives it. `provenance` greps the PR title and body for exactly that
+  trailer (`provenance.yml:53-59`) and it is the **only required status check** on
+  `protect-main`, with `strict_required_status_checks_policy=true` and `bypass_actors=[]`
+  (re-read live 2026-11-03: `required_status_checks=[{"context":"provenance"}]`). So the
+  blocking check fails on every bot PR.
+  Measured on the first one it produced, PR #64 (`actions/checkout` 4.4.0 -> 7.0.1, opened
+  2026-11-03T21:54:45Z, still `OPEN`): run `41726065687` `provenance` **fail** in 3s, and run
+  `41726065682` `audit` **fail** in 10s at `Check toolchain pins match the manifest`.
+  **Two independent defects sit in that single PR and must not be blurred:**
+  1. provenance (blocking) - no `ai:<tier>` trailer in the bot's body;
+  2. the pin guard (advisory) - the proposed ref `3d3c42e5aac5ba805825da76410c181273ba90b1`
+     is a genuine commit (verified: `GET /repos/actions/checkout/commits/v7.0.1` returns that
+     sha, dated 2026-07-17T18:45:11Z; tag `v7` is a lightweight ref to the same commit), while
+     `toolchain.yml` declares canonical `11d5960a…` = `v4.4.0`, so invariant I2 fails **by
+     design**. Converging onto a two-major jump is a Tier 3 decision under the manifest's own
+     selection rule - take the resolved commit from a **runner log**, and compare what each ref
+     actually installs before moving anything (the DOWNGRADE WARNING in `toolchain.yml`). What
+     `v7` installs and which Node runtime it uses was **not** measured here.
+     The bump also invalidates its own inline comment: the `+` line keeps
+     `# v4.4.0 (tag v4)`. Comments in this repo are evidence; merging it as-is would leave a
+     false one on `main`.
+  **Not a hard deadlock, and that is the actual gap.** `provenance.yml` triggers on
+  `opened, edited, synchronize`, and its own header (lines 21-25, read 2026-11-04) states the
+  purpose plainly: `edited` "re-checks provenance when the author adds the trailer after an
+  initial failure", because "without `edited`, a rerun after updating the PR body would still use
+  the stale event payload captured at push time". So a human appending a standalone `ai:<tier>`
+  line to the bot's body does re-fire and clear the check. That the mechanism works in both
+  directions is recorded from 2026-10-27 (PR #50, now `MERGED`, its head reporting `provenance`
+  `success` on re-read); the intermediate `BLOCKED` episode comes from that session's record and
+  is **not** independently re-verifiable today, because the older head commits' runs were not
+  re-read. What does not exist is any document that says so. `CONTRIBUTING.md` item 4
+  (landed by this same PR #58) states the trailer rule, names both checking layers, and ends
+  "There is no non-AI escape hatch: a purely human commit uses `ai:review`" - while never
+  mentioning a bot-authored PR. `policies/AI_WORKFLOW_POLICY.md` §3.11 says the same. So the
+  first red required check a maintainer meets arrives with no recorded path, and the two
+  documents that describe the control read as a prohibition on the only fix that works.
+  **Adjudication reserved to the owner. Three options, no recommendation recorded here:**
+  (a) a human adopts the bump and signs the PR `ai:review`, making the reviewer the accountable
+  author of a bot-produced diff; (b) `provenance.yml` exempts `dependabot[bot]`, which weakens
+  the audit trail precisely where unreviewed automation enters the repo; (c) keep it blocking and
+  treat bot output as a signal to hand-author the change in a human PR, which keeps provenance
+  total but makes `open-pull-requests-limit: 5` a standing queue of PRs that always close
+  unmerged. Whether a bot-authored diff may carry an `ai:` trailer at all is a
+  compliance-adequacy question (SOC 2 CC8.1 / ISO 27001 A.14.2.2 accountability), not a CI one.
+  **One stale claim found while measuring this, not fixed:** `provenance.yml` header lines 27-30
+  still say the job is "advisory" "only once its check name is added to the protect-main
+  ruleset … Until then it is advisory." It has been added. `strict=true` is what made PR #63
+  attempt 1 refuse with "the head branch is not up to date with the base branch" on 2026-11-03,
+  and the ruleset read above is the direct evidence.
+  **Allow-list boundary, stated so this is not over-read:** bot PRs are not currently frozen the
+  way the pnpm bumps froze three repos (P1-11). Live org patterns include `actions/checkout@*`
+  and `dependabot/*` (measured 2026-11-04), so a checkout bump is admissible and its workflow
+  runs and fails honestly. A bump that introduces an action name covered by **no** pattern would
+  still produce `startup_failure` with zero jobs and zero check-runs. The probe for that is
+  `scripts/check_startup_failures.sh` (deliberately not wired into CI, because it needs per-repo
+  run reads that `ORG_READ_TOKEN` is not scoped for) - but it is **not on `main`**. Measured
+  2026-11-04: `policies/README.md` on `main` carries a register row naming that script, added by
+  PR #58, while `git cat-file -e origin/main:scripts/check_startup_failures.sh` fails; the file
+  exists only on `chore/pnpm-canonical-pin` (open PR #57). A register row with no file behind it
+  is a separate defect; it is stated here rather than numbered or fixed, because it is outside
+  this finding.
 
 ## 3. Staged remediation roadmap
 
