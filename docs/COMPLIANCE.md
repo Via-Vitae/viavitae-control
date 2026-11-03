@@ -555,6 +555,54 @@ repo visibility or rotate credentials automatically. The following need explicit
   serial 143, decrypt round-trip verified). Still open: C7/C8/C17/C18 (file deploy needs
   `manage_files`), C3/C4/C5/C9/C10/C11 not re-observed live this session, no state locking
   (C13c), and the backup is on the same disk (no off-host copy).
+- **P1-25 — CLOSED for the apply path 2026-11-03; the blind spot the fix creates is NOT
+  guarded.** `github_organization_settings.billing_email` was missing from
+  `lifecycle.ignore_changes`, which held only `[email, name]` (the `email`/`name` omission
+  fix is PR #27, recorded above). `billing_email` is a REQUIRED provider argument with
+  deliberately no default (GDPR Art. 5(1)(c)), so every plan has to supply something:
+  `.github/workflows/audit.yml` passes `TF_VAR_billing_email=ci-placeholder-not-applied`
+  and a local plan needs a stand-in too. Live `billing_email` is the `viavitae.github`
+  plus-address established by P1-7, so **any apply executed from a placeholder-fed plan
+  overwrote the organization's real billing and security contact with a string that cannot
+  receive mail.** No error is raised and the plan does not look destructive — it reads as
+  one ordinary change, which is why an owner-authorized apply was the trigger condition.
+  Detection was incidental: a documentation PR needed a baseline plan, and CI can never see
+  this because it plans with **no state** (`init -backend=false`, `*.tfstate` git-ignored),
+  where the resource is a `+ create` and `ignore_changes` does not suppress creates.
+  A/B measured on the same working copy (lineage `eff08856`, serial 143, 82 resources,
+  81 refreshes, exit 0, identical placeholder in both legs):
+  - before: `Plan: 0 to add, 1 to change, 0 to destroy` with
+    `github_organization_settings.this will be updated in-place` and
+    `~ billing_email = "<live plus-address>" -> "ci-placeholder-not-applied"`;
+  - after: no `Plan:` summary at all — zero `will be created / updated in-place /
+    destroyed / must be replaced` lines, `billing_email` absent from the plan, ending in
+    `Changes to Outputs:` only.
+  Fix: PR #62, squash-merged to `main` as `36366ab`; `org_settings.tf` now declares
+  `ignore_changes = [email, name, billing_email]`. **No apply was needed and none was
+  run** — `ignore_changes` is a plan-time meta-argument read from configuration, not
+  state. Compliance rationale: ISO 27001 A.12.1.2 (prevent an unintended production change
+  from an authorized-looking apply), SOC 2 CC8.1, GDPR Art. 5(1)(c) kept intact by fixing
+  the lifecycle block rather than hardcoding an address, and Art. 38 reachability of the
+  published DPO/org contact.
+  **Three residual items, recorded as open:**
+  1. Terraform no longer manages this attribute, so out-of-band drift on the org billing
+     address is **invisible to a plan**. Verify deliberately with
+     `gh api orgs/Via-Vitae --jq .billing_email` (measured 2026-11-03: key present,
+     non-null). The value is a published contact channel, not a secret, so reading it live
+     is free.
+  2. Nothing guards the invariant itself. If `billing_email` is dropped from the list, the
+     hazard returns and no gate fails — no CI step or pre-commit hook reads
+     `org_settings.tf`. A candidate guard is a script asserting both that the ignore list
+     contains `billing_email` and that the live value still equals the registered contact
+     stream. Per §4, a gate that has never been observed failing is not yet a control, and
+     this one does not exist at all.
+  3. The plan still ends in `Changes to Outputs:` (`control_gaps`,
+     `effective_control_matrix`, `p0_security_alerts`) because the org-2FA assertion sits
+     behind `var.manage_org_data = false` and reports `UNKNOWN`. Identical in both legs and
+     predating this finding, so the literal `No changes.` post-merge check in
+     `policies/AI_WORKFLOW_POLICY.md` §5.2 remains unsatisfiable on this repo.
+  Coordination: PR #52 carries the same line on its own branch. `main` is authoritative;
+  that branch must rebase and take `main`'s version of `org_settings.tf`.
 
 ## 3. Staged remediation roadmap
 
