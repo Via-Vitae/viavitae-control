@@ -31,12 +31,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (tag v4)
+
+      - name: Read the declared Terraform pin
+        id: tfpin
+        run: echo "version=$(cat .terraform-version)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1 (tag v4)
         with:
-          terraform_version: 1.16.1
+          terraform_version: ${{ steps.tfpin.outputs.version }}
 
       - name: Terraform format check
         run: terraform fmt -check -recursive
@@ -55,6 +59,16 @@ jobs:
         run: |
           chmod +x scripts/check_plan_selfcite.sh
           ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
+
+      # Manifest conformance. Placed here on purpose: no secrets, no network, and
+      # ahead of every credential-dependent step, because a step after a failure
+      # is skipped and a skipped docs gate is indistinguishable from a passing one
+      # in the check list. Exit 2 means "could not run", surfaced as a failure,
+      # never as a pass.
+      - name: Check toolchain pins match the manifest
+        run: |
+          chmod +x scripts/check_toolchain_pins.sh
+          ./scripts/check_toolchain_pins.sh toolchain.yml .github/workflows
 
       # The audit register is a compliance artifact that asserts counts about itself
       # (findings per table, evidence numbering, PART headings, markdown column counts).

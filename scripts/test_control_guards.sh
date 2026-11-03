@@ -366,23 +366,32 @@ SI="${HERE}/check_secret_inventory.sh"
 SR="${HERE}/check_public_register.sh"
 SC="${HERE}/reconcile_secret_register.sh"
 sd="$(mktemp -d)"
-printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| B9 | 2099-12-31 |\n| A9 | never |\n' > "${sd}/twin.md"
-printf '| secret_id | expires | rotation | last_verified |\n| --- | --- | --- | --- |\n| K9 | 2027-01-15 | 90d | %s |\n| B9 | 2099-12-31 | manual | 2026-10-20 |\n| A9 | never | on-compromise | 2026-10-21 |\n' "$(date -u +%F)" > "${sd}/reg.md"
+# DERIVED DATES, NOT LITERAL ONES. SI2 used to plant the hardcoded expiry `2026-11-01`
+# as its "about to expire" case. On 2026-11-03 that date became the past, the near-expiry
+# branch stopped firing, and SI2 turned permanently red — a merge-gating suite failing on
+# the calendar rather than on a defect, which is exactly how operators learn to ignore
+# guards. The healthy baseline `2027-01-15` carried the same latent rot: it crosses into
+# WARN_DAYS on 2027-01-01 and would have gone red for the same reason. Both are now
+# computed relative to today, so the suite is stable for as long as WARN_DAYS stays 14.
+FAR="$(date -u -d '+90 days' +%F)"    # well outside WARN_DAYS -> must read as ok
+NEAR="$(date -u -d '+3 days' +%F)"    # inside WARN_DAYS, still future -> must trip the gate
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | %s |\n| B9 | 2099-12-31 |\n| A9 | never |\n' "$FAR" > "${sd}/twin.md"
+printf '| secret_id | expires | rotation | last_verified |\n| --- | --- | --- | --- |\n| K9 | %s | 90d | %s |\n| B9 | 2099-12-31 | manual | 2026-10-20 |\n| A9 | never | on-compromise | 2026-10-21 |\n' "$FAR" "$(date -u +%F)" > "${sd}/reg.md"
 
 out="$(bash "${SI}" "${sd}/twin.md" 2>&1)"; rc=$?
-if [[ ${rc} -eq 0 ]] && grep -q 'ok: 2027-01-15' <<<"${out}" && ! grep -q '^ok: 2099' <<<"${out}"; then
+if [[ ${rc} -eq 0 ]] && grep -q "ok: ${FAR}" <<<"${out}" && ! grep -q '^ok: 2099' <<<"${out}"; then
   pass "SI1 dated row passes, no-expiry and never rows are not counted as ok (exit 0)"
 else bad "SI1 wrong verdict on a truthful twin (exit ${rc}): ${out}"; fi
 
-sed 's/2027-01-15/2026-11-01/' "${sd}/twin.md" > "${sd}/near.md"
+sed "s/${FAR}/${NEAR}/" "${sd}/twin.md" > "${sd}/near.md"
 out="$(bash "${SI}" "${sd}/near.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q 'expires in' <<<"${out}"; then pass "SI2 planted near-expiry trips the gate (exit 1)"; else bad "SI2 missed near-expiry (exit ${rc})"; fi
 
-sed 's/2027-01-15/unknown/' "${sd}/twin.md" > "${sd}/unk.md"
+sed "s/${FAR}/unknown/" "${sd}/twin.md" > "${sd}/unk.md"
 out="$(bash "${SI}" "${sd}/unk.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q 'expiry unknown' <<<"${out}"; then pass "SI3 unknown expiry is a finding (exit 1)"; else bad "SI3 accepted unknown (exit ${rc})"; fi
 
-sed 's/2027-01-15/15 Jan 2027/' "${sd}/twin.md" > "${sd}/fmt.md"
+sed "s/${FAR}/15 Jan 2027/" "${sd}/twin.md" > "${sd}/fmt.md"
 out="$(bash "${SI}" "${sd}/fmt.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 2 ]]; then pass "SI4 non-ISO date -> could not evaluate (exit 2)"; else bad "SI4 returned ${rc}, expected 2"; fi
 
@@ -391,7 +400,7 @@ if [[ ${rc} -eq 2 ]]; then pass "SI5 missing register -> exit 2, never a pass"; 
 
 # SI6: THE DEFECT CLASS. Shortening a row so the expires cell falls off the end used to
 # be a silent `continue` — the credential stays live but stops being enforced.
-printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| K8 |\n' > "${sd}/trunc.md"
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | %s |\n| K8 |\n' "$FAR" > "${sd}/trunc.md"
 out="$(bash "${SI}" "${sd}/trunc.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -qi 'no readable' <<<"${out}"; then
   pass "SI6 truncated row (hidden expiry) caught (exit 1)"
@@ -407,7 +416,7 @@ else bad "SI7 read a table outside the register (exit ${rc}): ${out}"; fi
 
 # SR1 runs on a FRESH twin: SI7 deliberately appended a foreign table to the previous
 # copy, and the anti-leak gate is supposed to reject that file.
-printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| B9 | 2099-12-31 |\n| A9 | never |\n' > "${sd}/twin.md"
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | %s |\n| B9 | 2099-12-31 |\n| A9 | never |\n' "$FAR" > "${sd}/twin.md"
 out="$(bash "${SR}" "${sd}/twin.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 0 ]] && grep -q 'only opaque ids' <<<"${out}"; then pass "SR1 opaque twin accepted (exit 0)"; else bad "SR1 rejected an opaque twin (exit ${rc}): ${out}"; fi
 
@@ -415,13 +424,13 @@ if [[ ${rc} -eq 0 ]] && grep -q 'only opaque ids' <<<"${out}"; then pass "SR1 op
 # 12-digit account id, a device serial — must be rejected even though every date is
 # valid. Values are SYNTHETIC: putting the real identifiers in a test fixture would
 # re-publish in a public repo exactly what this gate exists to retract.
-printf '| secret_id | expires |\n| --- | --- |\n| K9 | 2027-01-15 |\n| X1 | 2027-01-15 |\n\nvault path `~/.vault/EXAMPLE/x`, AWS 000000000000, serial EXAMPLESERIAL0\n' > "${sd}/leak.md"
+printf '| secret_id | expires |\n| --- | --- |\n| K9 | %s |\n| X1 | %s |\n\nvault path `~/.vault/EXAMPLE/x`, AWS 000000000000, serial EXAMPLESERIAL0\n' "$FAR" "$FAR" > "${sd}/leak.md"
 out="$(bash "${SR}" "${sd}/leak.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q 'home path' <<<"${out}" && grep -q '12-digit' <<<"${out}" && grep -q 'serial' <<<"${out}"; then
   pass "SR2 planted leak (path + account id + serial) caught (exit 1)"
 else bad "SR2 let topology metadata through (exit ${rc}): ${out}"; fi
 
-printf '| secret_id | expires | blast_radius |\n| --- | --- | --- |\n| K9 | 2027-01-15 | org-wide read |\n' > "${sd}/wide.md"
+printf '| secret_id | expires | blast_radius |\n| --- | --- | --- |\n| K9 | %s | org-wide read |\n' "$FAR" > "${sd}/wide.md"
 out="$(bash "${SR}" "${sd}/wide.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q '2-column' <<<"${out}"; then pass "SR3 extra column rejected (exit 1)"; else bad "SR3 accepted a wide public table (exit ${rc}): ${out}"; fi
 
@@ -443,7 +452,7 @@ if [[ ${rc} -eq 1 ]] && grep -q 'MISSING from the public twin' <<<"${out}"; then
   pass "SC2 credential dropped from the twin caught (exit 1)"
 else bad "SC2 let a deleted row pass unnoticed (exit ${rc}): ${out}"; fi
 
-sed 's/^| K9 | 2027-01-15/| K9 | 2030-01-01/' "${sd}/twin.md" > "${sd}/disagree.md"
+sed "s/^| K9 | ${FAR}/| K9 | 2030-01-01/" "${sd}/twin.md" > "${sd}/disagree.md"
 out="$(PRIVATE_REGISTER="${sd}/reg.md" bash "${SC}" "${sd}/disagree.md" 2>&1)"; rc=$?
 if [[ ${rc} -eq 1 ]] && grep -q 'expiry disagrees' <<<"${out}"; then pass "SC3 date disagreement caught (exit 1)"; else bad "SC3 accepted disagreement (exit ${rc}): ${out}"; fi
 

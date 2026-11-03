@@ -1,0 +1,90 @@
+# toolchain.yml — single source of truth for declared tool versions and canonical
+# GitHub Action commits in the Via-Vitae control plane.
+#
+# WHY FLAT KEYS. `yq` is ABSENT on this host (verified 2026-11-03) and the guard
+# must not require a new binary, so the manifest is flat `key: value` YAML: valid
+# YAML for humans and tools, parseable by awk field-splitting for the guard.
+# DO NOT NEST — a nested mapping breaks the guard's parser and it will exit 2,
+# not silently pass.
+#
+# WHY THIS FILE EXISTS. Rule R4 (compliance-check.yml `action-pinning`) proves a
+# reference IS a 40-char SHA. It cannot prove it is the SAME SHA the other repos
+# use. Measured 2026-11-03: actions/checkout is pinned to 3 distinct commits and
+# aquasecurity/trivy-action to 4, every one of them R4-green. Separately,
+# NODE_VERSION and PYTHON_VERSION are re-declared per workflow file per repo
+# (~40 declarations of two numbers) with no gate anywhere.
+#
+# Every value carries its evidence. A value without a stated source is a claim,
+# not evidence, and must not be merged.
+
+schema_version: 1
+updated: 2026-11-03
+
+# --- declared tool versions (the host and CI must agree on these) -----------
+tool.node: "22"
+    # Every repo that declares one declares 22: viavitae-api ci.yml:42,
+    # compliance-check.yml:38, viavitae-brand ci.yml:42, viavitae-qa, viavitae-web,
+    # viavitae-template and all ten landing scaffolds. viavitae-web/.nvmrc = 22.
+    # Host /usr/bin/node is v20.20.2 — a live divergence (VV-2026-11-003). Fixing
+    # the host is Tier 0 and is OUT OF SCOPE here; this line states the intent.
+tool.python: "3.12"
+    # Declared identically across the estate. Host python3 is 3.12.3, so host and
+    # CI agree today by coincidence of the Ubuntu 24.04 default, not by control.
+tool.terraform: "1.16.1"
+    # == viavitae-control/.terraform-version, == dpkg-query -W terraform (1.16.1-1).
+    # jol-control and jolarca-control have NO pin file (VV-2026-11-007).
+tool.pre_commit: "4.7.0"
+    # .venv/bin/pre-commit --version. Declared NOWHERE today and absent from PATH:
+    # it exists only inside a git-ignored venv (VV-2026-11-008). This line is the
+    # first time the estate states it. Not yet asserted by the guard.
+
+# --- canonical action commits -----------------------------------------------
+# Selection rule: the commit the ACTIVE MAJOR TAG resolves to today. Read it from a
+# RUNNER LOG (`gh run view <id> --log | grep "Download action repository"`), which
+# is the only source that resolves an Action reference the way Actions does.
+# git/ref/tags is NOT safe: for an annotated tag it returns the tag OBJECT, not a
+# commit. It happened to agree for actions/checkout and hashicorp/setup-terraform
+# because those tags are lightweight.
+# NOT the most-used SHA. Frequency here would have picked
+# hashicorp/setup-terraform@b9cd54a3 (tag v3, v3.1.2) and silently downgraded
+# this repo from v4.0.1.
+#
+# DOWNGRADE WARNING — the rule has a failure mode. A pinned commit can be NEWER
+# than the major tag, in which case converging on the tag is a downgrade.
+# Observed: astral-sh/setup-uv@v4 installs uv 0.12.17, while viavitae-api's
+# explicit pin e58605a9 installs uv 0.13.6. Before moving any reference onto a
+# canonical value, compare what each one INSTALLS from a runner log, not just
+# the commit dates. Where the pin is newer, the move is a decision for the owner
+# and belongs in Tier 3, never in a drift sweep.
+#
+# RESOLVED for setup-uv on 2026-11-03: the downgrade is compatible. Both locks
+# declare `revision = 3` and host uv 0.12.17 validates them unchanged
+# (`uv lock --check --offline` exit 0: api 78 packages, hermes-agents 55).
+# So moving api from 0.13.6 down to the tag commit is safe for the lockfiles and
+# additionally makes host and CI agree on uv, which they do not today.
+#
+# Scope note: the guard checks only actions listed here. Undeclared actions
+# produce a notice, never a violation, so landing this gate is not red on
+# arrival. Widen deliberately (Tier 3), never accidentally.
+
+pin.actions/checkout: 11d5960a326750d5838078e36cf38b85af677262
+    # = tag v4 = v4.4.0 (verified 2026-11-03). 227 of 266 Via-Vitae references
+    # already use it. audit.yml's current `@v4` resolves to this exact commit, so
+    # pinning it is a behavioural no-op.
+pin.hashicorp/setup-terraform: dfe3c3f87815947d99a8997f908cb6525fc44e9e
+    # = tag v4 = v4.0.1 (verified 2026-11-03). audit.yml's current `@v4` resolves
+    # to this commit, so pinning is a behavioural no-op. Zero Via-Vitae refs use
+    # it but jol-control and jolarca-control already pin exactly this SHA.
+    # The 3 Via-Vitae refs on b9cd54a3 are v3.1.2 and are a Tier 3 CONVERGENCE
+    # item, not a Tier 1 change: upgrading is a decision, not a census result.
+pin.astral-sh/setup-uv: 38f3f104447c67c051c4a08e39b64a148898af3a
+    # = the commit the runner resolves tag `v4` to, read from a runner log rather than from the
+    # REST API: hermes-agents run 40863836724 logged
+    #   Download action repository 'astral-sh/setup-uv@v4' (SHA:38f3f104447c67c051c4a08e39b64a148898af3a)
+    #   Successfully installed uv version 0.12.17
+    # NOTE the inversion: gh api repos/astral-sh/setup-uv/git/ref/tags/v4 returns e4db8464…, which
+    # is the ANNOTATED TAG OBJECT, not a commit — /commits on it answers 422. Never take a
+    # canonical Action SHA from that endpoint; take it from a run log.
+    # viavitae-api pins e58605a9… instead, and installs uv 0.13.6 — a NEWER uv than tag v4 gives.
+    # That makes api's reference a Tier 3 CONVERGENCE DECISION, not a drift fix: converging api onto
+    # 38f3f104 would DOWNGRADE its package manager. See the DOWNGRADE WARNING above.
