@@ -1,0 +1,34 @@
+# CODEOWNERS — viavitae-control
+#
+# The two handles below are not invented: `locals.tf` maps the `control` tier to
+# ["security", "compliance"], and both are real teams in the live organization
+# (measured 2026-11-03: `gh api orgs/Via-Vitae/teams --paginate` returns architects,
+# compliance, dpo, legal, platform, security).
+#
+# WHAT THIS FILE IS AND IS NOT, STATED PLAINLY
+# It is a routing rule. It is not separation of duties. Each of those teams has exactly one
+# member, and it is the same account (`gh api orgs/Via-Vitae/teams/<slug>/members` ->
+# JourneyOfLife for all six), so an approval from a listed owner is an approval by the person
+# who wrote the change. Finding VV-2026-10-003 tracks that; the remedy is a second reviewer
+# (`policies/restore_peer_review.md`), not a longer CODEOWNERS file.
+#
+# Enforcement is also not active yet: `require_code_owner_review` in `repo_rulesets.tf` reads
+# `var.branch_require_code_owner_reviews`, which defaults to `false` (`variables.tf:131-135`)
+# because a one-person organization cannot approve its own pull request. Until that variable
+# is `true` and `branch_required_approving_review_count >= 1`, nothing here blocks a merge.
+
+# Default owner for everything in the control plane.
+*                                @Via-Vitae/security @Via-Vitae/compliance
+
+# Highest-sensitivity paths, named explicitly so a future reviewer split is a one-line change
+# rather than a rewrite: these are the files whose values reach live organization settings.
+/org_settings.tf                 @Via-Vitae/security @Via-Vitae/compliance
+/org_actions_policy.tf           @Via-Vitae/security @Via-Vitae/compliance
+/repo_rulesets.tf                @Via-Vitae/security @Via-Vitae/compliance
+/variables.tf                    @Via-Vitae/security @Via-Vitae/compliance
+/repos_data.tf                   @Via-Vitae/security @Via-Vitae/compliance
+/imports.tf                      @Via-Vitae/security @Via-Vitae/compliance
+/toolchain.yml                   @Via-Vitae/security @Via-Vitae/compliance
+/.github/workflows/              @Via-Vitae/security @Via-Vitae/compliance
+/scripts/                        @Via-Vitae/security @Via-Vitae/compliance
+/policies/                       @Via-Vitae/security @Via-Vitae/compliance
