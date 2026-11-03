@@ -174,13 +174,19 @@ Re-measured 2026-10-15 (this paragraph was stale — see `docs/COMPLIANCE.md` P1
   here for admins too. See P1-18 for the method and the full table.
 - Published contact channels are all plus-addressed streams now (P1-7 closed, P1-8 closed:
   private vulnerability reporting on 26/26 public repos).
-- **This repo's `Audit` CI job is red, and has been** — `TF_GITHUB_TOKEN` reaches the workflow
-  **empty**, so `terraform plan` ran anonymously: public repos read fine, the five private ones
-  fail to import, and `detect_drift.sh` never runs because `ORG_READ_TOKEN` is not set either.
-  `fmt`/`validate`/`provenance` pass, and since PR #12 the credential gate now fails in ~25s with
-  a named cause instead of a 20-minute opaque plan error. See P1-23 for the exact fix (two
-  secrets, not a workflow edit) and for why making the step green-by-configuration would have
-  been the wrong move.
+- **This repo's `Audit` CI job is green end-to-end** — re-measured 2026-11-03 on `main` (run
+  `41714131265`, commit `030da46`): `Check CI credential`, `Detect drift`
+  (`Declared: 31   Live: 31`, no shadow or ghost repos), `Assert live controls` (`Asserted 21
+  opted-in repo(s); 0 diverged or unreadable`), `Terraform plan` and `Assert toolchain pin` all
+  report `success`, and the `Fail loudly if ORG_READ_TOKEN is absent` step is `skipped` because the
+  secret is now present. The earlier text here ("red, and has been", `TF_GITHUB_TOKEN` reaching the
+  workflow **empty**, drift detection never running) described the pre-2026-10-17 credential state;
+  P1-23 in `docs/COMPLIANCE.md` records the two PATs being wired and the gates going green, and
+  §8 of `policies/AI_WORKFLOW_POLICY.md` carries the current measurement. Green here still means
+  only what it means: CI plans against **no state** (`init -backend=false`, no `*.tfstate` in the
+  checkout), so its plan summary (`52 to import, 30 to add, 30 to change, 1 to destroy` on that
+  run) is not an apply preview — read it as "the configuration resolves against the live API",
+  nothing more.
 - Peer review is currently **0 approvals** on every repo, because the org has one member and
   the second account cannot join without 2FA (P1-10). Separation of duties is a documented
   gap, not a control, until that changes.
