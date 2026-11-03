@@ -88,3 +88,34 @@ pin.astral-sh/setup-uv: 38f3f104447c67c051c4a08e39b64a148898af3a
     # viavitae-api pins e58605a9… instead, and installs uv 0.13.6 — a NEWER uv than tag v4 gives.
     # That makes api's reference a Tier 3 CONVERGENCE DECISION, not a drift fix: converging api onto
     # 38f3f104 would DOWNGRADE its package manager. See the DOWNGRADE WARNING above.
+
+pin.pnpm/action-setup: ea17c68df8912ef543352723c149a84f56e3d413
+    # = tag v6.1.0, read from `gh api repos/pnpm/action-setup/commits/v6.1.0` (2026-11-03).
+    # DEVIATION from the selection rule above, stated rather than hidden: the active major tag
+    # `v6` resolves to 73e46992e05b19abd31f2f3c20e0e7370d762115 and the newest release is v6.1.1
+    # (published 2026-11-03T13:50:23Z). NEITHER is admitted by the org Actions allow-list, which
+    # carries exactly two pnpm patterns — `pnpm/action-setup@b906affcce…` and
+    # `pnpm/action-setup@ea17c68df8…` (measured live on orgs/Via-Vitae/actions/permissions/
+    # selected-actions). Adopting tag-head would therefore need a `var.actions_allowed_patterns`
+    # change plus an authorized `terraform apply` — a live org mutation, so it is an owner
+    # decision (VV-2026-11-020), not a manifest edit. This line takes the newest ALREADY ADMITTED
+    # commit, which converges the estate with zero org change.
+    #
+    # MEASURED DELTA v4 → v6.1.0 (`diff` of action.yml at each commit): three lines, two input
+    # description texts and `runs.using: node20` → `node24`. No input name added, removed, or
+    # re-defaulted, so every `with:` block in this estate stays valid. The ref move does NOT
+    # change which pnpm a repo installs — that comes from `packageManager`, proven in web's
+    # runner log for run 41449846096: `Switching pnpm from v11.25.0 to v9.15.0` then
+    # `Successfully updated pnpm to v9.15.0`. Node 20 actions are already being forced to 24 by
+    # the platform (`##[warning]Node.js 20 is deprecated…` in demos run 41451712042 and qa run
+    # 41578799982), so the direction is toward the supported runtime, away from a downgrade.
+    #
+    # DRIFT THIS LINE CLOSES (census of `uses:` refs at each repo's live origin/main,
+    # 2026-11-03): viavitae-demos 8 refs (1ec6e2f) and viavitae-qa 13 refs (2d670ec) on
+    # b906affcce = v4, viavitae-web 9 refs (ca46563) on ea17c68df8 = v6.1.0. One action name,
+    # two commits, every one of them R4-green — exactly the blind spot this guard exists for.
+    #
+    # UNUSED IN THIS REPO: viavitae-control has no pnpm reference, so invariant I2 evaluates
+    # nothing for this key here. It is declared so the Tier 3 propagator has one canonical value
+    # to aim the three consumer repos at, and so removing the older allow-list pattern can be
+    # gated on a measured zero-ref count rather than on memory.
