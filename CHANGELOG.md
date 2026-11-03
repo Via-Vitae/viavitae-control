@@ -12,6 +12,14 @@ Reproduce the list with:
 git log --date=short --format='%ad %h %s' --grep='(#5[0-9])' origin/main
 ```
 
+Work that is still on an unmerged branch is **deliberately absent** from this file, and no line
+here states a merge status. That is not caution for its own sake: a sentence recording that a
+branch is open, unmerged, or awaiting a pull request goes stale the moment the merge lands, and it
+then sits on `main` asserting something false about itself - including, in the case this rule
+replaces, a claim that no pull request existed inside the pull request that carried it. A change
+earns its line only once the command above prints it, at which point the line is added with the
+squash SHA and PR number as recorded facts rather than predictions.
+
 ## [Unreleased] — 2026-11-03
 
 ### Added
@@ -31,12 +39,6 @@ git log --date=short --format='%ad %h %s' --grep='(#5[0-9])' origin/main
   finding `VV-2026-11-016` — `aac0d79` (#55), 2026-11-03.
 - Finding `VV-2026-11-019` and the governance-artifacts implementation plan that remediates it —
   `0708945` (#56), 2026-11-03.
-- Governance artifacts for this repository, executing that plan: `SECURITY.md`,
-  `CONTRIBUTING.md`, `CHANGELOG.md`, `.editorconfig`, `docs/architecture.md`, `QODER.md`,
-  `.github/CODEOWNERS`, `.github/dependabot.yml`, `.github/PULL_REQUEST_TEMPLATE.md`.
-  **In progress on branch `feat/governance-artifacts` and unmerged** — no PR exists yet, so this
-  line is not a record of anything delivered to `main`. `docs/DPIA-template.md` is deliberately
-  absent; see `CONTRIBUTING.md` and `VV-2026-11-019` for why.
 
 ### Changed
 
