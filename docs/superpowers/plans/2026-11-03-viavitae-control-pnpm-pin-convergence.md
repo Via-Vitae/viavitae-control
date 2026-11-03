@@ -112,7 +112,7 @@ The executing agent **halts immediately and reports** if any of the following oc
 **Files:**
 - Modify: `toolchain.yml`
 
-- [ ] **Step 1: Append the pin, keeping the flat key format**
+- [x] **Step 1: Append the pin, keeping the flat key format**
 
 Add after the `pin.astral-sh/setup-uv` block:
 
@@ -128,7 +128,7 @@ pin.pnpm/action-setup: ea17c68df8912ef543352723c149a84f56e3d413
     # NOT b906affc (v4.3.0/v4) - 21 refs use it, but it is two majors behind.
 ```
 
-- [ ] **Step 2: Verify the manifest still parses and the guard reads the new key**
+- [x] **Step 2: Verify the manifest still parses and the guard reads the new key**
 
 Run from `viavitae-control`:
 
@@ -139,7 +139,7 @@ awk -v k='pin.pnpm/action-setup' 'BEGIN{FS=": *"} $1==k {print "guard sees:", $2
 
 Expected: `YAML OK, keys: 10` and `pnpm pin = ea17c68df8912ef543352723c149a84f56e3d413`, then `guard sees: ea17c68df8912ef543352723c149a84f56e3d413`.
 
-- [ ] **Step 3: Confirm the guard does not go red on arrival**
+- [x] **Step 3: Confirm the guard does not go red on arrival**
 
 Run from `viavitae-control`:
 
@@ -149,7 +149,7 @@ Run from `viavitae-control`:
 
 Expected: exit `0`. `viavitae-control` references no pnpm action, so adding the pin changes nothing here — this step proves that adding a pin cannot itself break the gate.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add toolchain.yml
@@ -170,7 +170,7 @@ ai:cheap"
 **Files:**
 - Verify only.
 
-- [ ] **Step 1: Enumerate every pnpm reference across the org, by ref, excluding worktrees**
+- [x] **Step 1: Enumerate every pnpm reference across the org, by ref, excluding worktrees**
 
 Run from `/opt/viavitae/repos`:
 
@@ -185,7 +185,7 @@ done
 
 Expected: one line per consuming repo. Record the total; Task 3 opens exactly that many PRs and no more.
 
-- [ ] **Step 2: Record which commit each repo uses today**
+- [x] **Step 2: Record which commit each repo uses today**
 
 ```bash
 grep -rhoE 'uses: pnpm/action-setup@[^ ]+' viavitae-*/.github/workflows/*.yml 2>/dev/null \
@@ -194,7 +194,7 @@ grep -rhoE 'uses: pnpm/action-setup@[^ ]+' viavitae-*/.github/workflows/*.yml 2>
 
 Expected: two distinct SHAs today, `b906affc` and `ea17c68d`. If a third appears, **STOP and report** — the plan's table is then incomplete.
 
-- [ ] **Step 3: Prove each candidate repo actually uses pnpm, so a reference is not dead scaffold inheritance**
+- [x] **Step 3: Prove each candidate repo actually uses pnpm, so a reference is not dead scaffold inheritance**
 
 ```bash
 for d in viavitae-*/; do
@@ -215,7 +215,7 @@ Expected: `lock=yes` for every row. Any `lock=NO` is a halt-and-report case: the
 **Files:**
 - Modify: `.github/workflows/*.yml` in each repo listed by Task 2.
 
-- [ ] **Step 1: Preview the substitution for one repository, dry-run, no writes**
+- [x] **Step 1: Preview the substitution for one repository, dry-run, no writes**
 
 Run from `/opt/viavitae/repos/viavitae-qa`:
 
@@ -225,7 +225,7 @@ grep -rn 'pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1' .github/wo
 
 Expected: the list of lines the PR will touch. Confirm the count matches Task 2 for this repo before proceeding.
 
-- [ ] **Step 2: Create the branch from the live default, not a stale local ref**
+- [x] **Step 2: Create the branch from the live default, not a stale local ref**
 
 ```bash
 git fetch -q origin
@@ -234,7 +234,7 @@ git switch -q -c chore/pnpm-pin-convergence "origin/$(git remote show origin | s
 
 Expected: branch created at current remote `main`. A stale local base produces a behind-branch PR, which has burned this estate twice.
 
-- [ ] **Step 3: Substitute, then validate before any write leaves the machine**
+- [x] **Step 3: Substitute, then validate before any write leaves the machine**
 
 ```bash
 sed -i 's|pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4|pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0|g' .github/workflows/*.yml
@@ -244,7 +244,7 @@ python3 -c "import yaml,glob,sys; [yaml.safe_load(open(f)) for f in glob.glob('.
 
 Expected: `no stale refs`, then `YAML OK`.
 
-- [ ] **Step 4: Push, open the PR, and read its CI conclusion — this is the freeze tripwire**
+- [x] **Step 4: Push, open the PR, and read its CI conclusion — this is the freeze tripwire**
 
 ```bash
 git add -A .github/workflows && git commit -m "chore(deps): converge pnpm/action-setup onto the canonical v6.1.0 commit
@@ -264,7 +264,7 @@ gh pr checks --json name,status,conclusion 2>&1 | head -20
 
 Expected: checks `in_progress` or `pass`. **If any run concludes `startup_failure`, STOP immediately** — the target is not admitted and continuing freezes this repo permanently. Do not merge.
 
-- [ ] **Step 5: Handle `viavitae-qa` PR #14 without losing its other updates**
+- [x] **Step 5: Handle `viavitae-qa` PR #14 without losing its other updates**
 
 ```bash
 gh pr view 14 --json title,body,files --jq '{title, files: [.files[].path]}'
@@ -341,7 +341,7 @@ Expected: the guard reports zero open PRs in `startup_failure`.
 
 Rationale: `startup_failure` creates no jobs and no check-runs, so it is indistinguishable from "CI has not run yet" in every aggregate view. Without this guard, the class this plan fixes will silently recur on the next bump.
 
-- [ ] **Step 1: Write the guard**
+- [x] **Step 1: Write the guard**
 
 ```bash
 #!/usr/bin/env bash
@@ -373,7 +373,7 @@ echo "== open PRs scanned: $scanned · frozen PRs: $found"
 echo "OK: no open PR is in startup_failure."
 ```
 
-- [ ] **Step 2: Prove it is sensitive, not decorative**
+- [x] **Step 2: Prove it is sensitive, not decorative**
 
 Run from `viavitae-control`:
 
@@ -384,7 +384,7 @@ bash -n scripts/check_startup_failures.sh && echo "SYNTAX OK"
 
 Expected at authoring time: `EXIT=1` naming **`Via-Vitae/viavitae-qa` PR #14**, because that PR is frozen right now. A guard that reports clean while a known-frozen PR exists is broken — this is the mutation proof for this guard, and it is available without planting anything.
 
-- [ ] **Step 3: Register it and commit**
+- [x] **Step 3: Register it and commit**
 
 Add one row to the Script table in `policies/README.md` with all three columns populated, purpose stating the zero-jobs invisibility rationale, write behaviour `read-only (gh GETs) with an operator credential; exit 0 none frozen, 1 a frozen PR named, 2 nothing readable`.
 
@@ -403,6 +403,70 @@ ai:cheap"
 
 ---
 
+## Execution record - 2026-11-03 (Tasks 1, 2, 3 Steps 1-5, 5)
+
+**PRs opened, none merged:** `viavitae-control` #57 (manifest pin, VV-2026-11-020,
+`scripts/check_startup_failures.sh` plus its `policies/README.md` row) - `audit` pass,
+`provenance` pass. `viavitae-qa` #21 (13 refs in 5 files) and `viavitae-demos` #12
+(8 refs in 3 files) - both `CI status` and `Compliance status` pass.
+
+**Task 2 measured, live `origin/main` after an explicit fetch** (the local clones were
+behind, which is why the census reads refs at the base commit rather than at HEAD):
+demos 8, qa 13 on `b906affcce` and web 9 on `ea17c68df8`, exactly two distinct commits,
+`lock=yes` in all three, so no halt trigger fired. Task 3 Step 4's tripwire is the real
+proof the plan needed: neither convergence head produced `startup_failure`, so
+`ea17c68df8` is confirmed admitted by direct observation rather than by reading the
+allow-list and trusting the inference.
+
+**Behaviour delta measured before recommending the direction** (the plan asserted
+compatibility from the README; this is the stronger check): `diff` of `action.yml` at the
+two commits is three lines - two input description texts and `runs.using` going from
+node20 to node24. No input is added, removed or re-defaulted, and `version:` still means
+"Version of pnpm to install", so demos' `version: ${{ env.PNPM_VERSION }}` stays valid.
+Which pnpm is installed comes from `packageManager`, not from the ref: web's runner log
+for run 41449846096 reads `Switching pnpm from v11.25.0 to v9.15.0` then
+`Successfully updated pnpm to v9.15.0`. One caveat stated: the `Node.js 20 is deprecated`
+warning observed in demos run 41451712042 and qa run 41578799982 names
+`actions/checkout` and `actions/upload-artifact`, not the pnpm step, so it evidences the
+platform direction, not a warning this repo's pnpm step emits.
+
+**Task 3 Step 5 measured:** qa PR #14 carries four bumps - `pnpm/action-setup` plus
+`github/codeql-action` init, autobuild and analyze. Closing it would lose the three
+codeql bumps, so nothing was closed. demos PR #6 proposes the same `fc06bc12` pnpm bump.
+
+**The guard's first version was wrong and the fix is the point of the exercise.** Written
+as the plan specifies (`gh run list --limit 6` per repo), it scanned 50 open PRs, named
+nothing and printed a clean verdict while two PRs were frozen - a PR frozen on 2026-10-19
+has not been inside an active repo's last six runs for weeks. Rewritten to query the runs
+of each head (`actions/runs?head_sha=`), it now exits 1 naming qa #14 (4 `startup_failure`
+runs on head `3a896253`) and demos #6 (2 on head `42f05f67`), with failed reads and
+heads-without-runs counted and printed separately instead of folded into the clean total.
+
+**Deviations from the plan, stated rather than buried:**
+
+1. Executed at top tier, so commit trailers read `ai:top`; the plan routed Tasks 1-3 to
+   the cheap tier. A trailer naming a tier that did not produce the change would corrupt
+   the record the provenance gate exists to keep.
+2. Task 3 Step 4 as written branches `chore/pnpm-pin-convergence` but opens the PR with
+   `--head chore/pnpm-action-setup-convergence`, which does not exist. Used one name.
+3. Task 3 Step 3 validates with bare `python3`; Ubuntu 24.04 keeps `yaml` out of the
+   system interpreter, so the control plane's `.venv/bin/python` parsed every workflow.
+4. `policies/README.md` did not survive the first guard commit: `git add` listed only the
+   script and the row was absent from the tree afterwards (no stash entry). Re-added and
+   grep-verified in both the worktree and `HEAD` before pushing, which is why that check
+   is now part of the step.
+5. Task 1 Step 2's expected `YAML OK, keys: 10` held, and the manifest comment carries
+   more evidence than the plan text because the allow-list constraint, the measured
+   v4-to-v6 delta and the census bases are what make the choice auditable.
+
+**Not executed, and why:** Task 3 Step 6 cannot print `0` while the two PRs are unmerged
+(13 refs on qa `origin/main` `2d670ec`, 8 on demos `origin/main` `1ec6e2f`, 0 on web), so
+Task 4's `PRECONDITION MET` line is not available and Task 4 additionally needs the
+owner's standalone apply authorization. Nothing in this round touched the allow-list,
+`variables.tf` or Terraform state.
+
+---
+
 ## Out of scope
 
 | Item | Why |
@@ -416,23 +480,25 @@ ai:cheap"
 
 ## Review checklist (required — policy §5)
 
-Metrics recomputed for this document:
+Metrics recomputed for this document (re-counted after the 2026-11-03 execution
+round: Tasks 1, 2, 5 and Task 3 Steps 1–5 were executed; Task 3 Step 6, all of
+Task 4 and the post-merge items wait on the merges and on an apply authorization):
 selfcite:stop_clauses=6 selfcite:halt_clauses=4 selfcite:rationale_rows=4
-selfcite:file_rows=4 selfcite:tier_rows=7 selfcite:tasks_open=36 selfcite:tasks_done=0
+selfcite:file_rows=4 selfcite:tier_rows=7 selfcite:tasks_open=12 selfcite:tasks_done=24
 
 ### Pre-commit checklist
 
-- [ ] **Plan exists and is committed** — path: `docs/superpowers/plans/2026-11-03-viavitae-control-pnpm-pin-convergence.md`
-- [ ] **Plan includes STOP conditions** — 6 clauses, section present above
-- [ ] **Plan includes compliance rationale** — 4 rows
-- [ ] **Plan includes explicit halt-and-report triggers** — 4 clauses
-- [ ] **Deterministic gates passed** — paste `fmt · validate · YAML OK · TOOLCHAIN` outputs
+- [x] **Plan exists and is committed** — path: `docs/superpowers/plans/2026-11-03-viavitae-control-pnpm-pin-convergence.md`
+- [x] **Plan includes STOP conditions** — 6 clauses, section present above
+- [x] **Plan includes compliance rationale** — 4 rows
+- [x] **Plan includes explicit halt-and-report triggers** — 4 clauses
+- [x] **Deterministic gates passed** — paste `fmt · validate · YAML OK · TOOLCHAIN` outputs
 - [ ] **Diff matches plan** — expected `0 to add, 1 to change, 0 to destroy` for Task 4 only
-- [ ] **No silent fallback** — no allow-list pattern added; convergence uses the already-admitted commit
+- [x] **No silent fallback** — no allow-list pattern added; convergence uses the already-admitted commit
 - [ ] **Tier prefix in commit message** — `ai:cheap` per repo PR, `ai:top` in each PR body
-- [ ] **Small diff** — one action line per workflow
-- [ ] **No state mutation** — `terraform apply` **not** run; Task 4 gated on explicit authorization
-- [ ] **Freeze tripwire observed** — Task 3 Step 4 CI conclusion recorded per repo before merge
+- [x] **Small diff** — one action line per workflow
+- [x] **No state mutation** — `terraform apply` **not** run; Task 4 gated on explicit authorization
+- [x] **Freeze tripwire observed** — Task 3 Step 4 CI conclusion recorded per repo before merge
 - [ ] **Ordering precondition measured** — Task 4 Step 1 prints `PRECONDITION MET`
 
 ### Post-merge checklist
