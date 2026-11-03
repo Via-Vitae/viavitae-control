@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# check_startup_failures.sh — name every open PR whose workflow last concluded
+# startup_failure. That failure mode creates zero jobs and zero check-runs, so the
+# PR looks merely "untested" in aggregates while it is in fact permanently unrunnable.
+# Contract: 0 none found, 1 at least one frozen PR (named), 2 nothing readable.
+#
+# WHY THIS EXISTS. The org Actions allow-list admits only the exact commits listed
+# in patterns_allowed, so a Dependabot bump of pnpm/action-setup to a third commit
+# is rejected at workflow PARSE time: no job starts, no check-run is created, and
+# the required contexts (provenance, CI status, Compliance status) never report.
+# Every aggregate view then reads the PR as "checks have not run yet". Measured
+# 2026-11-03 on viavitae-qa PR #14 and viavitae-demos PR #6 — both frozen this way.
+#
+# Read-only: gh GETs with the operator credential. Not wired into audit.yml, because
+# audit.yml's CI token is scoped to plan reads and widening a credential is a
+# privilege increase (same reasoning as scripts/check_dependabot_scope.py).
+set -uo pipefail
+
+ORG="${1:-Via-Vitae}"
+command -v gh >/dev/null 2>&1 || { echo "gh required" >&2; exit 2; }
+
+repos=$(gh api "orgs/$ORG/repos" --paginate --jq '.[] | select(.archived==false) | .name' 2>/dev/null)
+[[ -n "$repos" ]] || { echo "no repositories readable for $ORG — cannot report clean" >&2; exit 2; }
+
+found=0; scanned=0; unreadable=0
+while IFS=$'\t' read -r repo number head; do
+  [[ -z "${number:-}" ]] && continue
+  scanned=$((scanned + 1))
+  # Capture the exit status on its own line: a failed read must count as UNKNOWN,
+  # never as "no freeze found". Reading $? after another command tests the wrong
+  # status, and an empty result from a broken call is not evidence of absence.
+  status=0
+  bad=$(gh run list -R "$ORG/$repo" --limit 6 --json headSha,conclusion \
+          --jq ".[] | select(.headSha==\"$head\") | select(.conclusion==\"startup_failure\") | .conclusion" 2>/dev/null) || status=$?
+  if (( status != 0 )); then
+    echo "   unknown: $ORG/$repo PR #$number — runs unreadable (exit $status), not counted as clean"
+    unreadable=$((unreadable + 1))
+    continue
+  fi
+  if [[ -n "$bad" ]]; then
+    echo "::error::$ORG/$repo PR #$number is frozen: its head run concluded startup_failure (0 jobs, no check-runs)"
+    found=$((found + 1))
+  fi
+done < <(for r in $repos; do
+           gh pr list -R "$ORG/$r" --state open --limit 50 --json headRefOid,number \
+             --jq '.[] | "'"$r"'\t\(.number)\t\(.headRefOid)"' 2>/dev/null
+         done)
+
+echo "== open PRs scanned: $scanned · frozen PRs: $found · unreadable repos counted as unknown: $unreadable"
+[[ $scanned -gt 0 ]] || { echo "nothing was scanned — not reporting clean" >&2; exit 2; }
+(( found == 0 )) || exit 1
+echo "OK: no open PR is in startup_failure."
