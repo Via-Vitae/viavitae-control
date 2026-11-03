@@ -145,6 +145,13 @@ locals {
       tier                  = "platform"
       manage_files          = false
       default_branch_exists = true
+      # VV-2026-10-025 route (a), owner-chosen 2026-11-01: this is the repo every other
+      # repository's README names as the template, and its own README line 37 asserts
+      # `This repository is marked **Use this template** on GitHub` — measured false for
+      # 0 of 31 repos until now. Declared here rather than toggled in the UI so the single
+      # true template is owned by this control plane. The ten landing repos still carry the
+      # inherited claim and still need option E wording.
+      is_template = true
     }
     "viavitae-qa" = {
       description           = ""

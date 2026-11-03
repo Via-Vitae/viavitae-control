@@ -8,7 +8,15 @@
 # #############################################################################
 
 resource "github_organization_settings" "this" {
-  # billing_email is a REQUIRED argument (org metadata, not a secret).
+  # billing_email is a REQUIRED argument (org metadata, not a secret). It is supplied at
+  # plan time and then IGNORED (see lifecycle below), because the value that satisfies the
+  # provider is not the value that must reach GitHub: audit.yml sets
+  # TF_VAR_billing_email=ci-placeholder-not-applied and an operator running a local plan
+  # passes a similar stand-in. Measured 2026-11-01: with only [email, name] ignored, a plan
+  # built on a placeholder proposed
+  # `billing_email: "<live address>" -> "plan-only-not-applied"`, i.e. the next apply would
+  # silently redirect the org's billing correspondence. Keeping the argument required by the
+  # provider but ignoring its drift is the fix that does not weaken anything else.
   billing_email = var.billing_email
 
   # --- Member permissions (current live Via-Vitae values preserved) ----------
@@ -38,7 +46,10 @@ resource "github_organization_settings" "this" {
   # The org profile `email` and `name` are set out-of-band (P1-7 / gh api) and are
   # intentionally NOT declared here. Without ignore_changes a full plan proposes to
   # null them, which on apply would wipe the public contact address and display name.
+  # `billing_email` joins them for the mirror reason: it IS declared (the provider demands
+  # it), but its declared value is a plan-time placeholder, so drifting it toward the
+  # placeholder must be refused rather than applied.
   lifecycle {
-    ignore_changes = [email, name]
+    ignore_changes = [email, name, billing_email]
   }
 }

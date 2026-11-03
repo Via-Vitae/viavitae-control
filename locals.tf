@@ -25,6 +25,9 @@ locals {
       license               = lookup(r, "license_template", var.license_template)
       codeowners            = lookup(r, "codeowners_teams", local.tier_codeowners[lookup(r, "tier", "app")])
       default_branch        = var.default_branch
+      # GitHub template flag. Declared per repo (only viavitae-template sets it) so the
+      # mechanism the READMEs describe is the mechanism Terraform owns — VV-2026-10-025.
+      is_template = lookup(r, "is_template", false)
 
       # Per-repo control gating, resolved against the org plan tier below.
       enable_branch_protection = lookup(r, "enable_branch_protection", true)
