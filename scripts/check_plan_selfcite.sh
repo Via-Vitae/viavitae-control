@@ -53,15 +53,37 @@ declare -A M
 fail=0
 warn=0
 
+# Count DATA rows of the first markdown table under a heading, POSITIONALLY:
+# the first pipe-led line is the header, the second is the |---| separator, and
+# every pipe-led line after that is data.
+#
+# Why not match the header by its cell text, as this script used to: the old
+# exclusion `!/^\^[[:space:]]*\| Task /` was meant to skip the header row
+# `| Task | Tier | Rationale |`, but it also matched EVERY data row whose first
+# cell began with the words "Task " — and the same trap applied to `Field ` and
+# `Action `. Measured on a fixture with 4 data rows, two of which began with
+# "Task ": the old expression counted 2. Replacing the POSIX class with [ \t]
+# changed nothing (still 2), which proves the defect is text-based header
+# detection, not mawk's lack of POSIX classes. Positional detection is correct
+# under any awk and does not care what a cell says.
+count_table_rows() { # $1 = heading substring, $2 = file
+  awk -v pat="$1" '
+    $0 ~ ("^## .*" pat) { s=1; n=0; next }
+    /^## / { s=0 }
+    s && /^[ \t]*\|/ { n++; if (n > 2) c++ }
+    END { print c+0 }
+  ' "$2"
+}
+
 recompute() {
   local f="$1"
   M=()
   M[stop_clauses]=$(awk '/^## .*STOP conditions/{s=1;next} /^## /{s=0} s&&/^- /{c++} END{print c+0}' "$f")
   M[halt_clauses]=$(awk '/^## .*Halt-and-report/{s=1;next} /^## /{s=0} s&&/^- /{c++} END{print c+0}' "$f")
   M[evidence_bullets]=$(awk '/^## .*Evidence base/{s=1;next} /^## /{s=0} s&&/^- /{c++} END{print c+0}' "$f")
-  M[rationale_rows]=$(awk '/^## .*Compliance rationale/{s=1;next} /^## /{s=0} s&&/^[[:space:]]*\|/&&!/^[[:space:]]*\|[[:space:]:|-]+$/&&!/^[[:space:]]*\| Field /{c++} END{print c+0}' "$f")
-  M[file_rows]=$(awk '/^## .*File structure/{s=1;next} /^## /{s=0} s&&/^[[:space:]]*\|/&&!/^[[:space:]]*\|[[:space:]:|-]+$/&&!/^[[:space:]]*\| Action /{c++} END{print c+0}' "$f")
-  M[tier_rows]=$(awk '/^## .*Tier routing/{s=1;next} /^## /{s=0} s&&/^[[:space:]]*\|/&&!/^[[:space:]]*\|[[:space:]:|-]+$/&&!/^[[:space:]]*\| Task /{c++} END{print c+0}' "$f")
+  M[rationale_rows]=$(count_table_rows "Compliance rationale" "$f")
+  M[file_rows]=$(count_table_rows "File structure" "$f")
+  M[tier_rows]=$(count_table_rows "Tier routing" "$f")
   M[tasks_open]=$(grep -cE '^- \[ \] ' "$f" || true)
   M[tasks_done]=$(grep -cE '^- \[x\] ' "$f" || true)
 }
