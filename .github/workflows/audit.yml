@@ -60,15 +60,9 @@ jobs:
           chmod +x scripts/check_plan_selfcite.sh
           ./scripts/check_plan_selfcite.sh docs/superpowers/plans/*.md
 
-      # Manifest conformance. Placed here on purpose: no secrets, no network, and
-      # ahead of every credential-dependent step, because a step after a failure
-      # is skipped and a skipped docs gate is indistinguishable from a passing one
-      # in the check list. Exit 2 means "could not run", surfaced as a failure,
-      # never as a pass.
-      - name: Check toolchain pins match the manifest
-        run: |
-          chmod +x scripts/check_toolchain_pins.sh
-          ./scripts/check_toolchain_pins.sh toolchain.yml .github/workflows
+      # Manifest conformance moved to its own `pin-guard` job below, so that
+      # requiring it does not make the secret-dependent audit job a merge
+      # dependency. See P1-26.
 
       # The audit register is a compliance artifact that asserts counts about itself
       # (findings per table, evidence numbering, PART headings, markdown column counts).
@@ -158,3 +152,38 @@ jobs:
             echo "::error::.terraform-version ($PIN) != installed ($ACTUAL)"
             exit 1
           fi
+
+  # ---------------------------------------------------------------------------
+  # pin-guard: the manifest-conformance check promoted to its own job so it can be
+  # a required status check WITHOUT dragging the whole audit into the merge gate.
+  # P1-26 recorded the gap: `audit` already runs this guard, but as an advisory
+  # step it can only warn, so a pin that contradicts toolchain.yml can be merged
+  # anyway - a human clearing `provenance` walks straight past a red I2.
+  #
+  # Deliberately minimal, because a required check that cannot report freezes every
+  # PR in the repo and this ruleset has no bypass actors to escape with. Needs: one
+  # runner, one checkout, one shell script. Needs NO secrets, NO network, NO
+  # Terraform and NO provider reads - unlike `audit`, which depends on
+  # TF_GITHUB_TOKEN, ORG_READ_TOKEN and a `terraform plan` against the live org.
+  # Requiring `audit` instead would turn any credential expiry into a repo-wide
+  # merge lockout, which is the outcome the pnpm allow-list incident produced by
+  # accident on three repos.
+  #
+  # ORDERING, not cosmetic: do not start requiring this context until the job
+  # reports on a real PR from main. Confirm the check-run name from an actual run
+  # before applying repo_rulesets.tf.
+  pin-guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (tag v4)
+
+      # Exit contract: 0 clean, 1 violation, 2 nothing-checkable. A 2 fails this
+      # job too - an unchecked invariant must never look like a satisfied one.
+      - name: Check toolchain pins match the manifest
+        run: |
+          chmod +x scripts/check_toolchain_pins.sh
+          ./scripts/check_toolchain_pins.sh toolchain.yml .github/workflows

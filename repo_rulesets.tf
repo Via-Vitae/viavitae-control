@@ -62,6 +62,21 @@ resource "github_repository_ruleset" "protect_main" {
       required_check {
         context = "provenance"
       }
+      # Promoted from advisory. `audit` has always run the manifest guard, but an
+      # advisory step can only warn: P1-26 measured that a human who clears the
+      # required `provenance` check on a bot PR can merge a pin that invariant I2
+      # rejects, because nothing blocks on a red advisory step. Requiring the
+      # dedicated `pin-guard` job closes that gap without making the secret- and
+      # provider-dependent `audit` job a merge dependency, which would convert any
+      # credential expiry into a repo-wide lockout (this ruleset has bypass_actors
+      # = none, so there is no escape route).
+      # Compliance rationale: SOC 2 CC6.8 / CC7.1, ISO 27001:2022 A.8.9 and A.8.19,
+      # PCI-DSS 4.0 Req. 2.2 and 6.5.1.
+      # ORDERING: apply only after `pin-guard` is confirmed reporting on a real PR
+      # from main. A required context whose producer never reports freezes every PR.
+      required_check {
+        context = "pin-guard"
+      }
     }
   }
 
