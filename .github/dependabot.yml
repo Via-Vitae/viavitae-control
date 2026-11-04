@@ -24,7 +24,9 @@ updates:
     # off-manifest. Measured on the first one it produced: PR #64 (actions/checkout
     # 4.4.0 -> 7.0.1) failed `provenance`, because no ai:<tier> trailer can exist in a
     # bot-authored body, and failed I2, because the workflow asked for 3d3c42e5aac5 while
-    # toolchain.yml declares 11d5960a3267. Registered as P1-26.
+    # toolchain.yml then declared 11d5960a3267. Registered as P1-26, and the manifest has since
+    # been moved onto that very commit by the 2026-11-04 convergence decision, which is why the
+    # ceiling below reads 7.0.1 rather than 4.4.0.
     #
     # Ceiling semantics: the current canonical is the maximum, so nothing is proposed until a
     # human moves the canonical in toolchain.yml and raises this range in the same change. The
@@ -38,7 +40,7 @@ updates:
     # bot response (P1-26).
     ignore:
       - dependency-name: "actions/checkout"
-        versions: ["> 4.4.0"]
+        versions: ["> 7.0.1"]
       - dependency-name: "hashicorp/setup-terraform"
         versions: ["> 4.0.1"]
     groups:
