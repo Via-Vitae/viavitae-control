@@ -616,7 +616,7 @@ repo visibility or rotate credentials automatically. The following need explicit
   (re-read live 2026-11-03: `required_status_checks=[{"context":"provenance"}]`). So the
   blocking check fails on every bot PR.
   Measured on the first one it produced, PR #64 (`actions/checkout` 4.4.0 -> 7.0.1, opened
-  2026-11-03T21:54:45Z, still `OPEN`): run `41726065687` `provenance` **fail** in 3s, and run
+  2026-11-03T21:54:45Z, `OPEN` when first measured and **CLOSED 2026-11-03T23:26:58Z**): run `41726065687` `provenance` **fail** in 3s, and run
   `41726065682` `audit` **fail** in 10s at `Check toolchain pins match the manifest`.
   **Two independent defects sit in that single PR and must not be blurred:**
   1. provenance (blocking) - no `ai:<tier>` trailer in the bot's body;
@@ -671,6 +671,35 @@ repo visibility or rotate credentials automatically. The following need explicit
   exists only on `chore/pnpm-canonical-pin` (open PR #57). A register row with no file behind it
   is a separate defect; it is stated here rather than numbered or fixed, because it is outside
   this finding.
+  **Disposition of PR #64, and two measurements that rewrite the options above.** It was
+  closed 2026-11-03T23:26:58Z with an evidence comment; `merged=false`, so nothing landed and
+  `main` still declares canonical `11d5960a` with `audit.yml:34` pinning it (`check_toolchain_pins.sh`
+  exits 0 on `main`). Two facts measured while doing it, neither available to the options list as
+  first written:
+  1. `maintainerCanModify=false` on the bot PR. Option (a) therefore **cannot be performed inside
+     that branch at all** - the `toolchain.yml` canonical change that I2 demands cannot be pushed to
+     it. Adopting a bump means hand-authoring a PR that moves `audit.yml`, `toolchain.yml`, the
+     propagated scaffold (`modules/repo/files.tf:35` and `:86` still emit `actions/checkout@v4`) and
+     the estate together.
+  2. The estate is uniform on the v4.4.0 commit. Sampled four workflows across three repos -
+     `viavitae-landing-basilica` and `viavitae-api`, each `ci.yml` plus `compliance-check.yml` - and
+     all four pin `11d5960a`. So `audit.yml` taking `3d3c42e5` alone makes this repo the sole
+     outlier, which is precisely the condition I2 was written to detect.
+  **The sharper risk, which the "not a hard deadlock" reading could invite.** Because `audit` is
+  **not** a required context (only `provenance` is), a human who appends `ai:review` to clear the
+  blocking check makes PR #64 mergeable **while the pin guard reports red**. The advisory step
+  warns and does not stop. Clearing provenance is therefore not an adoption path for a bump that
+  fails I2; it is a way to land estate divergence past a control that can see it.
+  **Two things stated as unverified rather than assumed.** The `@dependabot ignore this dependency`
+  comment drew no bot response in about four minutes and ignore conditions are not exposed via the
+  API, so whether it registered is unknown and **recurrence should be expected**; the durable
+  mechanism is an `ignore:` block in `.github/dependabot.yml`, which is a repo change. And the close
+  reason could not be set: `gh pr close` takes no `--reason` in this version, and `PATCH
+  /pulls/64` with `state_reason=not_planned` returned `null` on two attempts, so the PR appears under
+  the default close reason and the UI does not distinguish a declined bump from a completed one.
+  **This finding stays `OPEN`.** What it records is the absence of a documented adoption path, and
+  closing one pull request does not supply it. The three options remain, but option (a) as worded is
+  unavailable and option (c) is what was in fact done to PR #64.
 
 ## 3. Staged remediation roadmap
 
