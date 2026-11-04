@@ -716,6 +716,37 @@ repo visibility or rotate credentials automatically. The following need explicit
   closing one pull request does not supply it. The three options remain, but option (a) as worded is
   unavailable and option (c) is what was in fact done to PR #64.
 
+- **P1-27 — OPEN (found 2026-11-04): `scripts/check_plan_selfcite.sh` prints `OK` after comparing
+  one of the eight numbers a plan cites, so a plan can pass its own self-citation gate while seven
+  assertions are never measured.** The structured form is the defect: a line reading
+  `selfcite:name=N name=N …` is extracted by grepping `selfcite:[a-z_]+=[0-9]+` and piping into a
+  `sed` substitution that is applied once per line, so only the **first** pair survives and the rest
+  are discarded silently - the comparison counter never increments for them. Seen directly while
+  validating `docs/superpowers/plans/2026-11-04-viavitae-control-checkout-v7-estate-convergence.md`:
+  the gate printed `1 assertion(s) recomputed and compared` and then `OK` for a line citing eight
+  metrics.
+  The same run exposed a second, quieter mechanism: the metric patterns are **case-sensitive against
+  section headings**, so `Verified evidence base` did not match the expected `Evidence base`,
+  `evidence_bullets` recomputed to `0`, and a plan could assert `evidence_bullets=0` against eight
+  real bullets and still pass. Both are instances of the class already recorded for aggregate status
+  jobs that decide a verdict by grepping the text of a serialized `needs` context: a gate that has
+  never been seen to react is not evidence, and a green result from a check that inspected nothing is
+  indistinguishable on screen from a green result from one that inspected everything.
+  **Why this is a finding rather than cosmetics.** The policy makes this script the control that
+  stops a plan asserting unverifiable counts about itself, so a gate verifying one of eight numbers
+  supplies the appearance of that control without its substance, and the false confidence lands in
+  precisely the documents whose purpose is traceability. Two plans in the same directory already
+  report `0 assertions - nothing to verify`, which the script correctly refuses to treat as
+  evidence; the defect here is worse because it prints a pass instead of a notice.
+  **Remediation deliberately not applied in this change**, because the script is CI-critical and its
+  own behaviour is the thing under test: parse every pair on the structured line, treat a metric
+  whose section is missing as an advisory miss rather than a silent skip, then prove sensitivity by
+  mutation - plant a wrong count in each metric of a scratch copy and require the exit code to flip
+  to `1` every time, the standard this repo already holds for new guards. A fix must be
+  re-validated against the existing plans, whose prose forms currently carry all of the real
+  verification load. Until then, a plan that wants genuine self-citation checking must also state
+  each metric in prose, which is the workaround the 2026-11-04 plan uses to reach 8 assertions.
+
 ## 3. Staged remediation roadmap
 
 1. **Day 0 (now, free):** Enforce 2FA; enable secret scanning + push protection +
