@@ -18,7 +18,7 @@
 # not evidence, and must not be merged.
 
 schema_version: 1
-updated: 2026-11-03
+updated: 2026-11-04
 
 # --- declared tool versions (the host and CI must agree on these) -----------
 tool.node: "22"
@@ -67,10 +67,24 @@ tool.pre_commit: "4.7.0"
 # produce a notice, never a violation, so landing this gate is not red on
 # arrival. Widen deliberately (Tier 3), never accidentally.
 
-pin.actions/checkout: 11d5960a326750d5838078e36cf38b85af677262
-    # = tag v4 = v4.4.0 (verified 2026-11-03). 227 of 266 Via-Vitae references
-    # already use it. audit.yml's current `@v4` resolves to this exact commit, so
-    # pinning it is a behavioural no-op.
+pin.actions/checkout: 3d3c42e5aac5ba805825da76410c181273ba90b1
+    # = tag v7.0.1. Moved from 11d5960a32 (v4.4.0) by owner decision 2026-11-04, recorded in
+    # P1-26 and executed under Task 2 of
+    # docs/superpowers/plans/2026-11-04-viavitae-control-checkout-v7-estate-convergence.md.
+    # Tag-to-commit read from `gh api repos/actions/checkout/commits/v7.0.1`. Separately, the same
+    # commit is proven to resolve and run rather than merely being mapped: viavitae-web run
+    # 41388070142 (workflow CI, conclusion success) logs
+    #   Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+    # Do not take a canonical Action SHA from the git/ref endpoint: it returns the annotated tag
+    # object, and /commits on that answers 422.
+    # NOT A NO-OP. action.yml at this ref declares runs.using node24; the superseded
+    # 11d5960a declared node20. That runtime boundary is why this line moves by decision and not
+    # by census.
+    # Census 2026-11-04 over the 26 readable public repos (lower bound; 5 private repos unreadable
+    # on this plan tier): 238 refs still on 11d5960a across 18 repos, 36 on this commit across
+    # .github, viavitae-clients and viavitae-web, and 2 unpinned floating @v4 in
+    # viavitae-hermes-agents. THIS CHANGE CONVERGES ONLY viavitae-control; the other 17 incumbent
+    # repos are Task 5 and are explicitly not executed here.
 pin.hashicorp/setup-terraform: dfe3c3f87815947d99a8997f908cb6525fc44e9e
     # = tag v4 = v4.0.1 (verified 2026-11-03). audit.yml's current `@v4` resolves
     # to this commit, so pinning is a behavioural no-op. Zero Via-Vitae refs use

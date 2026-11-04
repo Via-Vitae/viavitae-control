@@ -131,13 +131,13 @@ Measured 2026-11-04 unless stated otherwise. Re-run any line before relying on i
 
 **Files:** none modified; output to a scratch file that is deleted afterwards.
 
-- [ ] **Step 1 — enumerate repositories**
+- [x] **Step 1 — enumerate repositories**
 
 Run: `gh api "orgs/Via-Vitae/repos?per_page=100&type=public" --jq '.[].name' | wc -l`
 Expected: an integer at or above 26. If it returns fewer than the census saw, the enumeration is
 failing, not the estate shrinking.
 
-- [ ] **Step 2 — count references per repository**
+- [x] **Step 2 — count references per repository**
 
 For each repository, list `.github/workflows`, fetch each YAML once, and count
 `actions/checkout@[0-9a-zA-Z._-]+`. Aggregate into three buckets: the current canonical, the v7
@@ -147,17 +147,17 @@ Run per file: `gh api "repos/Via-Vitae/<repo>/contents/.github/workflows/<file>"
 piped through `base64 -d`, then `grep -oE 'actions/checkout@[0-9a-zA-Z._-]+' | sort | uniq -c`.
 Expected: the union of buckets reproduces E1's shape; total occurrences at or above 276.
 
-- [ ] **Step 3 — verify the no-mixed-repos property (E2)**
+- [x] **Step 3 — verify the no-mixed-repos property (E2)**
 
 Intersect the repository set holding the canonical with the set holding the candidate.
 Expected: empty. Non-empty means a migration is already half-done in that repository; STOP 4.
 
-- [ ] **Step 4 — record the numbers in the PR body, not in the plan**
+- [x] **Step 4 — record the numbers in the PR body, not in the plan**
 
 The plan carries census-time numbers; the execution record carries the fresh ones. Do not edit E1
 in place, or the document loses the date the claim was true.
 
-- [ ] **Step 5 — commit nothing**
+- [x] **Step 5 — commit nothing**
 
 Task 1 is read-only. If it produced a change to a tracked file, that is a mistake; revert it.
 
@@ -165,13 +165,13 @@ Task 1 is read-only. If it produced a change to a tracked file, that is a mistak
 
 **Files:** none.
 
-- [ ] **Step 1 — present the measured trade-off**
+- [x] **Step 1 — present the measured trade-off**
 
 State: E4 (`node20` versus `node24`), E5 (three repos already green on the candidate), E1 (18
 repos on the incumbent, 3 on the candidate), and that the candidate is a three-major jump from
 the incumbent.
 
-- [ ] **Step 2 — ask for one of three answers, in writing**
+- [x] **Step 2 — ask for one of three answers, in writing**
 
 (a) converge the estate onto `3d3c42e5`; (b) keep `11d5960a` and schedule the 3 divergent repos
 back down, which is a downgrade and needs its own evidence; (c) leave the split, in which case the
@@ -186,25 +186,25 @@ levers 4 and 12 forbid.
 
 **Files:** `toolchain.yml`, `.github/workflows/audit.yml`.
 
-- [ ] **Step 1 — cut a clean branch from current main**
+- [x] **Step 1 — cut a clean branch from current main**
 
 Run: `git worktree add -b chore/canonical-checkout-v7 /tmp/vv-v7 origin/main`
 Expected: new worktree, and the operator's checkout is not moved.
 
-- [ ] **Step 2 — change the canonical and its annotation together**
+- [x] **Step 2 — change the canonical and its annotation together**
 
 In `toolchain.yml`, set `pin.actions/checkout` to the decided commit and rewrite the comment so it
 states the tag, the runner-log provenance (E3, with the run id), the `node24` fact (E4), and the
 census date. A value change with a stale comment is a false citation, not a note.
 
-- [ ] **Step 3 — update every consuming reference in the same commit**
+- [x] **Step 3 — update every consuming reference in the same commit**
 
 Run: `grep -n 'actions/checkout@' .github/workflows/*.yml`
 Expected: every listed line carries the new 40-char commit and an inline version comment. Note
 that `audit.yml` may now contain **two** checkout references if PR #70 landed, one per job;
 update both, then re-grep to prove zero old-commit matches.
 
-- [ ] **Step 4 — run the guard that will catch a half-edit**
+- [x] **Step 4 — run the guard that will catch a half-edit**
 
 Run: `./scripts/check_toolchain_pins.sh toolchain.yml .github/workflows`
 Expected exit: `0`. Exit `1` names the divergent pair; exit `2` means nothing was checkable and
@@ -219,7 +219,7 @@ Trailer line `ai:top` as its own final line. CI must show `pin-guard` (if #70 ha
 
 **Files:** `modules/repo/files.tf`.
 
-- [ ] **Step 1 — replace the two floating refs**
+- [x] **Step 1 — replace the two floating refs**
 
 Lines 35 and 86 emit `uses: actions/checkout@v4`. Set them to the decided 40-char commit with an
 inline comment, matching the convention every other repository already follows.
@@ -332,7 +332,7 @@ Expected: one match each. Verify by ref, because the working tree stays on the m
 - [ ] No sibling-plane value is referenced or copied
 - [ ] `check_toolchain_pins.sh` exit `2` is treated as failure, never as clean
 
-selfcite:stop_clauses=7 halt_clauses=5 evidence_bullets=8 rationale_rows=5 file_rows=6 tier_rows=7 tasks_open=34 tasks_done=0
+selfcite:stop_clauses=7 halt_clauses=5 evidence_bullets=8 rationale_rows=5 file_rows=6 tier_rows=7 tasks_open=22 tasks_done=12
 
 ## Structure self-audit
 
@@ -346,9 +346,30 @@ Each line below carries one metric in the prose form the gate parses, because th
 - File structure: 6 rows
 - Tier routing: 7 rows
 - Evidence base: 8 bullets
-- Review checklist: 34 open and 0 completed
+- Review checklist: 22 open and 12 completed
 
-## Execution record
+## Execution record — 2026-11-04
 
-Not started. Task 1 is the first executable step and is read-only; Task 2 blocks everything after
-it until the owner answers.
+**Task 2 answered by the owner: converge onto v7.0.1, control plane first, then stop.** The
+fan-out (Tasks 5-7) is therefore deliberately NOT executed. Task 2 Step 3 is left unticked
+because its stop condition did not fire - a conditional that cleared is not an action that was
+performed, and ticking it would record an intervention that never happened.
+
+Executed in one PR: Task 1 (census re-run 2026-11-04: 22 of 26 readable public repos carry
+references, and no repository mixes the two commits), Task 2 Steps 1-2, Task 3 Steps 1-4, and
+Task 4 Step 1. toolchain.yml now declares pin.actions/checkout: 3d3c42e5aac5ba805825da76410c181273ba90b1 with the runner-log
+and runtime evidence attached; both audit.yml checkout references and both
+modules/repo/files.tf scaffold references moved in the same commit; and the ceiling in
+.github/dependabot.yml moved from > 4.4.0 to > 7.0.1 so it expresses the current canonical
+rather than the commit that used to be it.
+
+Two hazards found while doing it, both fixed rather than merely noted:
+
+- scripts/patch_codeql_detect.py line 34 held CHECKOUT_PIN as a literal it writes into
+  workflows. Left alone it would re-plant the superseded commit into every future patched
+  repository, defeating this change through a generation path no guard inspects.
+- The Dependabot ceiling written the previous day was correct against that day's manifest and
+  silently wrong the moment the canonical moved. A ceiling only means something relative to the
+  value it bounds, so it belongs in the same commit as the canonical, not in a follow-up.
+
+Counts: 22 open and 12 completed.
