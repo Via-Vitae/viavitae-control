@@ -11,6 +11,19 @@ This file is the agent-facing adapter: it says what to do at the keyboard and
 points at the policy for the rationale. On any conflict, the policy wins. Owner
 instructions in the current session win over both.
 
+**Review.** Document owners: `@Via-Vitae/security` and `@Via-Vitae/compliance` - the two teams
+`locals.tf` binds to the `control` tier, and the handles `.github/CODEOWNERS` assigns through its
+`*` catch-all (this file has no CODEOWNERS line of its own). Reviewed 2026-11-04. Next review
+2027-05-01. Re-review early if any of these changes: the tier set in
+`policies/AI_WORKFLOW_POLICY.md`, the standalone `ai:<tier>` trailer rule, the guard exit-code
+contract `0`/`1`/`2`, the canonical-SHA rule in `toolchain.yml`, or the authority boundary in
+section 1.
+
+Nothing enforces that date. `check_plan_selfcite.sh` scans `docs/superpowers/plans/*.md` and
+`check_audit_register.py` scans `docs/security/` plus `docs/superpowers/specs/*.md`, so a
+root-level markdown file falls outside every CI glob and can drift from the policy it adapts
+without any gate noticing. The date is written here precisely because no machine will write it.
+
 **Tradeoff.** These rules bias toward caution over speed. For a one-line typo
 fix, use judgment — not every change needs the full gate run. Nothing here
 relaxes §1.
