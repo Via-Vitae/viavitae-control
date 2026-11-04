@@ -17,6 +17,30 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    # Every `uses:` in this repo is a canonical 40-char commit taken from toolchain.yml,
+    # and invariant I2 of scripts/check_toolchain_pins.sh fails any pinned reference that
+    # differs from the declared canonical. So ANY version bump Dependabot proposes -
+    # including a patch inside the same major tag - changes the commit and puts the repo
+    # off-manifest. Measured on the first one it produced: PR #64 (actions/checkout
+    # 4.4.0 -> 7.0.1) failed `provenance`, because no ai:<tier> trailer can exist in a
+    # bot-authored body, and failed I2, because the workflow asked for 3d3c42e5aac5 while
+    # toolchain.yml declares 11d5960a3267. Registered as P1-26.
+    #
+    # Ceiling semantics: the current canonical is the maximum, so nothing is proposed until a
+    # human moves the canonical in toolchain.yml and raises this range in the same change. The
+    # manifest, not the bot, decides when an Action version changes across the estate.
+    #
+    # Trade-off stated rather than hidden: this repo gives up automated discovery of Action
+    # security fixes. Compensating control: the deliberate Tier 3 review cadence in
+    # docs/superpowers/plans/2026-11-03-viavitae-control-toolchain-manifest-and-pin-guard.md
+    # plus the `updated:` field in toolchain.yml. An `@dependabot ignore` PR comment is NOT the
+    # mechanism - its effect cannot be observed through the API, and PR #64's comment drew no
+    # bot response (P1-26).
+    ignore:
+      - dependency-name: "actions/checkout"
+        versions: ["> 4.4.0"]
+      - dependency-name: "hashicorp/setup-terraform"
+        versions: ["> 4.0.1"]
     groups:
       actions:
         patterns:
