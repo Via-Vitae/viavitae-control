@@ -681,10 +681,25 @@ repo visibility or rotate credentials automatically. The following need explicit
      it. Adopting a bump means hand-authoring a PR that moves `audit.yml`, `toolchain.yml`, the
      propagated scaffold (`modules/repo/files.tf:35` and `:86` still emit `actions/checkout@v4`) and
      the estate together.
-  2. The estate is uniform on the v4.4.0 commit. Sampled four workflows across three repos -
-     `viavitae-landing-basilica` and `viavitae-api`, each `ci.yml` plus `compliance-check.yml` - and
-     all four pin `11d5960a`. So `audit.yml` taking `3d3c42e5` alone makes this repo the sole
-     outlier, which is precisely the condition I2 was written to detect.
+  2. **Corrected 2026-11-04 from a full census; the claim below it was overstated.** It said the
+     estate was uniform on the v4.4.0 commit and that taking `3d3c42e5` here would make this repo the
+     sole outlier, reasoning from a sample of four workflows in three repos. The census of the 26
+     readable public repos says otherwise: 276 references across 22 repos, of which **238 pin
+     `11d5960a` (v4.4.0) in 19 repos, 36 already pin `3d3c42e5` (v7.0.1) in `.github`,
+     `viavitae-clients` and `viavitae-web`, and 2 are unpinned floating `@v4` in
+     `viavitae-hermes-agents`**. The 5 private repos are unreadable on this plan tier, so the counts
+     are a lower bound. So v7.0.1 is not speculative here - each of those three repos shows its five
+     most recent workflow runs `success` - but `action.yml` at `3d3c42e5` declares
+     `runs.using: node24` where `11d5960a` declares `node20`, which is the same
+     behaviour-changing-runtime class recorded for the pnpm convergence, and that is a decision
+     rather than a rebase.
+     The objection to PR #64 survives the correction on different ground: not that this repo would be
+     unique, but that a one-line bot bump moves one repo across a Node major boundary while its own
+     manifest declares a different commit, which is exactly what I2 refuses. Two further facts came
+     out of the census and are stated here rather than silently folded in: `viavitae-hermes-agents`
+     carries the only unpinned `actions/checkout@v4` references found on the public estate, and
+     `viavitae-control`'s pin guard scans only the repository it lives in, so neither finding is
+     detectable from here.
   **The sharper risk, which the "not a hard deadlock" reading could invite.** Because `audit` is
   **not** a required context (only `provenance` is), a human who appends `ai:review` to clear the
   blocking check makes PR #64 mergeable **while the pin guard reports red**. The advisory step
